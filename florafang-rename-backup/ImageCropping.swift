@@ -37,7 +37,7 @@ extension UIImage {
     /// Assumes the square is centered in the preview, which it is.
     ///
     /// - Parameters:
-    ///   - squareSide: side length of the capture square, in points
+    ///   - squareSide: side length of the capture frame frame, in points
     ///   - previewSize: size of the preview view, in points
     ///   - padding: extra margin around the square, 0.0–1.0. A little context
     ///     helps the classifier; too much reintroduces the background problem.

@@ -1,6 +1,6 @@
 //
 //  RemoteIdentifier.swift
-//  FloraFang
+//  Quadrat
 //
 //  Tier 3. Off by default and safe to ship that way.
 //

@@ -1,6 +1,6 @@
 //
 //  PlantClassifier.swift
-//  FloraFang
+//  Quadrat
 //
 //  Wraps the plant toxicity Core ML model. Same shape as HazardClassifier,
 //  same graceful degradation: with no model in the bundle, isAvailable is
@@ -43,7 +43,7 @@ actor PlantClassifier {
         guard let url = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc")
                      ?? Bundle.main.url(forResource: modelName, withExtension: "mlmodel")
         else {
-            print("[FloraFang] No \(modelName) model in bundle — plant classification disabled.")
+            print("[Quadrat] No \(modelName) model in bundle — plant classification disabled.")
             return
         }
 
@@ -53,7 +53,7 @@ actor PlantClassifier {
             let model = try MLModel(contentsOf: url, configuration: config)
             container = try CoreMLModelContainer(model: model)
         } catch {
-            print("[FloraFang] Failed to load \(modelName): \(error)")
+            print("[Quadrat] Failed to load \(modelName): \(error)")
         }
     }
 
@@ -72,7 +72,7 @@ actor PlantClassifier {
         let runnerUp = classifications.dropFirst().first.map { Double($0.confidence) }
 
         guard let plantClass = PlantClass.from(label: top.identifier) else {
-            print("[FloraFang] Plant model emitted unmapped label: \(top.identifier)")
+            print("[Quadrat] Plant model emitted unmapped label: \(top.identifier)")
             return nil
         }
 

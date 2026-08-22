@@ -1,6 +1,6 @@
 //
 //  CameraService.swift
-//  FloraFang
+//  Quadrat
 //
 //  LENS NOTE (v3): this now requests a VIRTUAL multi-camera device
 //  (.builtInTripleCamera / .builtInDualWideCamera) rather than the plain wide
@@ -46,7 +46,7 @@ final class CameraService: NSObject {
 
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
-    private let sessionQueue = DispatchQueue(label: "com.aramirez.florafang.camera.session")
+    private let sessionQueue = DispatchQueue(label: "quadrat.camera.session")
 
     private var device: AVCaptureDevice?
     private var isConfigured = false

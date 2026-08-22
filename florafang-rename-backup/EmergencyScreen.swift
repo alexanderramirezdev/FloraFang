@@ -371,7 +371,7 @@ struct EmergencyScreen: View {
 }
 
 /// Minimal capture wrapper so the emergency flow does not depend on the main
-/// camera screen's cascade, zoom, or square framing. Fewer moving parts in
+/// camera screen's cascade, zoom, or capture frame framing. Fewer moving parts in
 /// the path that matters most.
 struct EmergencyCaptureSheet: View {
     let onCapture: (UIImage) -> Void

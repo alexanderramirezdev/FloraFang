@@ -1,6 +1,6 @@
 //
 //  HazardClassifier.swift
-//  FloraFang
+//  Quadrat
 //
 //  Tier 2. Wraps your trained Core ML model.
 //
@@ -45,7 +45,7 @@ actor HazardClassifier {
         guard let url = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc")
                      ?? Bundle.main.url(forResource: modelName, withExtension: "mlmodel")
         else {
-            print("[FloraFang] No \(modelName) model in bundle — Tier 2 disabled.")
+            print("[Quadrat] No \(modelName) model in bundle — Tier 2 disabled.")
             return
         }
 
@@ -56,7 +56,7 @@ actor HazardClassifier {
             let model = try MLModel(contentsOf: url, configuration: config)
             container = try CoreMLModelContainer(model: model)
         } catch {
-            print("[FloraFang] Failed to load \(modelName): \(error)")
+            print("[Quadrat] Failed to load \(modelName): \(error)")
         }
     }
 
@@ -81,7 +81,7 @@ actor HazardClassifier {
         let runnerUp = classifications.dropFirst().first.map { Double($0.confidence) }
 
         guard let spiderClass = SpiderClass.from(label: top.identifier) else {
-            print("[FloraFang] Model emitted unmapped label: \(top.identifier)")
+            print("[Quadrat] Model emitted unmapped label: \(top.identifier)")
             return nil
         }
 

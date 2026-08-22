@@ -1,6 +1,6 @@
 //
 //  SpiderClasses.swift
-//  FloraFang
+//  Quadrat
 //
 //  The label space for the hazard model. These strings must match your
 //  Create ML folder names EXACTLY — the folder name becomes the class label.

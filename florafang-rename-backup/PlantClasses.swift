@@ -1,6 +1,6 @@
 //
 //  PlantClasses.swift
-//  FloraFang
+//  Quadrat
 //
 //  The label space for the plant toxicity model. These strings must match
 //  your Create ML folder names EXACTLY.
@@ -192,7 +192,7 @@ nonisolated enum PlantClass: String, CaseIterable {
         case .castorBean:
             return "Seeds contain ricin and are severely toxic if chewed and swallowed. A very small number of seeds can be lethal."
         case .notKnownToxic:
-            return "This does not match any plant on FloraFang's toxic list. That is not the same as safe. FloraFang only recognizes a short list of notorious species, and most toxic plants are not on it. Do not eat it and do not assume it is harmless."
+            return "This does not match any plant on Quadrat's toxic list. That is not the same as safe. Quadrat only recognizes a short list of notorious species, and most toxic plants are not on it. Do not eat it and do not assume it is harmless."
         }
     }
 
