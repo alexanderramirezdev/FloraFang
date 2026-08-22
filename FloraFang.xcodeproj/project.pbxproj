@@ -1,0 +1,464 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5EA57B6B3039F6E7008FEC56 /* Contents.json in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B553039F6E7008FEC56 /* Contents.json */; };
+		5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B693039F6E7008FEC56 /* TRAINING.md */; };
+		5EA57B6D3039F6E7008FEC56 /* AppIcon-1024.png in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */; };
+		5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B663039F6E7008FEC56 /* SETUP.md */; };
+		5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */; };
+		5EA57B703039F6E7008FEC56 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B563039F6E7008FEC56 /* ContentView.swift */; };
+		5EA57B713039F6E7008FEC56 /* FieldEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */; };
+		5EA57B723039F6E7008FEC56 /* RemoteIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */; };
+		5EA57B733039F6E7008FEC56 /* EmergencyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */; };
+		5EA57B743039F6E7008FEC56 /* ExposureReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B593039F6E7008FEC56 /* ExposureReport.swift */; };
+		5EA57B753039F6E7008FEC56 /* ImageCropping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5E3039F6E7008FEC56 /* ImageCropping.swift */; };
+		5EA57B763039F6E7008FEC56 /* LabelInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */; };
+		5EA57B773039F6E7008FEC56 /* PoisonResources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B623039F6E7008FEC56 /* PoisonResources.swift */; };
+		5EA57B783039F6E7008FEC56 /* FieldLogScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5B3039F6E7008FEC56 /* FieldLogScreen.swift */; };
+		5EA57B793039F6E7008FEC56 /* ConfidenceGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */; };
+		5EA57B7A3039F6E7008FEC56 /* Assessment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B4E3039F6E7008FEC56 /* Assessment.swift */; };
+		5EA57B7B3039F6E7008FEC56 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B503039F6E7008FEC56 /* CameraPreview.swift */; };
+		5EA57B7C3039F6E7008FEC56 /* IdentificationCascade.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5D3039F6E7008FEC56 /* IdentificationCascade.swift */; };
+		5EA57B7D3039F6E7008FEC56 /* ResultScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B653039F6E7008FEC56 /* ResultScreen.swift */; };
+		5EA57B7E3039F6E7008FEC56 /* PlantClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B613039F6E7008FEC56 /* PlantClassifier.swift */; };
+		5EA57B7F3039F6E7008FEC56 /* SpiderClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B673039F6E7008FEC56 /* SpiderClasses.swift */; };
+		5EA57B803039F6E7008FEC56 /* SpiderHazard.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B683039F6E7008FEC56 /* SpiderHazard.mlmodel */; };
+		5EA57B813039F6E7008FEC56 /* HazardClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */; };
+		5EA57B823039F6E7008FEC56 /* PlantClasses.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B603039F6E7008FEC56 /* PlantClasses.swift */; };
+		5EA57B833039F6E7008FEC56 /* QuadratApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B633039F6E7008FEC56 /* QuadratApp.swift */; };
+		5EA57B843039F6E7008FEC56 /* CameraScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B513039F6E7008FEC56 /* CameraScreen.swift */; };
+		5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B523039F6E7008FEC56 /* CameraService.swift */; };
+		5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */; };
+		5EA57B873039F6E7008FEC56 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B533039F6E7008FEC56 /* Catalog.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		5E9248E2302142BF0001493F /* FloraFang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloraFang.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-1024.png"; sourceTree = "<group>"; };
+		5EA57B4E3039F6E7008FEC56 /* Assessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assessment.swift; sourceTree = "<group>"; };
+		5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5EA57B503039F6E7008FEC56 /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		5EA57B513039F6E7008FEC56 /* CameraScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraScreen.swift; sourceTree = "<group>"; };
+		5EA57B523039F6E7008FEC56 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
+		5EA57B533039F6E7008FEC56 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
+		5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfidenceGate.swift; sourceTree = "<group>"; };
+		5EA57B553039F6E7008FEC56 /* Contents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Contents.json; sourceTree = "<group>"; };
+		5EA57B563039F6E7008FEC56 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyScreen.swift; sourceTree = "<group>"; };
+		5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailScreen.swift; sourceTree = "<group>"; };
+		5EA57B593039F6E7008FEC56 /* ExposureReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureReport.swift; sourceTree = "<group>"; };
+		5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldEntry.swift; sourceTree = "<group>"; };
+		5EA57B5B3039F6E7008FEC56 /* FieldLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldLogScreen.swift; sourceTree = "<group>"; };
+		5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardClassifier.swift; sourceTree = "<group>"; };
+		5EA57B5D3039F6E7008FEC56 /* IdentificationCascade.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentificationCascade.swift; sourceTree = "<group>"; };
+		5EA57B5E3039F6E7008FEC56 /* ImageCropping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCropping.swift; sourceTree = "<group>"; };
+		5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelInspector.swift; sourceTree = "<group>"; };
+		5EA57B603039F6E7008FEC56 /* PlantClasses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantClasses.swift; sourceTree = "<group>"; };
+		5EA57B613039F6E7008FEC56 /* PlantClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlantClassifier.swift; sourceTree = "<group>"; };
+		5EA57B623039F6E7008FEC56 /* PoisonResources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoisonResources.swift; sourceTree = "<group>"; };
+		5EA57B633039F6E7008FEC56 /* QuadratApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuadratApp.swift; sourceTree = "<group>"; };
+		5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteIdentifier.swift; sourceTree = "<group>"; };
+		5EA57B653039F6E7008FEC56 /* ResultScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultScreen.swift; sourceTree = "<group>"; };
+		5EA57B663039F6E7008FEC56 /* SETUP.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SETUP.md; sourceTree = "<group>"; };
+		5EA57B673039F6E7008FEC56 /* SpiderClasses.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiderClasses.swift; sourceTree = "<group>"; };
+		5EA57B683039F6E7008FEC56 /* SpiderHazard.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = SpiderHazard.mlmodel; sourceTree = "<group>"; };
+		5EA57B693039F6E7008FEC56 /* TRAINING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TRAINING.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5E9248DF302142BF0001493F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5E9248D9302142BF0001493F = {
+			isa = PBXGroup;
+			children = (
+				5EA57B6A3039F6E7008FEC56 /* FloraFang */,
+				5E9248E3302142BF0001493F /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5E9248E3302142BF0001493F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5E9248E2302142BF0001493F /* FloraFang.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		5EA57B6A3039F6E7008FEC56 /* FloraFang */ = {
+			isa = PBXGroup;
+			children = (
+				5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */,
+				5EA57B4E3039F6E7008FEC56 /* Assessment.swift */,
+				5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */,
+				5EA57B503039F6E7008FEC56 /* CameraPreview.swift */,
+				5EA57B513039F6E7008FEC56 /* CameraScreen.swift */,
+				5EA57B523039F6E7008FEC56 /* CameraService.swift */,
+				5EA57B533039F6E7008FEC56 /* Catalog.swift */,
+				5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */,
+				5EA57B553039F6E7008FEC56 /* Contents.json */,
+				5EA57B563039F6E7008FEC56 /* ContentView.swift */,
+				5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */,
+				5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */,
+				5EA57B593039F6E7008FEC56 /* ExposureReport.swift */,
+				5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */,
+				5EA57B5B3039F6E7008FEC56 /* FieldLogScreen.swift */,
+				5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */,
+				5EA57B5D3039F6E7008FEC56 /* IdentificationCascade.swift */,
+				5EA57B5E3039F6E7008FEC56 /* ImageCropping.swift */,
+				5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */,
+				5EA57B603039F6E7008FEC56 /* PlantClasses.swift */,
+				5EA57B613039F6E7008FEC56 /* PlantClassifier.swift */,
+				5EA57B623039F6E7008FEC56 /* PoisonResources.swift */,
+				5EA57B633039F6E7008FEC56 /* QuadratApp.swift */,
+				5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */,
+				5EA57B653039F6E7008FEC56 /* ResultScreen.swift */,
+				5EA57B663039F6E7008FEC56 /* SETUP.md */,
+				5EA57B673039F6E7008FEC56 /* SpiderClasses.swift */,
+				5EA57B683039F6E7008FEC56 /* SpiderHazard.mlmodel */,
+				5EA57B693039F6E7008FEC56 /* TRAINING.md */,
+			);
+			path = FloraFang;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5E9248E1302142BF0001493F /* FloraFang */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E9248ED302142C00001493F /* Build configuration list for PBXNativeTarget "FloraFang" */;
+			buildPhases = (
+				5E9248DE302142BF0001493F /* Sources */,
+				5E9248DF302142BF0001493F /* Frameworks */,
+				5E9248E0302142BF0001493F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FloraFang;
+			productName = Quadrat;
+			productReference = 5E9248E2302142BF0001493F /* FloraFang.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5E9248DA302142BF0001493F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					5E9248E1302142BF0001493F = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = 5E9248DD302142BF0001493F /* Build configuration list for PBXProject "FloraFang" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5E9248D9302142BF0001493F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5E9248E3302142BF0001493F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5E9248E1302142BF0001493F /* FloraFang */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5E9248E0302142BF0001493F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EA57B6B3039F6E7008FEC56 /* Contents.json in Resources */,
+				5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */,
+				5EA57B6D3039F6E7008FEC56 /* AppIcon-1024.png in Resources */,
+				5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */,
+				5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5E9248DE302142BF0001493F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EA57B703039F6E7008FEC56 /* ContentView.swift in Sources */,
+				5EA57B713039F6E7008FEC56 /* FieldEntry.swift in Sources */,
+				5EA57B723039F6E7008FEC56 /* RemoteIdentifier.swift in Sources */,
+				5EA57B733039F6E7008FEC56 /* EmergencyScreen.swift in Sources */,
+				5EA57B743039F6E7008FEC56 /* ExposureReport.swift in Sources */,
+				5EA57B753039F6E7008FEC56 /* ImageCropping.swift in Sources */,
+				5EA57B763039F6E7008FEC56 /* LabelInspector.swift in Sources */,
+				5EA57B773039F6E7008FEC56 /* PoisonResources.swift in Sources */,
+				5EA57B783039F6E7008FEC56 /* FieldLogScreen.swift in Sources */,
+				5EA57B793039F6E7008FEC56 /* ConfidenceGate.swift in Sources */,
+				5EA57B7A3039F6E7008FEC56 /* Assessment.swift in Sources */,
+				5EA57B7B3039F6E7008FEC56 /* CameraPreview.swift in Sources */,
+				5EA57B7C3039F6E7008FEC56 /* IdentificationCascade.swift in Sources */,
+				5EA57B7D3039F6E7008FEC56 /* ResultScreen.swift in Sources */,
+				5EA57B7E3039F6E7008FEC56 /* PlantClassifier.swift in Sources */,
+				5EA57B7F3039F6E7008FEC56 /* SpiderClasses.swift in Sources */,
+				5EA57B803039F6E7008FEC56 /* SpiderHazard.mlmodel in Sources */,
+				5EA57B813039F6E7008FEC56 /* HazardClassifier.swift in Sources */,
+				5EA57B823039F6E7008FEC56 /* PlantClasses.swift in Sources */,
+				5EA57B833039F6E7008FEC56 /* QuadratApp.swift in Sources */,
+				5EA57B843039F6E7008FEC56 /* CameraScreen.swift in Sources */,
+				5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */,
+				5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */,
+				5EA57B873039F6E7008FEC56 /* Catalog.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5E9248EB302142C00001493F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5E9248EC302142C00001493F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5E9248EE302142C00001493F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Quadrat;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Quadrat uses the camera to identify plants and animals you point it at.Quadrat uses the camera to identify plants and animals you point it at.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5E9248EF302142C00001493F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Quadrat;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Quadrat uses the camera to identify plants and animals you point it at.Quadrat uses the camera to identify plants and animals you point it at.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5E9248DD302142BF0001493F /* Build configuration list for PBXProject "FloraFang" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E9248EB302142C00001493F /* Debug */,
+				5E9248EC302142C00001493F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5E9248ED302142C00001493F /* Build configuration list for PBXNativeTarget "FloraFang" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E9248EE302142C00001493F /* Debug */,
+				5E9248EF302142C00001493F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5E9248DA302142BF0001493F /* Project object */;
+}
