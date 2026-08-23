@@ -7,3 +7,4 @@ DerivedData/
 .swiftpm/
 *.mlmodel
 TrainingData/
+florafang-rename-backup/

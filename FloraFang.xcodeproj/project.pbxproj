@@ -7,12 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5EA57B6B3039F6E7008FEC56 /* Contents.json in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B553039F6E7008FEC56 /* Contents.json */; };
 		5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B693039F6E7008FEC56 /* TRAINING.md */; };
-		5EA57B6D3039F6E7008FEC56 /* AppIcon-1024.png in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */; };
 		5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B663039F6E7008FEC56 /* SETUP.md */; };
 		5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */; };
-		5EA57B703039F6E7008FEC56 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B563039F6E7008FEC56 /* ContentView.swift */; };
 		5EA57B713039F6E7008FEC56 /* FieldEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */; };
 		5EA57B723039F6E7008FEC56 /* RemoteIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */; };
 		5EA57B733039F6E7008FEC56 /* EmergencyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */; };
@@ -36,11 +33,14 @@
 		5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */; };
 		5EA57B873039F6E7008FEC56 /* Catalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B533039F6E7008FEC56 /* Catalog.swift */; };
 		5EA57B893039F988008FEC56 /* FloraFangApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B883039F988008FEC56 /* FloraFangApp.swift */; };
+		5EA57B8B303B5A4B008FEC56 /* PlantHazard.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8A303B5A4B008FEC56 /* PlantHazard.mlmodel */; };
+		5EA57B90303B6619008FEC56 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8D303B6619008FEC56 /* ExportService.swift */; };
+		5EA57B91303B6619008FEC56 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8E303B6619008FEC56 /* LocationService.swift */; };
+		5EA57B92303B6619008FEC56 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8F303B6619008FEC56 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		5E9248E2302142BF0001493F /* FloraFang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloraFang.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon-1024.png"; sourceTree = "<group>"; };
 		5EA57B4E3039F6E7008FEC56 /* Assessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assessment.swift; sourceTree = "<group>"; };
 		5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5EA57B503039F6E7008FEC56 /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
@@ -48,8 +48,6 @@
 		5EA57B523039F6E7008FEC56 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		5EA57B533039F6E7008FEC56 /* Catalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalog.swift; sourceTree = "<group>"; };
 		5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfidenceGate.swift; sourceTree = "<group>"; };
-		5EA57B553039F6E7008FEC56 /* Contents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Contents.json; sourceTree = "<group>"; };
-		5EA57B563039F6E7008FEC56 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmergencyScreen.swift; sourceTree = "<group>"; };
 		5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailScreen.swift; sourceTree = "<group>"; };
 		5EA57B593039F6E7008FEC56 /* ExposureReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureReport.swift; sourceTree = "<group>"; };
@@ -69,6 +67,11 @@
 		5EA57B683039F6E7008FEC56 /* SpiderHazard.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = SpiderHazard.mlmodel; sourceTree = "<group>"; };
 		5EA57B693039F6E7008FEC56 /* TRAINING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TRAINING.md; sourceTree = "<group>"; };
 		5EA57B883039F988008FEC56 /* FloraFangApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloraFangApp.swift; sourceTree = "<group>"; };
+		5EA57B8A303B5A4B008FEC56 /* PlantHazard.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = PlantHazard.mlmodel; sourceTree = "<group>"; };
+		5EA57B8C303B6580008FEC56 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5EA57B8D303B6619008FEC56 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
+		5EA57B8E303B6619008FEC56 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		5EA57B8F303B6619008FEC56 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,7 +104,7 @@
 		5EA57B6A3039F6E7008FEC56 /* FloraFang */ = {
 			isa = PBXGroup;
 			children = (
-				5EA57B4D3039F6E7008FEC56 /* AppIcon-1024.png */,
+				5EA57B8C303B6580008FEC56 /* Info.plist */,
 				5EA57B4E3039F6E7008FEC56 /* Assessment.swift */,
 				5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */,
 				5EA57B503039F6E7008FEC56 /* CameraPreview.swift */,
@@ -109,11 +112,12 @@
 				5EA57B523039F6E7008FEC56 /* CameraService.swift */,
 				5EA57B533039F6E7008FEC56 /* Catalog.swift */,
 				5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */,
-				5EA57B553039F6E7008FEC56 /* Contents.json */,
-				5EA57B563039F6E7008FEC56 /* ContentView.swift */,
 				5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */,
 				5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */,
 				5EA57B593039F6E7008FEC56 /* ExposureReport.swift */,
+				5EA57B8D303B6619008FEC56 /* ExportService.swift */,
+				5EA57B8E303B6619008FEC56 /* LocationService.swift */,
+				5EA57B8F303B6619008FEC56 /* OnboardingView.swift */,
 				5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */,
 				5EA57B5B3039F6E7008FEC56 /* FieldLogScreen.swift */,
 				5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */,
@@ -122,6 +126,7 @@
 				5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */,
 				5EA57B603039F6E7008FEC56 /* PlantClasses.swift */,
 				5EA57B613039F6E7008FEC56 /* PlantClassifier.swift */,
+				5EA57B8A303B5A4B008FEC56 /* PlantHazard.mlmodel */,
 				5EA57B623039F6E7008FEC56 /* PoisonResources.swift */,
 				5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */,
 				5EA57B883039F988008FEC56 /* FloraFangApp.swift */,
@@ -193,9 +198,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5EA57B6B3039F6E7008FEC56 /* Contents.json in Resources */,
 				5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */,
-				5EA57B6D3039F6E7008FEC56 /* AppIcon-1024.png in Resources */,
 				5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */,
 				5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */,
 			);
@@ -208,7 +211,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5EA57B703039F6E7008FEC56 /* ContentView.swift in Sources */,
 				5EA57B713039F6E7008FEC56 /* FieldEntry.swift in Sources */,
 				5EA57B723039F6E7008FEC56 /* RemoteIdentifier.swift in Sources */,
 				5EA57B733039F6E7008FEC56 /* EmergencyScreen.swift in Sources */,
@@ -228,9 +230,13 @@
 				5EA57B813039F6E7008FEC56 /* HazardClassifier.swift in Sources */,
 				5EA57B823039F6E7008FEC56 /* PlantClasses.swift in Sources */,
 				5EA57B843039F6E7008FEC56 /* CameraScreen.swift in Sources */,
+				5EA57B90303B6619008FEC56 /* ExportService.swift in Sources */,
+				5EA57B91303B6619008FEC56 /* LocationService.swift in Sources */,
+				5EA57B92303B6619008FEC56 /* OnboardingView.swift in Sources */,
 				5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */,
 				5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */,
 				5EA57B893039F988008FEC56 /* FloraFangApp.swift in Sources */,
+				5EA57B8B303B5A4B008FEC56 /* PlantHazard.mlmodel in Sources */,
 				5EA57B873039F6E7008FEC56 /* Catalog.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -369,13 +375,15 @@
 				DEVELOPMENT_TEAM = UV9NBSUZA6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Quadrat;
+				INFOPLIST_FILE = FloraFang/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FloraFang;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_NSCameraUsageDescription = "FloraFang uses the camera to identify plants and animals you point it at.Quadrat uses the camera to identify plants and animals you point it at.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -394,7 +402,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -408,13 +416,15 @@
 				DEVELOPMENT_TEAM = UV9NBSUZA6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = Quadrat;
+				INFOPLIST_FILE = FloraFang/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FloraFang;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_NSCameraUsageDescription = "FloraFang uses the camera to identify plants and animals you point it at.Quadrat uses the camera to identify plants and animals you point it at.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -433,7 +443,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};

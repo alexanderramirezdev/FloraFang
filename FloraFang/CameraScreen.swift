@@ -12,9 +12,11 @@ struct CameraScreen: View {
 
     @State private var camera = CameraService()
     @State private var cascade = IdentificationCascade()
+    @State private var location = LocationService()
 
     @State private var isWorking = false
     @State private var assessment: Assessment?
+    @State private var savedEntry: FieldEntry?
     @State private var capturedImage: UIImage?
     @State private var trace: [String] = []
     @State private var errorMessage: String?
@@ -72,11 +74,19 @@ struct CameraScreen: View {
                 assessment: result,
                 image: capturedImage,
                 trace: trace,
-                onSave: { note in
-                    save(result, note: note)
+                savedEntry: savedEntry,
+                onDelete: {
+                    if let entry = savedEntry {
+                        modelContext.delete(entry)
+                        try? modelContext.save()
+                    }
+                    savedEntry = nil
                     assessment = nil
                 },
-                onDiscard: { assessment = nil }
+                onDismiss: {
+                    savedEntry = nil
+                    assessment = nil
+                }
             )
         }
         .sheet(isPresented: $showInspector) {
@@ -143,11 +153,14 @@ struct CameraScreen: View {
                 .font(.system(size: 14, weight: .bold, design: .serif))
                 .tracking(4)
                 .foregroundStyle(Palette.parchment)
-            Text("a closer look at what's around you")
+            Text("know what bites and what is toxic")
                 .font(.system(size: 11, design: .serif))
                 .italic()
-                .foregroundStyle(Palette.lichen)
+                .foregroundStyle(Palette.parchment.opacity(0.7))
         }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 8)
+        .background(.black.opacity(0.35), in: Capsule())
         .allowsHitTesting(false)
     }
 
@@ -172,16 +185,29 @@ struct CameraScreen: View {
         .frame(width: squareSide, height: squareSide)
         .allowsHitTesting(false)
         .overlay(alignment: .bottom) {
-            VStack(spacing: 2) {
+            // Anchored to the frame but allowed to exceed its width. The hint
+            // is longer than 260pt, and wrapped text defaults to leading
+            // alignment, which reads as badly centered rather than wrapped.
+            //
+            // The scrim matters more than it looks. Light text over a live
+            // camera feed is legible against a dark wall and invisible
+            // against a bright one, and the app cannot control what someone
+            // points it at.
+            VStack(spacing: 3) {
                 Text("zoom until the subject fills the square")
-                    .font(.system(size: 11, design: .serif))
+                    .font(.system(size: 11.5, design: .serif))
                     .italic()
-                    .foregroundStyle(Palette.lichen)
+                    .foregroundStyle(Palette.parchment)
                 Text("tap to focus · long-press shutter for raw labels")
-                    .font(.system(size: 9, design: .monospaced))
-                    .foregroundStyle(Palette.lichen.opacity(0.5))
+                    .font(.system(size: 9.5, design: .monospaced))
+                    .foregroundStyle(Palette.parchment.opacity(0.72))
             }
-            .offset(y: 34)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 8))
+            .offset(y: 46)
             .allowsHitTesting(false)
         }
     }
@@ -277,21 +303,26 @@ struct CameraScreen: View {
     /// background and describes the wall instead of the spider on it.
     private func cropToFloraFang(_ image: UIImage) -> UIImage {
         guard previewSize != .zero else { return image }
-        return image.croppedToFloraFang(squareSide: squareSide, previewSize: previewSize)
+        return image.croppedToFrame(squareSide: squareSide, previewSize: previewSize)
     }
 
     private func capture() {
         isWorking = true
+        location.refresh()
         Task {
             defer { isWorking = false }
             do {
                 let full = try await camera.capturePhoto()
                 let cropped = cropToFloraFang(full)
-                // Store the crop, not the full frame — the log should show what
-                // was actually classified, which makes bad results diagnosable.
                 capturedImage = cropped
                 let result = try await cascade.assess(cropped)
                 trace = cascade.lastTrace
+                // Saved immediately rather than on a button tap. The scan is
+                // the effortful step and the save was the valuable one, which
+                // meant the common failure was doing the work and losing it.
+                // Deleting an unwanted entry is one swipe; recovering a scan
+                // you forgot to save is impossible.
+                savedEntry = save(result)
                 assessment = result
             } catch {
                 errorMessage = error.localizedDescription
@@ -317,18 +348,27 @@ struct CameraScreen: View {
         }
     }
 
-    private func save(_ result: Assessment, note: String) {
+    @discardableResult
+    private func save(_ result: Assessment) -> FieldEntry? {
         let entry = FieldEntry(
             assessment: result,
             imageData: capturedImage?.jpegData(compressionQuality: 0.8),
-            note: note
+            note: ""
         )
+
+        if let coord = location.coordinate {
+            entry.latitude = coord.latitude
+            entry.longitude = coord.longitude
+        }
+
         modelContext.insert(entry)
 
         do {
             try modelContext.save()
+            return entry
         } catch {
             errorMessage = "Couldn't save to the field log: \(error.localizedDescription)"
+            return nil
         }
     }
 }

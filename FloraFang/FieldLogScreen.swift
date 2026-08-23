@@ -9,10 +9,13 @@ import SwiftData
 struct FieldLogScreen: View {
     @Environment(\.modelContext) private var modelContext
 
-    // @Query is SwiftData's live-updating fetch. The view re-renders on its own
-    // when rows change — no manual refresh call needed.
     @Query(sort: \FieldEntry.capturedAt, order: .reverse)
     private var entries: [FieldEntry]
+
+    @State private var location = LocationService()
+    @State private var exportURL: URL?
+    @State private var exportError: String?
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -40,6 +43,41 @@ struct FieldLogScreen: View {
             }
             .navigationTitle("Field Log")
             .toolbarBackground(Palette.bark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button {
+                            exportLog()
+                        } label: {
+                            Label("Export field log", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(entries.isEmpty)
+
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Label("Settings", systemImage: "gearshape")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundStyle(Palette.ochre)
+                    }
+                }
+            }
+            .sheet(item: Binding(
+                get: { exportURL.map { ShareItem(url: $0) } },
+                set: { if $0 == nil { exportURL = nil } }
+            )) { item in
+                ShareSheet(items: [item.url])
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsSheet(location: location)
+            }
+            .alert("Export failed", isPresented: .constant(exportError != nil)) {
+                Button("OK") { exportError = nil }
+            } message: {
+                Text(exportError ?? "")
+            }
         }
     }
 
@@ -51,7 +89,7 @@ struct FieldLogScreen: View {
             Text("Nothing logged yet")
                 .font(.system(size: 15, weight: .semibold, design: .serif))
                 .foregroundStyle(Palette.parchment)
-            Text("Scan something and it'll show up here.")
+            Text("Scans save here automatically.")
                 .font(.system(size: 12, design: .serif))
                 .italic()
                 .foregroundStyle(Palette.lichen)
@@ -108,6 +146,92 @@ struct FieldLogScreen: View {
     private func delete(at offsets: IndexSet) {
         for index in offsets {
             modelContext.delete(entries[index])
+        }
+        try? modelContext.save()
+    }
+
+    private func exportLog() {
+        do {
+            exportURL = try ExportService.exportFieldLog(entries)
+        } catch {
+            exportError = error.localizedDescription
+        }
+    }
+}
+
+private struct ShareItem: Identifiable {
+    let url: URL
+    var id: String { url.absoluteString }
+}
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+// MARK: - Settings
+
+struct SettingsSheet: View {
+    @Bindable var location: LocationService
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var locationOn = false
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Palette.bark.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 18) {
+                        Toggle(isOn: $locationOn) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Record location on scans")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Palette.parchment)
+                                Text("Off by default. Where you are narrows down what a thing can be, since range rules a lot of species out. Stored on your iPhone only and never sent anywhere.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Palette.lichen)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .tint(Palette.moss)
+                        .onChange(of: locationOn) { _, newValue in
+                            location.isEnabled = newValue
+                            if newValue { location.requestPermission() }
+                        }
+
+                        Divider().overlay(Palette.moss.opacity(0.4))
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("ABOUT")
+                                .font(.system(size: 10, weight: .semibold))
+                                .tracking(1.4)
+                                .foregroundStyle(Palette.lichen)
+                            Text("FloraFang runs entirely on your iPhone. No account, no server, no analytics. Exporting your field log creates a file on your device that goes nowhere unless you send it yourself.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Palette.parchment.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Palette.bark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(Palette.ochre)
+                }
+            }
+            .onAppear { locationOn = location.isEnabled }
         }
     }
 }

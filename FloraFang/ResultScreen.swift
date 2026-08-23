@@ -4,36 +4,43 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ResultScreen: View {
     let assessment: Assessment
     let image: UIImage?
     let trace: [String]
-    let onSave: (String) -> Void
-    let onDiscard: () -> Void
+    let savedEntry: FieldEntry?
+    let onDelete: () -> Void
+    let onDismiss: () -> Void
 
     @State private var note = ""
     @State private var showTrace = false
+    @State private var showExposure = false
 
     var body: some View {
         ZStack {
             Palette.bark.ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 14) {
                     hero
-                    VStack(alignment: .leading, spacing: 14) {
-                        headline
-                        hazardBox
-                        if !assessment.ruledOut.isEmpty { ruledOutBox }
-                        notes
-                        noteField
-                        buttons
-                        traceToggle
-                    }
-                    .padding(20)
+                    headline
+                    hazardBox
+                    if assessment.warrantsExposureFlow { exposureLink }
+                    if !assessment.ruledOut.isEmpty { ruledOutBox }
+                    notes
+                    noteField
+                    buttons
+                    traceToggle
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
+            .ignoresSafeArea(edges: .top)
+        }
+        .sheet(isPresented: $showExposure) {
+            EmergencyScreen(prefilledPlant: assessment.plantClass, prefilledImage: image)
         }
     }
 
@@ -49,16 +56,19 @@ struct ResultScreen: View {
                 }
             }
             .frame(height: 230)
+            .frame(maxWidth: .infinity)
             .clipped()
 
-            Button(action: onDiscard) {
+            Button(action: onDismiss) {
                 Image(systemName: "chevron.left")
                     .foregroundStyle(Palette.parchment)
                     .padding(9)
                     .background(.black.opacity(0.4), in: Circle())
             }
-            .padding(14)
+            .padding(.leading, 14)
+            .padding(.top, 54)
         }
+        .padding(.horizontal, -20)
     }
 
     // MARK: - Headline
@@ -81,9 +91,8 @@ struct ResultScreen: View {
                 .foregroundStyle(Palette.parchment)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Deliberately no confidence number on a refusal. A percentage next
-            // to "couldn't determine" reads as partial certainty, which is
-            // exactly the wrong takeaway.
+            // No confidence number on a refusal. A percentage next to "could
+            // not determine" reads as partial certainty.
             if !assessment.isRefusal {
                 Text("\(Int(assessment.confidence * 100))% confidence")
                     .font(.system(size: 11))
@@ -113,7 +122,33 @@ struct ResultScreen: View {
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(hazardTint.opacity(0.5), lineWidth: 1))
     }
 
-    /// The differentiator: state plainly what was excluded.
+    /// Only appears for plants that are dangerous if eaten. Surfacing the
+    /// exposure flow at the moment someone is looking at one of those is the
+    /// difference between the feature being findable and being decorative.
+    private var exposureLink: some View {
+        Button {
+            showExposure = true
+        } label: {
+            HStack(spacing: 9) {
+                Image(systemName: "cross.case.fill")
+                    .font(.system(size: 15))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Has someone eaten this?")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("Poison control, and what they will ask for")
+                        .font(.system(size: 11))
+                        .opacity(0.85)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 11))
+            }
+            .foregroundStyle(Palette.parchment)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.rust, in: RoundedRectangle(cornerRadius: 8))
+        }
+    }
+
     private var ruledOutBox: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("RULED OUT")
@@ -175,6 +210,7 @@ struct ResultScreen: View {
         }
     }
 
+    /// Writes straight through to the saved entry, since it already exists.
     private var noteField: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("YOUR NOTE")
@@ -187,13 +223,16 @@ struct ResultScreen: View {
                 .foregroundStyle(Palette.parchment)
                 .padding(9)
                 .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+                .onChange(of: note) { _, newValue in
+                    savedEntry?.note = newValue
+                }
         }
     }
 
     private var buttons: some View {
         VStack(spacing: 9) {
-            Button { onSave(note) } label: {
-                Text("ADD TO FIELD LOG")
+            Button(action: onDismiss) {
+                Text("DONE")
                     .font(.system(size: 12.5, weight: .semibold))
                     .tracking(1)
                     .frame(maxWidth: .infinity)
@@ -201,15 +240,22 @@ struct ResultScreen: View {
                     .background(Palette.moss, in: RoundedRectangle(cornerRadius: 8))
                     .foregroundStyle(Palette.parchment)
             }
-            Button("Discard", action: onDiscard)
-                .font(.system(size: 12))
-                .foregroundStyle(Palette.lichen)
+
+            // Saved already, so the escape hatch is delete rather than save.
+            HStack(spacing: 4) {
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 10))
+                Text("Saved to field log")
+                    .font(.system(size: 11))
+                Text("·")
+                Button("Delete", action: onDelete)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Palette.rust)
+            }
+            .foregroundStyle(Palette.lichen)
         }
         .padding(.top, 4)
     }
 
-    /// Developer affordance. Shows which tiers ran and what each said — this is
-    /// what you'll read constantly while calibrating the gate.
     private var traceToggle: some View {
         VStack(alignment: .leading, spacing: 5) {
             Button {

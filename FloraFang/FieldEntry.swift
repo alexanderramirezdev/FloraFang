@@ -36,6 +36,20 @@ final class FieldEntry {
     var nextStep: String = ""
     var ruledOut: [String] = []
 
+    // Tester feedback. This is what turns a field log into calibration data.
+    //
+    // A confidence score is uninterpretable on its own. Setting a threshold
+    // requires pairs of "the model said 0.72" and "the model was right or
+    // wrong," and only the person who was standing there can supply the
+    // second half. Without this, more testers means more unlabelled photos
+    // rather than a faster calibration.
+    var verdictRaw: String = ""
+
+    /// What it actually was, when the app got it wrong. Free text on purpose:
+    /// a picker would constrain people to the classes the model already
+    /// knows, and the useful corrections are often outside them.
+    var actualIdentity: String = ""
+
     /// The raw Vision label, kept so you can audit what the classifier actually said.
     var rawLabel: String
     var confidence: Double
@@ -90,6 +104,11 @@ final class FieldEntry {
 
     var wasRefusal: Bool { tierRaw == ResolutionTier.refusal.rawValue }
 
+    var verdict: Verdict? {
+        get { Verdict(rawValue: verdictRaw) }
+        set { verdictRaw = newValue?.rawValue ?? "" }
+    }
+
     /// Falls back to catalog content for rows saved before these fields existed.
     var displayGroup: String {
         group.isEmpty ? (category?.group ?? "—") : group
@@ -127,5 +146,34 @@ extension FieldEntry {
         self.fieldNotes = assessment.fieldNotes
         self.nextStep = assessment.nextStep
         self.ruledOut = assessment.ruledOut
+    }
+}
+
+/// Whether the app got it right, as judged by the person who was there.
+///
+/// "Not sure" is a deliberate option rather than a cop out. Forcing a binary
+/// would produce guesses, and a guessed label is worse than a missing one
+/// because it looks like data.
+nonisolated enum Verdict: String, CaseIterable, Identifiable {
+    case correct
+    case wrong
+    case unsure
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .correct: return "Got it right"
+        case .wrong:   return "Got it wrong"
+        case .unsure:  return "Not sure"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .correct: return "checkmark.circle.fill"
+        case .wrong:   return "xmark.circle.fill"
+        case .unsure:  return "questionmark.circle.fill"
+        }
     }
 }

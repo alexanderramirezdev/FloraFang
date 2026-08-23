@@ -21,6 +21,12 @@ import UIKit
 final class IdentificationCascade {
 
     private let classifier = HazardClassifier()
+    private let plantClassifier = PlantClassifier()
+
+    /// Coarse categories worth handing to the plant toxicity model.
+    /// Mushroom is included because a fungus photo misrouted here still
+    /// resolves to notKnownToxic, which is the correct answer anyway.
+    private static let plantCategories: Set<String> = ["plant", "flower", "mushroom"]
     private let gate = ConfidenceGate.calibrated
     private let remote: RemoteIdentifying
 
@@ -39,7 +45,18 @@ final class IdentificationCascade {
         let coarse = try await coarseCategory(image)
         lastTrace.append("tier1: \(coarse.rawLabel) @ \(pct(coarse.confidence))")
 
-        // Anything that isn't a spider is fully answered by the catalog —
+        // Plants get their own Tier 2. Categories that can carry a toxicity
+        // answer route to the plant model; everything else is fully answered
+        // by the catalog.
+        if Self.plantCategories.contains(coarse.entry.id) {
+            if let plantAssessment = try await plantTier(image, coarse: coarse) {
+                return plantAssessment
+            }
+            // Plant model absent or unsure. Fall through to the catalog, which
+            // still gives honest category level guidance.
+        }
+
+        // Anything that isn't a spider is fully answered by the catalog,
         // unless we're not confident enough to make a claim at all.
         guard coarse.entry.id == "spider" else {
             if coarse.isLowConfidence {
@@ -172,6 +189,56 @@ final class IdentificationCascade {
 
     /// Below this, we don't present the category as a finding.
     private let lowConfidenceFloor: Double = 0.30
+
+    // MARK: - Plant tier
+
+    /// Returns nil when the plant model is absent or produced nothing useful,
+    /// so the caller can fall back to catalog level guidance.
+    private func plantTier(_ image: UIImage, coarse: Coarse) async throws -> Assessment? {
+        guard await plantClassifier.isAvailable else {
+            lastTrace.append("tier2 plant: no model in bundle, skipped")
+            return nil
+        }
+
+        guard let prediction = try await plantClassifier.classify(image) else {
+            lastTrace.append("tier2 plant: no usable prediction")
+            return nil
+        }
+
+        lastTrace.append("tier2 plant: \(prediction.rawLabel) @ \(pct(prediction.confidence))")
+
+        let pc = prediction.plantClass
+
+        // A notKnownToxic result is NOT a clean bill of health, and the app
+        // must not present it as one. Hand it back as nil so the catalog's
+        // ordinary plant guidance shows instead, which already says appearance
+        // alone does not establish toxicity. Claiming "we checked and it is
+        // fine" would be the single worst thing this feature could say.
+        guard pc != .notKnownToxic else {
+            lastTrace.append("tier2 plant: no toxic match, deferring to catalog")
+            return nil
+        }
+
+        var notes = pc.fieldNotes
+        if let steps = pc.contactSteps {
+            notes = steps + notes
+        }
+
+        return Assessment(
+            headline: pc.displayName,
+            group: pc.scientificName.isEmpty ? "Plant" : "Plant, \(pc.scientificName)",
+            hazard: pc.hazard,
+            hazardNote: pc.hazardNote,
+            confidence: prediction.confidence,
+            tier: .hazard,
+            ruledOut: [],
+            fieldNotes: notes,
+            nextStep: pc.nextStep,
+            rawLabel: prediction.rawLabel,
+            categoryKey: coarse.entry.id,
+            plantClass: pc
+        )
+    }
 
     // MARK: - Debug
 

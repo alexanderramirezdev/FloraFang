@@ -54,6 +54,16 @@ struct Assessment {
     /// Catalog key for persistence.
     let categoryKey: String
 
+    /// Set when the plant model produced a named toxic match. Lets the result
+    /// screen offer the exposure flow for things that are dangerous if eaten,
+    /// and prefill the suspected plant when it opens.
+    var plantClass: PlantClass? = nil
+
+    /// True when this is something an animal or child could be poisoned by.
+    var warrantsExposureFlow: Bool {
+        plantClass?.isSevereIfEaten ?? false
+    }
+
     /// True when we stopped short of an identification on purpose.
     var isRefusal: Bool { tier == .refusal }
 }

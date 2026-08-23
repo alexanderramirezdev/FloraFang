@@ -29,10 +29,15 @@ struct EntryDetailScreen: View {
                     if !entry.ruledOut.isEmpty { ruledOutBox }
                     notes
                     noteEditor
+                    verdictSection
                     metadata
                     deleteButton
                 }
+                // Extra bottom inset so the delete button clears the tab bar.
+                // Without it the button rendered underneath and read as a
+                // duplicate of itself.
                 .padding(20)
+                .padding(.bottom, 44)
             }
         }
         .navigationTitle("")
@@ -194,6 +199,72 @@ struct EntryDetailScreen: View {
                 .foregroundStyle(Palette.parchment)
                 .padding(9)
                 .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+        }
+    }
+
+    /// The most valuable thing a tester can do, so it sits above the fold of
+    /// the metadata rather than buried at the bottom.
+    private var verdictSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("WAS THIS RIGHT?")
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(1.2)
+                .foregroundStyle(Palette.lichen)
+
+            Text("Only you know what it actually was. Marking this is what lets the app learn where it is overconfident.")
+                .font(.system(size: 11))
+                .foregroundStyle(Palette.lichen.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                ForEach(Verdict.allCases) { option in
+                    Button {
+                        entry.verdict = (entry.verdict == option) ? nil : option
+                    } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: option.symbol)
+                                .font(.system(size: 16))
+                            Text(option.label)
+                                .font(.system(size: 10))
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(
+                            (entry.verdict == option ? verdictTint(option) : Palette.moss.opacity(0.15)),
+                            in: RoundedRectangle(cornerRadius: 8)
+                        )
+                        .foregroundStyle(
+                            entry.verdict == option ? Palette.parchment : Palette.lichen
+                        )
+                    }
+                }
+            }
+
+            if entry.verdict == .wrong {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("What was it actually?")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Palette.lichen)
+                    TextField("wolf spider, oleander, a rock…", text: $entry.actualIdentity)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Palette.parchment)
+                        .padding(9)
+                        .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+                    Text("A guess is fine. If you had it identified by someone, say so.")
+                        .font(.system(size: 10))
+                        .foregroundStyle(Palette.lichen.opacity(0.7))
+                }
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private func verdictTint(_ v: Verdict) -> Color {
+        switch v {
+        case .correct: return Palette.moss
+        case .wrong:   return Palette.rust
+        case .unsure:  return Palette.lichen.opacity(0.5)
         }
     }
 

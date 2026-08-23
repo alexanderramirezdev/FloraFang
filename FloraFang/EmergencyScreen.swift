@@ -24,6 +24,11 @@
 import SwiftUI
 
 struct EmergencyScreen: View {
+    /// Set when opened from a result screen that already identified something
+    /// dangerous, so the user does not rephotograph a plant the app just saw.
+    var prefilledPlant: PlantClass? = nil
+    var prefilledImage: UIImage? = nil
+
     @Environment(\.dismiss) private var dismiss
 
     @State private var report = ExposureReport()
@@ -32,6 +37,7 @@ struct EmergencyScreen: View {
     @State private var isClassifying = false
     @State private var classifierFailed = false
     @State private var showCopied = false
+    @State private var didPrefill = false
 
     private let classifier = PlantClassifier()
 
@@ -53,11 +59,23 @@ struct EmergencyScreen: View {
                         relaySection
                     }
                     .padding(20)
+                    .padding(.bottom, 44)
                 }
             }
             .navigationTitle("Exposure")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Palette.bark, for: .navigationBar)
+            .onAppear {
+                guard !didPrefill else { return }
+                didPrefill = true
+                if let plant = prefilledPlant {
+                    report.suspectedPlant = plant
+                    report.rawLabel = plant.trainingLabel
+                }
+                if let img = prefilledImage {
+                    image = img
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") { dismiss() }
@@ -371,7 +389,7 @@ struct EmergencyScreen: View {
 }
 
 /// Minimal capture wrapper so the emergency flow does not depend on the main
-/// camera screen's cascade, zoom, or square framing. Fewer moving parts in
+/// camera screen's cascade, zoom, or capture frame framing. Fewer moving parts in
 /// the path that matters most.
 struct EmergencyCaptureSheet: View {
     let onCapture: (UIImage) -> Void

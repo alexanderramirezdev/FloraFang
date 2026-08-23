@@ -12,14 +12,25 @@ struct FloraFangApp: App {
         WindowGroup {
             RootView()
         }
-        // SwiftData sets up the whole persistence stack from this one line.
-        // Think of it like registering a DbContext in Program.cs — everything
-        // downstream gets it injected via the environment.
         .modelContainer(for: FieldEntry.self)
     }
 }
 
 struct RootView: View {
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+
+    var body: some View {
+        Group {
+            if hasSeenOnboarding {
+                MainTabs()
+            } else {
+                OnboardingView { hasSeenOnboarding = true }
+            }
+        }
+    }
+}
+
+struct MainTabs: View {
     var body: some View {
         TabView {
             CameraScreen()
@@ -27,13 +38,19 @@ struct RootView: View {
 
             FieldLogScreen()
                 .tabItem { Label("Field Log", systemImage: "book.closed") }
+
+            // A tab rather than something tucked behind a menu. In an actual
+            // poisoning nobody hunts for a feature, and a permanent tab costs
+            // one slot to make it findable without thinking.
+            EmergencyScreen()
+                .tabItem { Label("Exposure", systemImage: "cross.case") }
         }
         .tint(Palette.ochre)
         .preferredColorScheme(.dark)
     }
 }
 
-/// Central place for the visual tokens so screens don't drift apart.
+/// Central place for the visual tokens so screens do not drift apart.
 enum Palette {
     static let bark      = Color(red: 0.086, green: 0.102, blue: 0.075) // #161A13
     static let moss      = Color(red: 0.247, green: 0.361, blue: 0.247) // #3F5C3F
