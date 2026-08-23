@@ -6,4 +6,22 @@ No permission is granted to copy, modify, merge, publish, distribute,
 sublicense, or sell copies of this software, in whole or in part,
 except with prior written permission from the copyright holder.
 
+This includes the trained Core ML models distributed with this
+repository, which are covered by the same terms.
+
 Reading the code, and learning from it, is welcome.
+
+
+TRAINING DATA
+
+The models were trained on observation photographs from iNaturalist,
+filtered to CC0 and CC BY licensed images only. Photographs licensed
+CC BY NC were deliberately excluded, since this software is
+distributed commercially.
+
+No photographs from that dataset are contained in, or redistributable
+from, this repository or the shipped application. Only the resulting
+model weights are.
+
+Thanks are owed to the iNaturalist community, whose observations made
+these models possible.
