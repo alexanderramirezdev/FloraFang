@@ -1,27 +1,38 @@
-Copyright (c) 2026 Ramirez Labs. All rights reserved.
+Copyright (c) 2026 Alexander Ramirez (Ramirez Labs). All rights reserved.
 
-This source code is published for reference and portfolio purposes.
+This source code is made publicly available for the purposes of reading,
+evaluation, education, and reference — for example, by prospective employers,
+collaborators, and other developers who wish to study how the application is
+built.
 
-No permission is granted to copy, modify, merge, publish, distribute,
-sublicense, or sell copies of this software, in whole or in part,
-except with prior written permission from the copyright holder.
+Permission is granted to view and clone this repository, and to compile and run
+the application locally for the sole purpose of evaluating this source code.
 
-This includes the trained Core ML models distributed with this
-repository, which are covered by the same terms.
+No other rights are granted. Without prior written permission from the copyright
+holder, you may not:
 
-Reading the code, and learning from it, is welcome.
+  1. Redistribute this source code or any substantial portion of it, whether
+     modified or unmodified;
+  2. Use this source code, in whole or in part, in any application, product, or
+     service, whether commercial or non-commercial;
+  3. Distribute or publish any application derived from or substantially based
+     on this source code, including to any application marketplace;
+  4. Use the names "FloraFang" or "Ramirez Labs", or any associated marks, logos,
+     or app icons, in connection with any derivative work or any other product
+     or service.
 
+The machine learning models, training data, application icons, and other visual
+assets included in this repository are likewise all rights reserved and are not
+licensed for reuse.
 
-TRAINING DATA
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-The models were trained on observation photographs from iNaturalist,
-filtered to CC0 and CC BY licensed images only. Photographs licensed
-CC BY NC were deliberately excluded, since this software is
-distributed commercially.
-
-No photographs from that dataset are contained in, or redistributable
-from, this repository or the shipped application. Only the resulting
-model weights are.
-
-Thanks are owed to the iNaturalist community, whose observations made
-these models possible.
+FloraFang identifies plants and spiders, including hazard information. It is an
+informational tool only and is not a substitute for professional identification
+or medical advice. Do not rely on it to determine whether a plant, spider, or
+other organism is safe to touch, consume, or approach.
