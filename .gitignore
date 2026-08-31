@@ -5,6 +5,5 @@ build/
 DerivedData/
 *.moved-aside
 .swiftpm/
-*.mlmodel
 TrainingData/
 florafang-rename-backup/
