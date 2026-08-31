@@ -1,6 +1,6 @@
 //
 //  IdentificationCascade.swift
-//  FloraFang
+//  Quadrat
 //
 //  Runs the tiers in order, stopping at the first one confident enough to
 //  answer. Tier 4 always answers, so this function never fails to produce
@@ -22,6 +22,7 @@ final class IdentificationCascade {
 
     private let classifier = HazardClassifier()
     private let plantClassifier = PlantClassifier()
+    private let featureExtractor = FeatureExtractor()
 
     /// Coarse categories worth handing to the plant toxicity model.
     /// Mushroom is included because a fungus photo misrouted here still
@@ -70,28 +71,53 @@ final class IdentificationCascade {
             )
         }
 
-        // ---- Tier 2: hazard model ---------------------------------------
+        // ---- Tier 2a: Core ML hazard model ------------------------------
+        var corePrediction: HazardPrediction?
+        var coreVerdict: ConfidenceGate.Verdict = .escalate
+
         if await classifier.isAvailable {
             if let prediction = try await classifier.classify(image) {
-                lastTrace.append("tier2: \(prediction.rawLabel) @ \(pct(prediction.confidence))")
-
-                let verdict = gate.evaluate(
+                corePrediction = prediction
+                lastTrace.append("tier2a: \(prediction.rawLabel) @ \(pct(prediction.confidence))")
+                coreVerdict = gate.evaluate(
                     top: (prediction.spiderClass, prediction.confidence),
                     runnerUp: prediction.runnerUpConfidence
                 )
-                lastTrace.append("gate: \(verdict)")
-
-                switch verdict {
-                case .accept:
-                    return assessment(from: prediction, asWarning: false)
-                case .acceptAsWarning:
-                    return assessment(from: prediction, asWarning: true)
-                case .escalate:
-                    break // fall through
-                }
+                lastTrace.append("gate: \(coreVerdict)")
             }
         } else {
-            lastTrace.append("tier2: no model in bundle, skipped")
+            lastTrace.append("tier2a: no model in bundle, skipped")
+        }
+
+        // ---- Tier 2b: visible markings ----------------------------------
+        //
+        // Runs alongside Core ML rather than after it, because the value is
+        // in the comparison. Two models that fail differently disagreeing is
+        // information; either one alone is just a guess with a number on it.
+        var extraction: ExtractionResult?
+
+        if await featureExtractor.isAvailable {
+            do {
+                extraction = try await featureExtractor.extract(from: image)
+                if let ex = extraction {
+                    let names = ex.report.visibleFeatures.map(\.rawValue).joined(separator: ", ")
+                    lastTrace.append("tier2b: features [\(names.isEmpty ? "none visible" : names)]")
+                    if let indicated = ex.verdict.indicatedClass {
+                        lastTrace.append("tier2b: rules indicate \(indicated.trainingLabel), \(ex.verdict.strength)")
+                    }
+                }
+            } catch {
+                lastTrace.append("tier2b: extraction failed, \(error.localizedDescription)")
+            }
+        } else {
+            lastTrace.append("tier2b: language model unavailable, skipped")
+        }
+
+        // ---- Combine ----------------------------------------------------
+        if let combined = combine(core: corePrediction,
+                                  coreVerdict: coreVerdict,
+                                  extraction: extraction) {
+            return combined
         }
 
         // ---- Tier 3: remote ---------------------------------------------
@@ -123,7 +149,7 @@ final class IdentificationCascade {
         guard let cgImage = image.cgImage else { throw IdentificationError.badImage }
 
         var request = ClassifyImageRequest()
-        // The image arriving here is ALREADY cropped to the capture square, so
+        // The image arriving here is ALREADY cropped to the quadrat square, so
         // don't crop again — that would throw away the framing the user chose.
         request.cropAndScaleAction = .scaleToFit
         let observations = try await request.perform(on: cgImage)
@@ -189,6 +215,115 @@ final class IdentificationCascade {
 
     /// Below this, we don't present the category as a finding.
     private let lowConfidenceFloor: Double = 0.30
+
+    // MARK: - Combining the two tier 2 signals
+
+    /// Decides what to report given a Core ML prediction, its gate verdict,
+    /// and whatever markings the language model claimed to see.
+    ///
+    /// THE RULE THAT MATTERS: features can escalate, never downgrade. If Core
+    /// ML says cellar spider and the markings show an hourglass, the answer
+    /// is widow. If Core ML says widow and no markings are visible, the
+    /// answer is still widow. Nothing here can turn a dangerous call into a
+    /// safe one, because a photo failing to show a marking is not evidence
+    /// the marking is absent.
+    ///
+    /// Returns nil when neither signal is strong enough, so the caller falls
+    /// through to the refusal.
+    private func combine(
+        core: HazardPrediction?,
+        coreVerdict: ConfidenceGate.Verdict,
+        extraction: ExtractionResult?
+    ) -> Assessment? {
+
+        let featureClass = extraction?.verdict.indicatedClass
+        let featureStrength = extraction?.verdict.strength ?? .none
+        let features = extraction?.report.visibleFeatures ?? []
+
+        // A diagnostic marking outranks everything. The ventral hourglass and
+        // the six eye arrangement are close to definitive, and a classifier
+        // trained on 79% widow recall should not be allowed to overrule one.
+        if featureStrength == .diagnostic,
+           let fc = featureClass,
+           fc.isMedicallySignificant {
+            lastTrace.append("combine: diagnostic marking, features lead")
+            var result = featureLedAssessment(fc, extraction: extraction, corroboratedBy: core)
+            if let core, core.spiderClass != fc {
+                result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()), but a marking associated with \(fc.displayName.lowercased()) is visible. Treating it as the more dangerous of the two."
+            }
+            return result
+        }
+
+        // Features escalate a benign Core ML call toward a dangerous group.
+        if let core, let fc = featureClass,
+           fc.isMedicallySignificant, !core.spiderClass.isMedicallySignificant {
+            lastTrace.append("combine: features escalate over benign Core ML call")
+            var result = featureLedAssessment(fc, extraction: extraction, corroboratedBy: core)
+            result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()). Markings consistent with \(fc.displayName.lowercased()) are also visible, so this is being treated as the more dangerous possibility."
+            return result
+        }
+
+        guard let core else {
+            // No Core ML result. Features alone are enough only when the
+            // marking is diagnostic, which was handled above.
+            return nil
+        }
+
+        // Both point the same way. This is the case where confidence is
+        // actually earned rather than asserted, so it gets its own tier label.
+        if let fc = featureClass, fc == core.spiderClass {
+            lastTrace.append("combine: agreement")
+            var result = assessment(from: core, asWarning: false)
+            result = withFeatures(result, features, tier: .corroborated)
+            return result
+        }
+
+        // No feature signal. Fall back to the gate's own verdict on Core ML.
+        switch coreVerdict {
+        case .accept:
+            return withFeatures(assessment(from: core, asWarning: false), features, tier: .hazard)
+        case .acceptAsWarning:
+            return withFeatures(assessment(from: core, asWarning: true), features, tier: .hazard)
+        case .escalate:
+            return nil
+        }
+    }
+
+    private func featureLedAssessment(
+        _ sc: SpiderClass,
+        extraction: ExtractionResult?,
+        corroboratedBy core: HazardPrediction?
+    ) -> Assessment {
+        let features = extraction?.report.visibleFeatures ?? []
+        let supporting = extraction?.verdict.supportingFeatures ?? []
+
+        var notes = supporting.map { "Visible: \($0.userFacingDescription.lowercased())." }
+        notes += sc.fieldNotes
+
+        var result = Assessment(
+            headline: sc.displayName,
+            group: sc.genus,
+            hazard: sc.hazard,
+            hazardNote: sc.hazardNote,
+            // Rule strength, not a model confidence. Deliberately not a
+            // number the language model produced.
+            confidence: extraction?.verdict.strength == .diagnostic ? 0.9 : 0.6,
+            tier: core != nil ? .corroborated : .features,
+            ruledOut: [],
+            fieldNotes: notes,
+            nextStep: sc.nextStep,
+            rawLabel: supporting.map(\.rawValue).joined(separator: "+"),
+            categoryKey: "spider"
+        )
+        result.observedFeatures = features
+        return result
+    }
+
+    private func withFeatures(_ base: Assessment, _ features: [DiagnosticFeature], tier: ResolutionTier) -> Assessment {
+        var copy = base
+        copy.observedFeatures = features
+        return copy
+    }
 
     // MARK: - Plant tier
 
@@ -327,7 +462,7 @@ final class IdentificationCascade {
             headline: "Spider — group not determined",
             group: "Arachnid",
             hazard: .caution,
-            hazardNote: "This is a spider, but FloraFang can't tell you which group with enough confidence to be useful. It is NOT ruling out a widow or recluse. Don't handle it.",
+            hazardNote: "This is a spider, but Quadrat can't tell you which group with enough confidence to be useful. It is NOT ruling out a widow or recluse. Don't handle it.",
             confidence: confidence,
             tier: .refusal,
             ruledOut: [],
