@@ -92,7 +92,7 @@ Identification runs through four orchestrated tiers:
 
 ## Build & Testing Setup
 
-1. Open `FloraFang.xcodeproj` in **Xcode 16+** (with iOS 27 SDK support).
+1. Open `FloraFang.xcodeproj` in **Xcode 27** (with iOS 27 SDK support).
 2. Set the run destination to your **physical iPhone** running iOS 27 beta.
 3. In **Signing & Capabilities**, select your development team.
 4. Press **Cmd + R** to run.
