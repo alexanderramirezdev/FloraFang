@@ -75,8 +75,8 @@ actor FeatureExtractor {
         }
     }
 
-    /// Segments the subject, then asks the model which features are visible.
-    func extract(from image: UIImage) async throws -> ExtractionResult? {
+    /// Segments the subject (if not already segmented), then asks the model which features are visible.
+    func extract(from image: UIImage, isAlreadySegmented: Bool = false) async throws -> ExtractionResult? {
         guard #available(iOS 27.0, *) else { return nil }
         guard await isAvailable else { return nil }
 
@@ -85,21 +85,22 @@ actor FeatureExtractor {
         // resizes internally anyway.
         let sized = try await processor.prepareForInference(image)
 
-        // Isolating the subject matters more here than for Core ML. A
-        // language model asked about a photo of a wall with a spider on it
-        // will describe the wall, and the stucco will end up in the plain
-        // description.
-        let isolated = (try? await segmenter.isolateSubject(from: sized)) ?? sized
+        // If the subject was already isolated upstream before being passed to the cascade,
+        // reuse it directly to avoid burning CPU/Neural Engine time on a redundant second pass.
+        let isolated: UIImage
+        if isAlreadySegmented {
+            isolated = sized
+        } else {
+            isolated = (try? await segmenter.isolateSubject(from: sized)) ?? sized
+        }
 
         guard let cgImage = isolated.cgImage else { throw IdentificationError.badImage }
 
         let report = try await requestFeatures(from: cgImage)
 
-        // Segmentation grabs whatever the strongest foreground object is,
-        // which on a photo of a leaf is the leaf. If the model says there is
-        // no animal, believe it and contribute nothing rather than feeding
-        // features from a plant into the spider rules.
-        guard report.animalVisible else { return nil }
+        // If the model identified diagnostic features, trust them even if animalVisible was hedged.
+        // If it reported no animal and found no features, return nil.
+        guard report.animalVisible || !report.visibleFeatures.isEmpty else { return nil }
 
         let verdict = FeatureRules.evaluate(report.visibleFeatures)
 

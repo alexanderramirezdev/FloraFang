@@ -1,149 +1,55 @@
-# FloraFang — build setup
+# FloraFang — Project Setup & Architecture Guide
 
-## Create the project
+## Environment Requirements
 
-1. Xcode → **New Project → iOS → App**
-2. Product Name: `FloraFang`
-3. Interface: **SwiftUI**, Language: **Swift**, Storage: **None**
-4. Minimum Deployment: **iOS 26.0**
-5. Delete the generated `ContentView.swift` and the generated `FloraFangApp.swift`
-
-## Add the files
-
-Drag these in individually (not as a folder or zip — zips create duplicate references):
-
-- `FloraFangApp.swift`
-- `FieldEntry.swift`
-- `Catalog.swift`
-- `IdentificationService.swift`
-- `CameraService.swift`
-- `CameraPreview.swift`
-- `CameraScreen.swift`
-- `ResultScreen.swift`
-- `FieldLogScreen.swift`
-
-Check **Copy items if needed** and confirm the FloraFang target is ticked.
-
-## Required Info.plist key
-
-Target → **Info** tab → add:
-
-| Key | Value |
-|---|---|
-| `NSCameraUsageDescription` | FloraFang uses the camera to identify plants and animals you point it at. |
-
-Without this the app hard-crashes the moment it touches the camera.
-
-## Must run on a real device
-
-The simulator has no camera. Build to your iPhone. Signing → select your personal team; a free Apple ID works for on-device testing.
+* **Xcode**: Version 16.0 or higher (with iOS 27 SDK support).
+* **Target OS**: iOS 27.0 beta.
+* **Testing Hardware**: Physical iPhone running iOS 27 beta (Apple Silicon Neural Engine required for on-device Foundation Models).
 
 ---
 
-## What this build actually does
+## Required Permissions (Info.plist)
 
-Apple's on-device classifier identifies **categories, not species.**
+FloraFang runs 100% on-device and requires three privacy keys configured in `Info.plist`:
 
-It will tell you "spider." It will not tell you "black widow."
-
-That's a real ceiling, not a bug in this code — the OS taxonomy is roughly a
-few thousand general labels, and no species-level model is bundled. So v1 is:
-
-**camera → category → local hazard + field guidance**
-
-which is honest and useful for the "should I be worried about this thing in my
-bedroom" case, and useless for the "what exact flower is this" case.
-
-### Finding the ceiling yourself
-
-`IdentificationService.debugLabels(_:)` returns the full ranked label list.
-Wire it to a temporary button and photograph 20–30 things around the house and
-yard. Write down what Vision emits. That tells you two things:
-
-1. Which `matchTerms` in `Catalog.swift` need to change to match reality
-2. Whether category-level ID is enough for the app you want
-
-Do this before writing another line of feature code. It's a 30-minute test that
-decides the whole architecture.
-
-### If category-level isn't enough
-
-Three paths, in order of effort:
-
-1. **External API** — Pl@ntNet (plants, free tier) or iNaturalist's computer
-   vision endpoint. Species-level, needs network, needs a key. Fastest to real
-   accuracy.
-2. **Bundled Core ML model** — train on iNaturalist data with Create ML, convert
-   with `coremltools`. Offline, but you're now maintaining a model and the
-   accuracy bar set by Seek and Merlin is high.
-3. **Hybrid** — Vision decides the coarse category offline, then routes to a
-   category-specific model or API only when the user asks for species detail.
-   Keeps the fast path offline and private, spends network only when it pays.
-
-Path 3 is where a real differentiator lives, given the competitive landscape.
-
-## Known rough edges
-
-- No location capture yet. `FieldEntry` has `latitude`/`longitude` fields
-  waiting; add CoreLocation when you want habitat context.
-- Photo orientation from `fileDataRepresentation()` is usually correct but
-  worth verifying in landscape.
-- The center-crop happens inside Vision, so it crops the *full frame*, not the
-  on-screen square. They're close but not identical — if results feel off, crop
-  the `UIImage` to the visible square before handing it to the classifier.
+| Key | Purpose |
+| :--- | :--- |
+| `NSCameraUsageDescription` | Required to capture photos of spiders and plants for on-device identification. |
+| `NSLocationWhenInUseUsageDescription` | Optional coarse location (~1 km) used solely to assist in narrowing geographic ranges. |
+| `NSPhotoLibraryAddUsageDescription` | Allows users to save exported field log photos to their photo library. |
 
 ---
 
-# UPDATE — cascade architecture added
+## Active Codebase Map
 
-## Revised file list
+### Core Identification & AI
+* `IdentificationCascade.swift`: Central coordinator for multi-tier evaluation, routing, and refusal generation.
+* `HazardClassifier.swift`: Core ML wrapper with **Mathematical Temperature Scaling ($T = 1.6$)** and **Shannon Entropy ($H$)** calculation.
+* `ConfidenceGate.swift`: Calibrated asymmetric confidence thresholds (`dangerousFloor = 0.22`, `benignFloor = 0.55`, `minimumMargin = 0.06`).
+* `FeatureExtractor.swift`: Apple Intelligence multimodal feature extractor using on-device `SystemLanguageModel`.
+* `SubjectSegmenter.swift`: Apple Vision foreground instance masking (`VNGenerateForegroundInstanceMaskRequest`).
+* `ImageProcessor.swift`: Downscales and pre-processes images for Apple Foundation Model inference.
+* `SpiderClasses.swift`: Label space for the 10 spider classes, clinical hazard notes, and diagnostic features.
+* `PlantClasses.swift` & `PlantClassifier.swift`: Tier 2 toxic plant identification.
+* `DiagnosticFeatures.swift`: Rule definitions for medical features (hourglass, violin, eye patterns).
+* `Catalog.swift`: Taxonomy match terms, hazard ratings, and coarse category definitions.
 
-Delete `IdentificationService.swift` if you already added it. It's been folded
-into the cascade.
+### Camera & UI
+* `CameraService.swift`: AVFoundation capture session manager with macro switching and tap-to-focus.
+* `CameraPreview.swift`: Metal/UIKit video preview layer bridge.
+* `CameraScreen.swift`: Viewfinder UI, quadrat capture brackets, zoom controls, and shutter.
+* `ImageCropping.swift`: Aspect-fill quadrat geometry calculation.
+* `ResultScreen.swift`: Identification card, decision traces, and save/discard actions.
+* `FieldLogScreen.swift`: SwiftData observation history with search and filtering.
+* `EntryDetailScreen.swift`: Full entry review, notes, and the **Field Naturalist AI** chat interface.
+* `EmergencyScreen.swift`: 1-tap poison hotline dials and exposure intake checklist.
+* `OnboardingView.swift`: 3-screen welcome flow explaining safety philosophy.
+* `ExportService.swift` & `ExportConfirmSheet.swift`: Offline CSV and ZIP export generator.
+* `LabelInspector.swift`: Developer debugging tool activated by long-pressing the camera shutter.
 
-Add all of these:
+---
 
-- `FloraFangApp.swift`
-- `FieldEntry.swift`
-- `Catalog.swift`
-- `Assessment.swift`          ← new
-- `SpiderClasses.swift`       ← new
-- `ConfidenceGate.swift`      ← new
-- `HazardClassifier.swift`    ← new
-- `RemoteIdentifier.swift`    ← new
-- `IdentificationCascade.swift` ← new
-- `CameraService.swift`
-- `CameraPreview.swift`
-- `CameraScreen.swift`        ← replaced
-- `ResultScreen.swift`        ← replaced
-- `FieldLogScreen.swift`
+## Debugging & Verification
 
-## App icon
-
-`AppIcon/AppIcon-1024.png` — drag into `Assets.xcassets` → `AppIcon`, into the
-1024pt single-size slot. Xcode 16+ derives the rest.
-
-`AppIcon/icon-preview.png` is just a legibility check at 180/120/87/60/40px,
-not for the project.
-
-## How the cascade behaves right now
-
-With no trained model in the bundle:
-
-1. **Tier 1** classifies the coarse category (spider / plant / bird / …)
-2. Non-spiders resolve here from the catalog — same as before
-3. Spiders skip Tier 2 (no model), skip Tier 3 (disabled), and land on
-4. **Tier 4** — an honest refusal that tells the user it's a spider, that it is
-   *not* ruling out a widow or recluse, and how to get a better answer
-
-That's a shippable v1. It makes no network calls and no claims it can't support.
-
-## The trace
-
-Every result screen has a collapsed **cascade trace** at the bottom showing
-which tiers ran and what each said. Leave it in during development — it's what
-you'll read while calibrating. Hide it behind a debug flag before shipping.
-
-## Next: training
-
-See `TRAINING.md`.
+* **Label Inspector**: Long-press the camera shutter in `CameraScreen` to view raw Vision labels without filtering.
+* **Cascade Decision Trace**: Scroll to the bottom of any saved entry in the Field Log to review the step-by-step trace (`tier1`, `tier2a`, `gate`, `tier2b`, `combine`).

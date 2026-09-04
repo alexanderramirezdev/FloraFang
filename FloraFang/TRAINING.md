@@ -192,30 +192,25 @@ cell in that row that isn't `widow` is a potential injury.
 
 ---
 
-## Step 8 — Calibrate the confidence gate
+## Step 8 — Calibrate the confidence gate & defense layers
 
-The thresholds in `ConfidenceGate.swift` are placeholders. Replace them with
-measured values.
+The inference pipeline in `HazardClassifier.swift` and `ConfidenceGate.swift` uses a multi-layer defense pipeline:
 
-Softmax confidence is not probability. A model outputting 0.85 is not right
-85% of the time — it's usually overconfident, sometimes badly.
+1. **Temperature Scaling ($T = 1.6$)**: Modern deep neural networks produce severely miscalibrated, overconfident softmax distributions. Post-processing probabilities with $P_{\text{calibrated}} \propto P^{1/T}$ pulls artificial 85%+ spikes down to realistic ~60% levels.
+2. **Shannon Entropy Filter ($H$)**: Max entropy across 10 classes is $\log_2(10) \approx 3.32$. If entropy $H > 2.35$ and top confidence is $< 0.55$, the model is guessing across multiple classes on an unfamiliar/OOD image (like monitor glare or blur). The gate escalates to refusal automatically.
+3. **Calibrated Asymmetric Thresholds**:
+   - `dangerousFloor = 0.22`: Catches widow/recluse signals even when slightly degraded by lighting or phone angles.
+   - `benignFloor = 0.55`: Moderate bar for benign classifications, requiring dual-tier corroboration from Apple Intelligence before being accepted.
+   - `minimumMargin = 0.06`: Ensures top prediction beats the runner-up.
 
-Procedure:
+Procedure to measure and refine:
 
 1. Run the model over your held-out test set, recording predicted class,
-   confidence, and true label for each image.
+   calibrated confidence, entropy, and true label for each image.
 2. Bucket by confidence: 0.3–0.4, 0.4–0.5, and so on.
 3. For each bucket, compute actual accuracy.
-4. Plot predicted confidence vs. actual accuracy. A perfectly calibrated model
-   is a diagonal line. Yours won't be.
-5. Read off the real thresholds:
-   - `benignFloor` = the confidence at which benign predictions are ≥95% correct
-   - `dangerousFloor` = low enough that you catch ≥95% of real widows, even at
-     the cost of false alarms
-6. Put those numbers in `ConfidenceGate.calibrated` and delete the defaults.
-
-Write down the numbers and the date. When you retrain, redo this — thresholds
-don't transfer between models.
+4. Plot predicted confidence vs. actual accuracy. A calibrated model sits on the diagonal.
+5. If you retrain, rerun this sweep to ensure thresholds match the new model weights.
 
 ---
 

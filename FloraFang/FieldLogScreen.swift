@@ -16,6 +16,7 @@ struct FieldLogScreen: View {
     @State private var exportURL: URL?
     @State private var exportError: String?
     @State private var showSettings = false
+    @State private var showExportConfirm = false
 
     var body: some View {
         NavigationStack {
@@ -47,7 +48,7 @@ struct FieldLogScreen: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button {
-                            exportLog()
+                            showExportConfirm = true
                         } label: {
                             Label("Export field log", systemImage: "square.and.arrow.up")
                         }
@@ -64,11 +65,28 @@ struct FieldLogScreen: View {
                     }
                 }
             }
+            .sheet(isPresented: $showExportConfirm) {
+                ExportConfirmSheet(summary: ExportSummary.of(entries)) {
+                    exportLog()
+                }
+            }
             .sheet(item: Binding(
                 get: { exportURL.map { ShareItem(url: $0) } },
                 set: { if $0 == nil { exportURL = nil } }
             )) { item in
-                ShareSheet(items: [item.url])
+                ShareSheet(items: [item.url]) {
+                    // Share sheet dismissed. Whether they sent it or not,
+                    // the archive has no reason to stay on disk.
+                    exportURL = nil
+                    ExportService.cleanUpPreviousExports()
+                }
+            }
+            .onDisappear {
+                // Backstop: leaving the tab with an archive still staged
+                // should not leave it sitting in temp indefinitely.
+                if exportURL == nil {
+                    ExportService.cleanUpPreviousExports()
+                }
             }
             .sheet(isPresented: $showSettings) {
                 SettingsSheet(location: location)
@@ -166,9 +184,17 @@ private struct ShareItem: Identifiable {
 
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
+    var onFinish: () -> Void = {}
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: items, applicationActivities: nil)
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        // Fires whether the user sent it, cancelled, or the sheet failed.
+        // Without this the archive lingers until iOS decides to clear temp,
+        // which can be a long time.
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            onFinish()
+        }
+        return controller
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
@@ -194,10 +220,15 @@ struct SettingsSheet: View {
                                 Text("Record location on scans")
                                     .font(.system(size: 14))
                                     .foregroundStyle(Palette.parchment)
-                                Text("Off by default. Where you are narrows down what a thing can be, since range rules a lot of species out. Stored on your iPhone only and never sent anywhere.")
+                                Text("Off by default. Where you are narrows down what a thing can be, since range rules a lot of species out.")
                                     .font(.system(size: 11))
                                     .foregroundStyle(Palette.lichen)
                                     .fixedSize(horizontal: false, vertical: true)
+                                Text("Stored on your iPhone only and never sent anywhere. Recorded as a city name plus coordinates rounded to about a kilometre, which is enough to rule species in or out and not enough to identify an address.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(Palette.ochre.opacity(0.9))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .padding(.top, 2)
                             }
                         }
                         .tint(Palette.moss)

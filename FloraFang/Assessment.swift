@@ -1,6 +1,6 @@
 //
 //  Assessment.swift
-//  FloraFang
+//  Quadrat
 //
 //  The single result type every tier of the cascade produces.
 //
@@ -15,10 +15,12 @@ import Foundation
 /// Which tier produced the answer. Surfaced in the UI so the user can tell
 /// an offline guess from a network call, and so you can debug the cascade.
 enum ResolutionTier: String {
-    case coarse   = "on-device category"
-    case hazard   = "on-device hazard model"
-    case remote   = "remote model"
-    case refusal  = "insufficient confidence"
+    case coarse       = "on-device category"
+    case hazard       = "on-device hazard model"
+    case corroborated = "model and visible markings agree"
+    case features     = "visible markings"
+    case remote       = "remote model"
+    case refusal      = "insufficient confidence"
 }
 
 struct Assessment {
@@ -63,6 +65,16 @@ struct Assessment {
     var warrantsExposureFlow: Bool {
         plantClass?.isSevereIfEaten ?? false
     }
+
+    /// Markings the language model reported seeing, when that tier ran.
+    /// Shown to the user for confirmation rather than presented as fact,
+    /// which is the whole point of extracting features instead of a species.
+    var observedFeatures: [DiagnosticFeature] = []
+
+    /// Set when the Core ML classifier and the visible markings point at
+    /// different groups. Surfaced rather than resolved silently: two models
+    /// disagreeing is information the user should have.
+    var disagreementNote: String? = nil
 
     /// True when we stopped short of an identification on purpose.
     var isRefusal: Bool { tier == .refusal }

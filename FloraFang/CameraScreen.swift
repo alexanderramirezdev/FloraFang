@@ -43,7 +43,7 @@ struct CameraScreen: View {
             case .ready:
                 preview
             case .denied:
-                message("FloraFang needs the camera to identify anything. Enable it in Settings → FloraFang.")
+                message("Quadrat needs the camera to identify anything. Enable it in Settings → Quadrat.")
             case .interrupted:
                 message("Camera paused. This usually clears on its own — if it doesn't, switch tabs and come back.")
             case .failed(let reason):
@@ -55,7 +55,7 @@ struct CameraScreen: View {
             VStack {
                 header
                 Spacer()
-                if isReady { captureFrame }
+                if isReady { quadratFrame }
                 Spacer()
                 if isReady { zoomControl }
                 shutter
@@ -164,7 +164,7 @@ struct CameraScreen: View {
         .allowsHitTesting(false)
     }
 
-    private var captureFrame: some View {
+    private var quadratFrame: some View {
         ZStack {
             Rectangle().stroke(Palette.moss, lineWidth: 1.5)
 
@@ -301,7 +301,7 @@ struct CameraScreen: View {
 
     /// Crops to what the user framed. Without this the classifier sees mostly
     /// background and describes the wall instead of the spider on it.
-    private func cropToFloraFang(_ image: UIImage) -> UIImage {
+    private func cropToFrame(_ image: UIImage) -> UIImage {
         guard previewSize != .zero else { return image }
         return image.croppedToFrame(squareSide: squareSide, previewSize: previewSize)
     }
@@ -313,15 +313,13 @@ struct CameraScreen: View {
             defer { isWorking = false }
             do {
                 let full = try await camera.capturePhoto()
-                let cropped = cropToFloraFang(full)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                let cropped = cropToFrame(full)
+
                 capturedImage = cropped
                 let result = try await cascade.assess(cropped)
                 trace = cascade.lastTrace
-                // Saved immediately rather than on a button tap. The scan is
-                // the effortful step and the save was the valuable one, which
-                // meant the common failure was doing the work and losing it.
-                // Deleting an unwanted entry is one swipe; recovering a scan
-                // you forgot to save is impossible.
+
                 savedEntry = save(result)
                 assessment = result
             } catch {
@@ -331,22 +329,22 @@ struct CameraScreen: View {
     }
 
     private func inspectLabels() {
-        guard isReady, !isWorking else { return }
-        isWorking = true
-        Task {
-            defer { isWorking = false }
-            do {
-                let full = try await camera.capturePhoto()
-                let cropped = cropToFloraFang(full)
-                inspectorImage = cropped
-                rawLabels = try await cascade.rawLabels(cropped)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                showInspector = true
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-        }
-    }
+           guard isReady, !isWorking else { return }
+           isWorking = true
+           Task {
+               defer { isWorking = false }
+               do {
+                   let full = try await camera.capturePhoto()
+                   let cropped = cropToFrame(full)
+                   inspectorImage = cropped
+                   rawLabels = try await cascade.rawLabels(cropped)
+                   UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                   showInspector = true
+               } catch {
+                   errorMessage = error.localizedDescription
+               }
+           }
+       }
 
     @discardableResult
     private func save(_ result: Assessment) -> FieldEntry? {
@@ -356,9 +354,14 @@ struct CameraScreen: View {
             note: ""
         )
 
-        if let coord = location.coordinate {
+        entry.traceLines = trace
+
+        if let coord = location.coarseCoordinate {
             entry.latitude = coord.latitude
             entry.longitude = coord.longitude
+        }
+        if let place = location.placeName {
+            entry.placeName = place
         }
 
         modelContext.insert(entry)
@@ -373,7 +376,7 @@ struct CameraScreen: View {
     }
 }
 
-// MARK: - FloraFang corner brackets
+// MARK: - Quadrat corner brackets
 
 enum CornerPosition: CaseIterable { case topLeft, topRight, bottomLeft, bottomRight }
 

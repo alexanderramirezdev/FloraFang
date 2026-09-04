@@ -21,7 +21,7 @@ enum Hazard: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .safe:    return "Generally safe"
+        case .safe:    return "Not medically significant"
         case .caution: return "Use caution"
         case .avoid:   return "Do not handle"
         case .unknown: return "Unidentified"

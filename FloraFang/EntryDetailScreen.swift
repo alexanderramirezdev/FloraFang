@@ -8,6 +8,9 @@
 
 import SwiftUI
 import SwiftData
+#if canImport(FoundationModels)
+import FoundationModels
+#endif
 
 struct EntryDetailScreen: View {
     @Bindable var entry: FieldEntry
@@ -16,6 +19,11 @@ struct EntryDetailScreen: View {
 
     @State private var showFullImage = false
     @State private var confirmDelete = false
+
+    // On-device Field Naturalist (Apple Foundation Models)
+    @State private var naturalistQuery = ""
+    @State private var naturalistAnswer = ""
+    @State private var isNaturalistThinking = false
 
     var body: some View {
         ZStack {
@@ -29,7 +37,9 @@ struct EntryDetailScreen: View {
                     if !entry.ruledOut.isEmpty { ruledOutBox }
                     notes
                     noteEditor
+                    naturalistChatSection
                     verdictSection
+                    traceSection
                     metadata
                     deleteButton
                 }
@@ -202,6 +212,160 @@ struct EntryDetailScreen: View {
         }
     }
 
+    // MARK: - On-Device Field Naturalist (Apple Foundation Models)
+
+    @ViewBuilder
+    private var naturalistChatSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.ochre)
+                Text("FIELD NATURALIST")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(Palette.lichen)
+                Spacer()
+                Text("On-device AI")
+                    .font(.system(size: 9.5))
+                    .foregroundStyle(Palette.lichen.opacity(0.6))
+            }
+
+            Text("Ask questions about this \(entry.displayTitle.lowercased()) — behavior, toxicity, pet safety, or safe handling.")
+                .font(.system(size: 11.5))
+                .foregroundStyle(Palette.parchment.opacity(0.75))
+
+            // Quick Prompt Chips
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    quickChip("🐾 Dangerous to pets?")
+                    quickChip("📦 Safe way to move it?")
+                    quickChip("🩺 What if bitten?")
+                    quickChip("🏠 Where do they nest?")
+                }
+            }
+
+            if !naturalistAnswer.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("ANSWER")
+                            .font(.system(size: 9.5, weight: .bold))
+                            .tracking(1.0)
+                            .foregroundStyle(Palette.moss)
+                        Spacer()
+                    }
+                    Text(naturalistAnswer)
+                        .font(.system(size: 12.5))
+                        .foregroundStyle(Palette.parchment)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+                .background(Palette.moss.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.moss.opacity(0.3), lineWidth: 1))
+            }
+
+            if isNaturalistThinking {
+                HStack(spacing: 8) {
+                    ProgressView().tint(Palette.ochre)
+                    Text("Consulting on-device model…")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(Palette.lichen)
+                }
+                .padding(.vertical, 4)
+            }
+
+            // Custom Question Input
+            HStack(spacing: 8) {
+                TextField("ask anything about this organism…", text: $naturalistQuery)
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(Palette.parchment)
+                    .padding(9)
+                    .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+                    .onSubmit {
+                        submitNaturalistQuery(naturalistQuery)
+                    }
+
+                Button {
+                    submitNaturalistQuery(naturalistQuery)
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty ? Palette.lichen.opacity(0.4) : Palette.ochre)
+                }
+                .disabled(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty || isNaturalistThinking)
+            }
+        }
+        .padding(12)
+        .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func quickChip(_ text: String) -> some View {
+        Button {
+            submitNaturalistQuery(text)
+        } label: {
+            Text(text)
+                .font(.system(size: 11.5, weight: .medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Palette.moss.opacity(0.25), in: Capsule())
+                .foregroundStyle(Palette.parchment)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func submitNaturalistQuery(_ query: String) {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty, !isNaturalistThinking else { return }
+        isNaturalistThinking = true
+        naturalistAnswer = ""
+
+        Task {
+            defer { isNaturalistThinking = false }
+            #if canImport(FoundationModels)
+            if #available(iOS 27.0, *) {
+                do {
+                    let instructions = """
+                    You are FloraFang's on-device naturalist and toxicity expert.
+                    The user is asking about an observation identified as: "\(entry.displayTitle)" (Category: \(entry.categoryKey), Hazard Level: \(entry.hazard.label)).
+                    Provide a concise, practical, calm, and accurate response in 1-2 short paragraphs. Focus directly on safety, animal behavior, pet risk, and clear advice.
+                    """
+                    let session = LanguageModelSession(
+                        model: SystemLanguageModel.default,
+                        instructions: Instructions(instructions)
+                    )
+
+                    let prompt: Prompt
+                    if let data = entry.imageData, let img = UIImage(data: data), let cg = img.cgImage {
+                        prompt = Prompt {
+                            q
+                            Attachment(cg)
+                        }
+                    } else {
+                        prompt = Prompt {
+                            q
+                        }
+                    }
+
+                    let response = try await session.respond(to: prompt)
+                    await MainActor.run {
+                        self.naturalistAnswer = response.content
+                        self.naturalistQuery = ""
+                    }
+                    return
+                } catch {
+                    await MainActor.run {
+                        self.naturalistAnswer = "On-device query unavailable: \(error.localizedDescription)"
+                    }
+                    return
+                }
+            }
+            #endif
+            await MainActor.run {
+                self.naturalistAnswer = "Apple Intelligence Foundation Models require an iOS 27 compatible device."
+            }
+        }
+    }
+
     /// The most valuable thing a tester can do, so it sits above the fold of
     /// the metadata rather than buried at the bottom.
     private var verdictSection: some View {
@@ -265,6 +429,45 @@ struct EntryDetailScreen: View {
         case .correct: return Palette.moss
         case .wrong:   return Palette.rust
         case .unsure:  return Palette.lichen.opacity(0.5)
+        }
+    }
+
+    /// Collapsed by default. This is a developer and tester affordance, not
+    /// something a normal user needs, but it is the only explanation of why
+    /// a scan came out the way it did and it has to survive the result screen.
+    @State private var showTrace = false
+
+    @ViewBuilder
+    private var traceSection: some View {
+        if !entry.traceLines.isEmpty {
+            VStack(alignment: .leading, spacing: 5) {
+                Button {
+                    withAnimation { showTrace.toggle() }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: showTrace ? "chevron.down" : "chevron.right")
+                            .font(.system(size: 9))
+                        Text("cascade trace")
+                            .font(.system(size: 10, design: .monospaced))
+                    }
+                    .foregroundStyle(Palette.lichen.opacity(0.7))
+                }
+
+                if showTrace {
+                    VStack(alignment: .leading, spacing: 3) {
+                        ForEach(entry.traceLines, id: \.self) { line in
+                            Text(line)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundStyle(Palette.lichen.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 6))
+                }
+            }
+            .padding(.top, 4)
         }
     }
 

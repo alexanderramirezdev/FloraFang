@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5E1764163043EEF000332D86 /* SubjectSegmenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764153043EEF000332D86 /* SubjectSegmenter.swift */; };
+		5E1764173043EEF000332D86 /* FeatureExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764133043EEF000332D86 /* FeatureExtractor.swift */; };
+		5E1764183043EEF000332D86 /* DiagnosticFeatures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764123043EEF000332D86 /* DiagnosticFeatures.swift */; };
+		5E1764193043EEF000332D86 /* ImageProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764143043EEF000332D86 /* ImageProcessor.swift */; };
 		5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B693039F6E7008FEC56 /* TRAINING.md */; };
 		5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B663039F6E7008FEC56 /* SETUP.md */; };
 		5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */; };
@@ -37,9 +41,14 @@
 		5EA57B90303B6619008FEC56 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8D303B6619008FEC56 /* ExportService.swift */; };
 		5EA57B91303B6619008FEC56 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8E303B6619008FEC56 /* LocationService.swift */; };
 		5EA57B92303B6619008FEC56 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57B8F303B6619008FEC56 /* OnboardingView.swift */; };
+		5EA57CCC303E8EB3008FEC56 /* ExportConfirmSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57CCB303E8EB3008FEC56 /* ExportConfirmSheet.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5E1764123043EEF000332D86 /* DiagnosticFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticFeatures.swift; sourceTree = "<group>"; };
+		5E1764133043EEF000332D86 /* FeatureExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureExtractor.swift; sourceTree = "<group>"; };
+		5E1764143043EEF000332D86 /* ImageProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessor.swift; sourceTree = "<group>"; };
+		5E1764153043EEF000332D86 /* SubjectSegmenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubjectSegmenter.swift; sourceTree = "<group>"; };
 		5E9248E2302142BF0001493F /* FloraFang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloraFang.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EA57B4E3039F6E7008FEC56 /* Assessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assessment.swift; sourceTree = "<group>"; };
 		5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -72,6 +81,7 @@
 		5EA57B8D303B6619008FEC56 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		5EA57B8E303B6619008FEC56 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		5EA57B8F303B6619008FEC56 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		5EA57CCB303E8EB3008FEC56 /* ExportConfirmSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportConfirmSheet.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,21 +130,26 @@
 				5EA57B8F303B6619008FEC56 /* OnboardingView.swift */,
 				5EA57B5A3039F6E7008FEC56 /* FieldEntry.swift */,
 				5EA57B5B3039F6E7008FEC56 /* FieldLogScreen.swift */,
+				5EA57CCB303E8EB3008FEC56 /* ExportConfirmSheet.swift */,
 				5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */,
 				5EA57B5D3039F6E7008FEC56 /* IdentificationCascade.swift */,
 				5EA57B5E3039F6E7008FEC56 /* ImageCropping.swift */,
 				5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */,
 				5EA57B603039F6E7008FEC56 /* PlantClasses.swift */,
 				5EA57B613039F6E7008FEC56 /* PlantClassifier.swift */,
-				5EA57B8A303B5A4B008FEC56 /* PlantHazard.mlmodel */,
 				5EA57B623039F6E7008FEC56 /* PoisonResources.swift */,
 				5EA57B643039F6E7008FEC56 /* RemoteIdentifier.swift */,
 				5EA57B883039F988008FEC56 /* FloraFangApp.swift */,
 				5EA57B653039F6E7008FEC56 /* ResultScreen.swift */,
-				5EA57B663039F6E7008FEC56 /* SETUP.md */,
 				5EA57B673039F6E7008FEC56 /* SpiderClasses.swift */,
+				5E1764123043EEF000332D86 /* DiagnosticFeatures.swift */,
+				5E1764133043EEF000332D86 /* FeatureExtractor.swift */,
+				5E1764143043EEF000332D86 /* ImageProcessor.swift */,
+				5E1764153043EEF000332D86 /* SubjectSegmenter.swift */,
+				5EA57B8A303B5A4B008FEC56 /* PlantHazard.mlmodel */,
 				5EA57B683039F6E7008FEC56 /* SpiderHazard.mlmodel */,
 				5EA57B693039F6E7008FEC56 /* TRAINING.md */,
+				5EA57B663039F6E7008FEC56 /* SETUP.md */,
 			);
 			path = FloraFang;
 			sourceTree = "<group>";
@@ -216,6 +231,10 @@
 				5EA57B733039F6E7008FEC56 /* EmergencyScreen.swift in Sources */,
 				5EA57B743039F6E7008FEC56 /* ExposureReport.swift in Sources */,
 				5EA57B753039F6E7008FEC56 /* ImageCropping.swift in Sources */,
+				5E1764163043EEF000332D86 /* SubjectSegmenter.swift in Sources */,
+				5E1764173043EEF000332D86 /* FeatureExtractor.swift in Sources */,
+				5E1764183043EEF000332D86 /* DiagnosticFeatures.swift in Sources */,
+				5E1764193043EEF000332D86 /* ImageProcessor.swift in Sources */,
 				5EA57B763039F6E7008FEC56 /* LabelInspector.swift in Sources */,
 				5EA57B773039F6E7008FEC56 /* PoisonResources.swift in Sources */,
 				5EA57B783039F6E7008FEC56 /* FieldLogScreen.swift in Sources */,
@@ -231,6 +250,7 @@
 				5EA57B823039F6E7008FEC56 /* PlantClasses.swift in Sources */,
 				5EA57B843039F6E7008FEC56 /* CameraScreen.swift in Sources */,
 				5EA57B90303B6619008FEC56 /* ExportService.swift in Sources */,
+				5EA57CCC303E8EB3008FEC56 /* ExportConfirmSheet.swift in Sources */,
 				5EA57B91303B6619008FEC56 /* LocationService.swift in Sources */,
 				5EA57B92303B6619008FEC56 /* OnboardingView.swift in Sources */,
 				5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */,
@@ -384,7 +404,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -425,7 +445,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
