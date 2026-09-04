@@ -21,19 +21,17 @@ import Foundation
 struct ConfidenceGate {
 
     /// Below this, a dangerous-class prediction is still worth surfacing as a
-    /// warning. Low on purpose: we would rather over-warn than miss.
-    var dangerousFloor: Double = 0.35
+    /// warning. With 10 classes, anything above 22% is more than 2x random chance.
+    var dangerousFloor: Double = 0.22
 
-    /// A benign class must clear this before we tell someone it's safe.
-    /// High on purpose: "this is harmless" is a strong claim.
-    var benignFloor: Double = 0.70
+    /// A benign class must clear this before we report an identification.
+    var benignFloor: Double = 0.55
 
     /// Below this we don't trust the prediction at all and escalate.
-    var escalationFloor: Double = 0.30
+    var escalationFloor: Double = 0.22
 
-    /// Margin the top prediction must beat the runner-up by. Two classes at
-    /// 0.45/0.44 is a coin flip dressed up as an answer.
-    var minimumMargin: Double = 0.10
+    /// Margin the top prediction must beat the runner-up by.
+    var minimumMargin: Double = 0.06
 
     enum Verdict {
         /// Confident enough to report as-is.
@@ -46,12 +44,19 @@ struct ConfidenceGate {
 
     func evaluate(
         top: (spiderClass: SpiderClass, confidence: Double),
-        runnerUp: Double?
+        runnerUp: Double?,
+        isHighEntropy: Bool = false
     ) -> Verdict {
+
+        // Layer 1 OOD filter: If the model exhibits high Shannon entropy
+        // (probability spread erratically across multiple classes), escalate rather than accepting.
+        if isHighEntropy {
+            return .escalate
+        }
 
         let margin = runnerUp.map { top.confidence - $0 } ?? 1.0
 
-        // Dangerous classes: surface even on weak evidence, but label it honestly.
+        // Dangerous classes (Widow, Recluse): surface even on moderate evidence
         if top.spiderClass.isMedicallySignificant {
             if top.confidence >= benignFloor && margin >= minimumMargin {
                 return .accept
@@ -62,13 +67,13 @@ struct ConfidenceGate {
             return .escalate
         }
 
-        // Benign classes: high bar, because we're telling someone not to worry.
+        // Benign classes:
         if top.confidence >= benignFloor && margin >= minimumMargin {
             return .accept
         }
 
-        if top.confidence < escalationFloor || margin < minimumMargin {
-            return .escalate
+        if top.confidence >= 0.38 && margin >= minimumMargin {
+            return .acceptAsWarning
         }
 
         return .escalate

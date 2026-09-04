@@ -43,6 +43,13 @@ final class FieldEntry {
     // wrong," and only the person who was standing there can supply the
     // second half. Without this, more testers means more unlabelled photos
     // rather than a faster calibration.
+    /// The cascade trace for this scan. Persisted rather than discarded,
+    /// because it is the only record of WHY a result came out the way it did,
+    /// and a refusal with no trace is undiagnosable after the fact. Also the
+    /// thing that makes a tester export useful: they cannot relay a trace
+    /// they never saw.
+    var traceLines: [String] = []
+
     var verdictRaw: String = ""
 
     /// What it actually was, when the app got it wrong. Free text on purpose:
@@ -62,8 +69,13 @@ final class FieldEntry {
     /// main store file automatically with this attribute.
     @Attribute(.externalStorage) var imageData: Data?
 
+    /// Rounded to about a kilometre, not a precise fix. See LocationService.
     var latitude: Double?
     var longitude: Double?
+
+    /// Reverse geocoded city and region, when location capture is on. This is
+    /// what gets shown and exported; the coordinates are for range checks.
+    var placeName: String = ""
     var note: String
 
     init(

@@ -2,7 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Privacy - Location Always and When In Use Usage DescriptionFloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.</key>
+	<key>NSCameraUsageDescription</key>
+	<string>FloraFang requires camera access to capture and identify spiders and plants in the field.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>FloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allows FloraFang to save exported field log photos to your photo library.</string>
 </dict>
 </plist>

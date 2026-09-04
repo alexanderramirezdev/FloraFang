@@ -19,6 +19,8 @@ struct HazardPrediction {
     let confidence: Double
     let runnerUpConfidence: Double?
     let rawLabel: String
+    let entropy: Double
+    let isHighEntropy: Bool
 }
 
 actor HazardClassifier {
@@ -66,30 +68,54 @@ actor HazardClassifier {
         guard let cgImage = image.cgImage else { throw IdentificationError.badImage }
 
         var request = CoreMLRequest(model: container)
-
-        // Match this to how you preprocessed training images. If you trained on
-        // tight crops, .centerCrop here; if on full frames, .scaleToFit.
-        // A mismatch between training and inference preprocessing is one of the
-        // most common causes of "works in Create ML, fails on device."
-        request.cropAndScaleAction = .centerCrop
+        request.cropAndScaleAction = .scaleToFit
 
         let observations = try await request.perform(on: cgImage)
 
         let classifications = observations.compactMap { $0 as? ClassificationObservation }
-        guard let top = classifications.first else { return nil }
+        guard !classifications.isEmpty else { return nil }
 
-        let runnerUp = classifications.dropFirst().first.map { Double($0.confidence) }
+        // Layer 2: Mathematical Temperature Scaling (T = 1.6)
+        // Flattens raw softmax overconfidence so probabilities reflect realistic reliability.
+        let temperature: Double = 1.6
+        var powered: [(identifier: String, prob: Double)] = []
+        var sum: Double = 0.0
 
-        guard let spiderClass = SpiderClass.from(label: top.identifier) else {
-            print("[FloraFang] Model emitted unmapped label: \(top.identifier)")
+        for obs in classifications {
+            let raw = max(Double(obs.confidence), 1e-6)
+            let scaled = pow(raw, 1.0 / temperature)
+            powered.append((obs.identifier, scaled))
+            sum += scaled
+        }
+
+        let calibrated = powered.map { ($0.identifier, $0.prob / max(sum, 1e-6)) }
+            .sorted { $0.1 > $1.1 }
+
+        guard let top = calibrated.first else { return nil }
+        let runnerUp = calibrated.dropFirst().first.map { $0.1 }
+
+        // Layer 1: Shannon Entropy Out-of-Distribution (OOD) Filter
+        // Max entropy for 10 classes is log2(10) ≈ 3.32.
+        // When an image is out-of-distribution (e.g. computer screen moiré, blurry noise),
+        // entropy spikes while top confidence is moderate.
+        var entropy: Double = 0.0
+        for (_, p) in calibrated where p > 1e-6 {
+            entropy -= p * (log(p) / log(2.0))
+        }
+        let isHighEntropy = entropy > 2.35 && top.1 < 0.55
+
+        guard let spiderClass = SpiderClass.from(label: top.0) else {
+            print("[FloraFang] Model emitted unmapped label: \(top.0)")
             return nil
         }
 
         return HazardPrediction(
             spiderClass: spiderClass,
-            confidence: Double(top.confidence),
+            confidence: top.1,
             runnerUpConfidence: runnerUp,
-            rawLabel: top.identifier
+            rawLabel: top.0,
+            entropy: entropy,
+            isHighEntropy: isHighEntropy
         )
     }
 }

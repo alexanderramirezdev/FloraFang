@@ -142,7 +142,7 @@ struct FeatureReport: Codable, Sendable {
 // MARK: - Deterministic rules
 
 /// What the features imply, decided in code rather than by a model.
-struct FeatureVerdict: Sendable {
+nonisolated struct FeatureVerdict: Sendable {
 
     /// The group the visible features point to, when they point anywhere.
     let indicatedClass: SpiderClass?
@@ -160,7 +160,7 @@ struct FeatureVerdict: Sendable {
     }
 }
 
-enum FeatureRules {
+nonisolated enum FeatureRules {
 
     /// Maps observed features to an indicated group.
     ///
@@ -186,11 +186,13 @@ enum FeatureRules {
             )
         }
 
-        if set.contains(.glossyBlackRoundAbdomen) && set.contains(.redOrOrangeSpotsOnBack) {
+        if set.contains(.redOrOrangeSpotsOnBack) {
+            var support: [DiagnosticFeature] = [.redOrOrangeSpotsOnBack]
+            if set.contains(.glossyBlackRoundAbdomen) { support.append(.glossyBlackRoundAbdomen) }
             return FeatureVerdict(
                 indicatedClass: .widow,
-                strength: .suggestive,
-                supportingFeatures: [.glossyBlackRoundAbdomen, .redOrOrangeSpotsOnBack]
+                strength: .diagnostic,
+                supportingFeatures: support
             )
         }
 

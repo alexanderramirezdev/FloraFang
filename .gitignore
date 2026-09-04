@@ -2,8 +2,12 @@
 xcuserdata/
 *.xcuserstate
 build/
+.build/
 DerivedData/
 *.moved-aside
 .swiftpm/
 TrainingData/
 florafang-rename-backup/
+*.backup
+*.aimodel/
+tokenizer/

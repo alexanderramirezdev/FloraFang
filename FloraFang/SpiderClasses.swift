@@ -94,17 +94,17 @@ nonisolated enum SpiderClass: String, CaseIterable {
         case .tarantula:
             return "Not medically dangerous to healthy adults, but urticating hairs cause serious irritation, especially to eyes. Don't handle."
         case .huntsman:
-            return "Large and fast, which is alarming, but not medically significant. Bites are rare and defensive."
+            return "Large and fast, which is alarming, but not medically significant. Bites are rare and defensive. Do not handle."
         case .wolfSpider:
-            return "A defensive bite is painful but not medically significant. Ground hunters, often found indoors by accident."
+            return "A defensive bite is painful but not medically significant. Ground hunters, often found indoors by accident. Leave undisturbed."
         case .orbWeaver:
-            return "Harmless. Builds the classic circular web and stays in it."
+            return "Not medically significant. Builds the classic circular web and stays in it. Relocate gently if needed."
         case .jumpingSpider:
-            return "Harmless and among the most visually capable spiders. Bites are essentially unheard of."
+            return "Not medically significant. Highly curious and visually capable spiders. Bites are essentially unheard of."
         case .cellarSpider:
-            return "Harmless. Long thin legs, tangled webs in corners and basements."
+            return "Not medically significant. Long thin legs, tangled webs in corners and basements. Fangs rarely penetrate human skin."
         case .otherSpider:
-            return "Group not determined. Most spiders are harmless, but treat any unidentified spider as hands-off."
+            return "Group not determined. Most spiders are not medically significant, but treat any unidentified spider as hands-off."
         case .notASpider:
             return "This doesn't appear to be a spider."
         }

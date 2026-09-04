@@ -41,11 +41,56 @@ enum ExportError: Error, LocalizedError {
     }
 }
 
+/// What is about to leave the device, so the warning can be specific rather
+/// than generic. A vague "this contains personal data" gets dismissed; "12
+/// photos and 4 locations" does not.
+struct ExportSummary {
+    let photoCount: Int
+    let entryCount: Int
+    let locationCount: Int
+    let hasNotes: Bool
+    let earliest: Date?
+    let latest: Date?
+
+    static func of(_ entries: [FieldEntry]) -> ExportSummary {
+        ExportSummary(
+            photoCount: entries.filter { $0.imageData != nil }.count,
+            entryCount: entries.count,
+            locationCount: entries.filter { $0.latitude != nil }.count,
+            hasNotes: entries.contains { !$0.note.isEmpty },
+            earliest: entries.map(\.capturedAt).min(),
+            latest: entries.map(\.capturedAt).max()
+        )
+    }
+}
+
 enum ExportService {
+
+    /// Removes any export archives left in the temp directory.
+    ///
+    /// The share sheet gives no reliable completion signal, and iOS clears
+    /// temp on its own schedule, which can be a long time. Until then a zip
+    /// of someone's photos, notes, and coordinates is sitting on disk with
+    /// no reason to be. Called before building a new one and again after
+    /// the share sheet closes.
+    static func cleanUpPreviousExports() {
+        let fm = FileManager.default
+        guard let contents = try? fm.contentsOfDirectory(
+            at: fm.temporaryDirectory,
+            includingPropertiesForKeys: nil
+        ) else { return }
+
+        for url in contents where url.lastPathComponent.hasPrefix("florafang-export-") {
+            try? fm.removeItem(at: url)
+        }
+    }
 
     /// Builds a zip in the temp directory and returns its URL for sharing.
     static func exportFieldLog(_ entries: [FieldEntry]) throws -> URL {
         guard !entries.isEmpty else { throw ExportError.noEntries }
+
+        // Clear anything from a previous run before writing a new one.
+        cleanUpPreviousExports()
 
         let fm = FileManager.default
         let stamp = ISO8601DateFormatter().string(from: .now)
@@ -57,7 +102,7 @@ enum ExportService {
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
 
         var rows: [String] = [
-            "filename,captured_at,headline,category,raw_label,confidence,hazard,tier,verdict,actual_identity,latitude,longitude,note"
+            "filename,captured_at,headline,category,raw_label,confidence,hazard,tier,verdict,actual_identity,place,latitude,longitude,note,cascade_trace"
         ]
 
         for (index, entry) in entries.enumerated() {
@@ -80,9 +125,11 @@ enum ExportService {
                 csv(entry.tierRaw),
                 csv(entry.verdictRaw),
                 csv(entry.actualIdentity),
+                csv(entry.placeName),
                 csv(entry.latitude.map { String($0) } ?? ""),
                 csv(entry.longitude.map { String($0) } ?? ""),
-                csv(entry.note)
+                csv(entry.note),
+                csv(entry.traceLines.joined(separator: " | "))
             ].joined(separator: ","))
         }
 
@@ -95,7 +142,13 @@ enum ExportService {
             encoding: .utf8
         )
 
-        return try zip(workDir, named: folderName)
+        let archive = try zip(workDir, named: folderName)
+
+        // The staging folder holds the photos unarchived. Once the zip
+        // exists it has no reason to remain.
+        try? fm.removeItem(at: workDir)
+
+        return archive
     }
 
     /// Foundation has no direct zip API, but NSFileCoordinator's
@@ -141,6 +194,20 @@ enum ExportService {
         """
         FloraFang field log export
 
+        BEFORE YOU SEND THIS, READ THIS PART
+
+        This file contains every photo you saved. Photos capture whatever
+        was in frame, not just the subject, which can include your home,
+        your desk, documents, or other people.
+
+        If you turned on location capture, it also contains roughly where
+        each scan happened. Coordinates are rounded to about a kilometre and
+        the place name is city level, so this does not pinpoint an address,
+        but it does show the general area you were in.
+
+        Send it to someone you intend to send it to. Check the file before
+        you send it if you are unsure what is in it.
+
         WHAT IS IN HERE
         Every photo you saved, plus field-log.csv describing what the app
         said about each one at the time.
@@ -156,9 +223,13 @@ enum ExportService {
         tier          which tier of the cascade answered
         verdict       correct, wrong, or unsure, if you marked it
         actual_identity  what it really was, when you marked it wrong
-        latitude      blank unless location capture was enabled
-        longitude     blank unless location capture was enabled
+        place         city and region, blank unless location was enabled
+        latitude      rounded to about a kilometre, not a precise fix
+        longitude     rounded to about a kilometre, not a precise fix
         note          whatever you typed
+        cascade_trace which tiers ran and what each decided, pipe separated.
+                      This is the diagnostic record. A refusal without it
+                      cannot be explained after the fact.
 
         WHAT IT IS FOR
         Real photos taken on real phones in real conditions are the thing
