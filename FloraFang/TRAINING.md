@@ -194,23 +194,23 @@ cell in that row that isn't `widow` is a potential injury.
 
 ## Step 8 — Calibrate the confidence gate & defense layers
 
-The inference pipeline in `HazardClassifier.swift` and `ConfidenceGate.swift` uses a multi-layer defense pipeline:
+The inference pipeline in `HazardClassifier.swift` and `ConfidenceGate.swift` uses an empirically calibrated defense pipeline:
 
-1. **Temperature Scaling ($T = 1.6$)**: Modern deep neural networks produce severely miscalibrated, overconfident softmax distributions. Post-processing probabilities with $P_{\text{calibrated}} \propto P^{1/T}$ pulls artificial 85%+ spikes down to realistic ~60% levels.
-2. **Shannon Entropy Filter ($H$)**: Max entropy across 10 classes is $\log_2(10) \approx 3.32$. If entropy $H > 2.35$ and top confidence is $< 0.55$, the model is guessing across multiple classes on an unfamiliar/OOD image (like monitor glare or blur). The gate escalates to refusal automatically.
-3. **Calibrated Asymmetric Thresholds**:
-   - `dangerousFloor = 0.22`: Catches widow/recluse signals even when slightly degraded by lighting or phone angles.
-   - `benignFloor = 0.55`: Moderate bar for benign classifications, requiring dual-tier corroboration from Apple Intelligence before being accepted.
+1. **Empirical Temperature Scaling ($T = 1.53$)**:
+   Modern deep neural networks produce severely miscalibrated, overconfident softmax distributions. Fitting $T$ via negative log likelihood minimization over **1,946 unseen, held-out iNaturalist research-grade images** yielded $T = 1.53$ (NLL 1.2014).
+   * **Uncalibrated ECE ($T = 1.0$):** 0.1014 (raw predictions were systematically overconfident; e.g. 85% confidence bucket was only 67.9% accurate).
+   * **Calibrated ECE ($T = 1.53$):** 0.0274 (a 73% drop in calibration error, pulling bucket accuracy onto the diagonal).
+2. **Shannon Entropy Filter ($H$)**: Max entropy across 10 classes is $\log_2(10) \approx 3.32$. If entropy $H > 2.35$ and top confidence is $< 0.55$, the model is guessing across multiple classes on an unfamiliar/OOD image (like monitor glare, carpets, or motion blur). The gate escalates to refusal automatically. *Note:* Entropy catches diffuse confusion, not sharp overconfident misclassifications; those are guarded by Layers 2, 3, and 4.
+3. **Empirically Derived Asymmetric Thresholds**:
+   - `benignFloor = 0.86`: Derived from the calibration curve. A benign classification requires $\ge 0.86$ calibrated confidence to achieve $\ge 95\%$ empirical accuracy. Below this, benign claims are treated with caution or escalated.
+   - `dangerousFloor = 0.22`: Set permissively to capture low-confidence hazard signals. *Critical finding:* On held-out data, top-1 recall on real widows and recluses plateaus at 66.5% because 33.5% of real specimens are ranked into benign classes by the vision model alone. This demonstrates why Tier 2b (multimodal Apple Intelligence feature inspection) and Tier 4 (structured refusal) are essential.
    - `minimumMargin = 0.06`: Ensures top prediction beats the runner-up.
 
-Procedure to measure and refine:
-
-1. Run the model over your held-out test set, recording predicted class,
-   calibrated confidence, entropy, and true label for each image.
-2. Bucket by confidence: 0.3–0.4, 0.4–0.5, and so on.
-3. For each bucket, compute actual accuracy.
-4. Plot predicted confidence vs. actual accuracy. A calibrated model sits on the diagonal.
-5. If you retrain, rerun this sweep to ensure thresholds match the new model weights.
+Procedure used to measure (`calibrate.py`):
+1. Pulled 1,946 fresh observations using `fetch_holdout.py`, excluding observation IDs present in training.
+2. Ran `calibrate.py --model SpiderHazard.mlmodel --holdout florafang-training/holdout`.
+3. Saved predictions to `calibration-predictions.csv` and derived $T = 1.53$ and `benignFloor = 0.86`.
+4. Rerun this script whenever the model weights are retrained.
 
 ---
 
