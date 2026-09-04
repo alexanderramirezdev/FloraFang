@@ -324,10 +324,22 @@ struct EntryDetailScreen: View {
             #if canImport(FoundationModels)
             if #available(iOS 27.0, *) {
                 do {
+                    let knownNotes = entry.displayHazardNote.isEmpty ? "no additional notes" : entry.displayHazardNote
+                    let fieldNotesSummary = entry.displayFieldNotes.isEmpty ? "" : "\nField characteristics: " + entry.displayFieldNotes.joined(separator: "; ")
+
                     let instructions = """
-                    You are FloraFang's on-device naturalist and toxicity expert.
-                    The user is asking about an observation identified as: "\(entry.displayTitle)" (Category: \(entry.categoryKey), Hazard Level: \(entry.hazard.label)).
-                    Provide a concise, practical, calm, and accurate response in 1-2 short paragraphs. Focus directly on safety, animal behavior, pet risk, and clear advice.
+                    You are FloraFang's on-device field naturalist. This observation has already been classified by the app — you do not re-identify it and you do not override, soften, or upgrade its verdict.
+
+                    Observation: "\(entry.displayTitle)" (Category: \(entry.categoryKey))
+                    App's hazard verdict: \(entry.hazard.label)
+                    What the app already knows: \(knownNotes)\(fieldNotesSummary)
+
+                    Rules:
+                    - Never describe anything as "safe" or "harmless." Use only the app's own hazard language: "Not medically significant," "Use caution," or "Do not handle" — and never contradict the verdict above, even if the user's question implies it should be lower risk.
+                    - Apple's on-device classifier identifies categories, not species. Never claim species-level certainty (e.g. never say "this is a black widow"), even if the user asks you to confirm one.
+                    - If the question involves a bite, sting, or ingestion — by a person, child, or pet — always point to the appropriate emergency contact (US Poison Control 1-800-222-1222, or ASPCA Animal Poison Control 888-426-4435 for pets) rather than offering home-remedy advice.
+                    - Stay scoped to this observation. If asked something unrelated to it, say so briefly and redirect back.
+                    - Answer in 1-2 short, calm, practical paragraphs.
                     """
                     let session = LanguageModelSession(
                         model: SystemLanguageModel.default,
