@@ -4,24 +4,17 @@
 //
 //  The "something ate this" flow.
 //
-//  DESIGN RULE, NON NEGOTIABLE: this screen has no safe outcome. There is no
-//  path through it that tells someone not to worry. It routes to poison
-//  control and helps them make that call well. It never answers the question
-//  "is my dog going to be okay," because a wrong reassurance here is the
-//  worst thing this app could produce.
-//
-//  Consequences of that rule, visible below:
-//    - Hotline buttons render FIRST and stay pinned. Not behind a result,
-//      not after a spinner. Three seconds of inference is three seconds not
-//      spent dialing.
-//    - The classifier result is framed as "tell them this", never as a
-//      verdict.
-//    - notKnownToxic escalates. It does not reassure.
-//    - No confidence percentage is shown to the user. It reads as a
-//      probability of safety, which is not what it is.
+//  DESIGN RULES:
+//    - Hotline buttons render FIRST and stay pinned. Three seconds of inference
+//      is three seconds not spent dialing.
+//    - Urgency banner is always visible.
+//    - The intake form only reveals AFTER selecting who was exposed (Person or Pet).
+//    - Records of exposures are persisted to SwiftData so users can review, share,
+//      or clear data without stale emergency details cluttering a new incident.
 //
 
 import SwiftUI
+import SwiftData
 
 struct EmergencyScreen: View {
     /// Set when opened from a result screen that already identified something
@@ -30,7 +23,10 @@ struct EmergencyScreen: View {
     var prefilledImage: UIImage? = nil
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \ExposureIncident.timestamp, order: .reverse) private var pastIncidents: [ExposureIncident]
 
+    @State private var selectedSubject: ExposureSubject? = nil
     @State private var report = ExposureReport()
     @State private var image: UIImage?
     @State private var showCamera = false
@@ -38,6 +34,9 @@ struct EmergencyScreen: View {
     @State private var classifierFailed = false
     @State private var showCopied = false
     @State private var didPrefill = false
+    @State private var showHistory = false
+    @State private var showSavedToast = false
+    @State private var confirmClear = false
 
     private let classifier = PlantClassifier()
 
@@ -51,15 +50,20 @@ struct EmergencyScreen: View {
                         urgencyBanner
                         hotlines
                         Divider().overlay(Palette.moss.opacity(0.4))
-                        photoSection
-                        if report.suspectedPlant != nil || classifierFailed {
-                            matchSection
+                        subjectSelector
+
+                        if selectedSubject != nil {
+                            intakeForm
+                        } else {
+                            unselectedPlaceholder
                         }
-                        intakeSection
-                        relaySection
                     }
                     .padding(20)
                     .padding(.bottom, 44)
+                }
+
+                if showSavedToast {
+                    savedToast
                 }
             }
             .navigationTitle("Exposure")
@@ -71,28 +75,73 @@ struct EmergencyScreen: View {
                 if let plant = prefilledPlant {
                     report.suspectedPlant = plant
                     report.rawLabel = plant.trainingLabel
+                    selectedSubject = .dog // default for prefilled ingestion if unset
                 }
                 if let img = prefilledImage {
                     image = img
+                    if selectedSubject == nil { selectedSubject = .dog }
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
-                        .foregroundStyle(Palette.lichen)
+                // Only provide a close/done button when opened as a modal sheet
+                if prefilledPlant != nil || prefilledImage != nil {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { dismiss() }
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Palette.parchment)
+                    }
                 }
+
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 15))
+                            if !pastIncidents.isEmpty {
+                                Text("\(pastIncidents.count)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Palette.moss, in: Capsule())
+                                    .foregroundStyle(Palette.parchment)
+                            }
+                        }
+                        .foregroundStyle(Palette.parchment)
+                    }
+                    .accessibilityLabel("Incident history")
+                }
+            }
+            .sheet(isPresented: $showHistory) {
+                ExposureHistoryView()
+            }
+            .confirmationDialog("Start a new report?", isPresented: $confirmClear, titleVisibility: .visible) {
+                Button("Clear and Start Fresh", role: .destructive) {
+                    withAnimation {
+                        clearForm()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This will clear the current intake form. Any saved records in Incident History remain safe.")
             }
         }
     }
 
-    // MARK: - Above the fold
+    // MARK: - Above the fold: Urgency Banner
 
     private var urgencyBanner: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("CALL FIRST")
-                .font(.system(size: 11, weight: .bold))
-                .tracking(2)
-                .foregroundStyle(Palette.rust)
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(Palette.rust)
+                Text("CALL FIRST")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(2)
+                    .foregroundStyle(Palette.rust)
+            }
             Text("Do not wait on this app. Poison control can start helping while you fill in the details below.")
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.parchment)
@@ -104,49 +153,166 @@ struct EmergencyScreen: View {
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.rust.opacity(0.6), lineWidth: 1))
     }
 
+    // MARK: - Emergency Hotlines (Always Visible)
+
     private var hotlines: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Picker("Who", selection: $report.subject) {
-                ForEach(ExposureSubject.allCases) { subject in
-                    Text(subject.label).tag(subject)
-                }
-            }
-            .pickerStyle(.segmented)
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("EMERGENCY DISPATCH HOTLINES")
 
-            ForEach(PoisonResources.forAudience(report.subject.audience)) { resource in
-                Link(destination: resource.telURL ?? URL(string: "tel://")!) {
-                    HStack {
-                        Image(systemName: "phone.fill")
-                            .font(.system(size: 15))
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(resource.name)
-                                .font(.system(size: 14, weight: .semibold))
-                            Text(resource.phone)
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                            Text(resource.detail)
-                                .font(.system(size: 10))
-                                .opacity(0.8)
+            // Human Poison Control
+            Link(destination: URL(string: "tel://18002221222")!) {
+                HStack(spacing: 12) {
+                    Image(systemName: "phone.fill")
+                        .font(.system(size: 16))
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack {
+                            Text("Poison Control (People)")
+                                .font(.system(size: 13.5, weight: .semibold))
+                            Spacer()
+                            Text("Free · 24/7")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(Palette.parchment.opacity(0.75))
                         }
-                        Spacer()
+                        Text("1-800-222-1222")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
                     }
-                    .foregroundStyle(Palette.parchment)
-                    .padding(12)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Palette.rust, in: RoundedRectangle(cornerRadius: 8))
                 }
+                .foregroundStyle(Palette.parchment)
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Palette.rust, in: RoundedRectangle(cornerRadius: 8))
             }
 
-            Text("US numbers. If you are outside the US, contact your local poison center or an emergency vet.")
+            // Animal Poison Control
+            Link(destination: URL(string: "tel://8884264435")!) {
+                HStack(spacing: 12) {
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: 15))
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack {
+                            Text("ASPCA Animal Poison Control")
+                                .font(.system(size: 13.5, weight: .semibold))
+                            Spacer()
+                            Text("Pet Hotline")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(Palette.parchment.opacity(0.75))
+                        }
+                        Text("(888) 426-4435")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                    }
+                }
+                .foregroundStyle(Palette.parchment)
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Palette.moss, in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            Text("US numbers. If you are outside the US, contact your local poison center or emergency vet.")
                 .font(.system(size: 10))
                 .foregroundStyle(Palette.lichen)
         }
     }
 
-    // MARK: - Photo
+    // MARK: - Subject Selector
+
+    private var subjectSelector: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionLabel("WHO WAS EXPOSED?")
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(ExposureSubject.allCases) { subject in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedSubject = subject
+                                report.subject = subject
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: subjectIcon(subject))
+                                    .font(.system(size: 13))
+                                Text(subject.label)
+                                    .font(.system(size: 12.5, weight: .semibold))
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(
+                                selectedSubject == subject ? Palette.moss : Color.black.opacity(0.3),
+                                in: RoundedRectangle(cornerRadius: 8)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(selectedSubject == subject ? Palette.parchment : Palette.lichen.opacity(0.4), lineWidth: 1)
+                            )
+                            .foregroundStyle(selectedSubject == subject ? Palette.parchment : Palette.lichen)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Unselected Placeholder
+
+    private var unselectedPlaceholder: some View {
+        VStack(spacing: 8) {
+            Text("Select who was exposed above to start an intake checklist.")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Palette.parchment)
+                .multilineTextAlignment(.center)
+
+            Text("Having age, timing, and symptoms ready helps the poison specialist give you fast, accurate care.")
+                .font(.system(size: 12))
+                .foregroundStyle(Palette.lichen)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+
+            if !pastIncidents.isEmpty {
+                Button {
+                    showHistory = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.arrow.circlepath")
+                        Text("View Past Incident Records (\(pastIncidents.count))")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.ochre)
+                    .padding(.top, 4)
+                }
+            }
+        }
+        .padding(.vertical, 22)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
+        .background(Color.black.opacity(0.18), in: RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Palette.lichen.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Intake Form (Reveals upon subject selection)
+
+    private var intakeForm: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            photoSection
+
+            if report.suspectedPlant != nil || classifierFailed {
+                matchSection
+            }
+
+            intakeSection
+            relaySection
+            incidentActionsSection
+        }
+    }
+
+    // MARK: - Photo Section
 
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionLabel("THE PLANT")
+            sectionLabel("PHOTO OF WHAT WAS EATEN")
 
             if let image {
                 Image(uiImage: image)
@@ -161,23 +327,23 @@ struct EmergencyScreen: View {
             Button {
                 showCamera = true
             } label: {
-                Label(image == nil ? "Photograph the plant" : "Retake photo",
-                      systemImage: "camera")
-                    .font(.system(size: 13))
+                Label(image == nil ? "Take a Photo" : "Retake Photo",
+                      systemImage: "camera.fill")
+                    .font(.system(size: 13, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 11)
                     .background(Palette.moss, in: RoundedRectangle(cornerRadius: 8))
                     .foregroundStyle(Palette.parchment)
             }
 
-            Text("If you can do it safely, keep a cutting of the plant. The vet may want to see it.")
+            Text("If you can do it safely, keep a cutting or physical sample. The vet or doctor may want to see it.")
                 .font(.system(size: 11))
                 .foregroundStyle(Palette.lichen)
 
             if isClassifying {
                 HStack(spacing: 6) {
                     ProgressView().controlSize(.small).tint(Palette.ochre)
-                    Text("checking against known toxic plants")
+                    Text("checking against known toxic plants…")
                         .font(.system(size: 11))
                         .foregroundStyle(Palette.lichen)
                 }
@@ -192,10 +358,8 @@ struct EmergencyScreen: View {
         }
     }
 
-    // MARK: - Match
+    // MARK: - Match Section
 
-    /// Framed as information to relay. Never as a conclusion, and never with
-    /// a confidence number attached.
     private var matchSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionLabel("TELL THEM THIS")
@@ -229,7 +393,6 @@ struct EmergencyScreen: View {
                 .background(Palette.rust.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.rust.opacity(0.5), lineWidth: 1))
             } else {
-                // The escalation path. Unknown never reassures.
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Not identified")
                         .font(.system(size: 15, weight: .semibold, design: .serif))
@@ -247,7 +410,7 @@ struct EmergencyScreen: View {
         }
     }
 
-    // MARK: - Intake
+    // MARK: - Intake Questions
 
     private var intakeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -301,11 +464,11 @@ struct EmergencyScreen: View {
                 }
             }
 
-            field("Anything else", text: $report.otherNotes, placeholder: "optional")
+            field("Anything else", text: $report.otherNotes, placeholder: "optional details")
         }
     }
 
-    // MARK: - Relay
+    // MARK: - Relay Section
 
     private var relaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -319,26 +482,160 @@ struct EmergencyScreen: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 8))
 
-            Button {
-                UIPasteboard.general.string = report.relaySummary()
-                showCopied = true
-                Task {
-                    try? await Task.sleep(for: .seconds(2))
-                    showCopied = false
+            HStack(spacing: 10) {
+                Button {
+                    UIPasteboard.general.string = report.relaySummary()
+                    showCopied = true
+                    Task {
+                        try? await Task.sleep(for: .seconds(2))
+                        showCopied = false
+                    }
+                } label: {
+                    Label(showCopied ? "Copied" : "Copy summary", systemImage: "doc.on.clipboard")
+                        .font(.system(size: 13, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 11)
+                        .background(Palette.moss, in: RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(Palette.parchment)
                 }
-            } label: {
-                Label(showCopied ? "Copied" : "Copy summary", systemImage: "doc.on.clipboard")
-                    .font(.system(size: 13))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 11)
-                    .background(Palette.moss, in: RoundedRectangle(cornerRadius: 8))
-                    .foregroundStyle(Palette.parchment)
+
+                ShareLink(item: report.relaySummary()) {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                        .font(.system(size: 13, weight: .semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .background(Color.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(Palette.parchment)
+                }
             }
         }
-        .padding(.bottom, 20)
     }
 
-    // MARK: - Bits
+    // MARK: - Incident Actions (Save / Clear)
+
+    private var incidentActionsSection: some View {
+        VStack(spacing: 10) {
+            // Save to Incident Log
+            Button(action: saveIncident) {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                    Text("Save to Incident Log")
+                }
+                .font(.system(size: 13, weight: .bold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(Palette.ochre, in: RoundedRectangle(cornerRadius: 8))
+                .foregroundStyle(Color.black)
+            }
+
+            // Start New Report / Clear
+            Button {
+                confirmClear = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text("Start New Report")
+                }
+                .font(.system(size: 12, weight: .medium))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .foregroundStyle(Palette.lichen)
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.lichen.opacity(0.4), lineWidth: 1))
+            }
+        }
+        .padding(.top, 8)
+    }
+
+    // MARK: - Toast Banner
+
+    private var savedToast: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(Palette.moss)
+                Text("Incident saved to history log")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.parchment)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(Color.black.opacity(0.85), in: Capsule())
+            .overlay(Capsule().stroke(Palette.moss.opacity(0.6), lineWidth: 1))
+            .padding(.bottom, 60)
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .animation(.easeInOut, value: showSavedToast)
+    }
+
+    // MARK: - Logic & Actions
+
+    private func saveIncident() {
+        let incident = ExposureIncident(
+            subjectRaw: report.subject.rawValue,
+            subjectDetail: report.subjectDetail,
+            plantName: report.suspectedPlant?.displayName ?? (report.rawLabel.isEmpty ? "" : report.rawLabel),
+            scientificName: report.suspectedPlant?.scientificName ?? "",
+            rawLabel: report.rawLabel,
+            confidence: report.confidence,
+            partEatenRaw: report.partEaten.rawValue,
+            amount: report.amount,
+            timeOfExposure: report.timeOfExposure,
+            symptomsRaw: report.symptoms.map(\.label),
+            otherNotes: report.otherNotes,
+            relaySummaryText: report.relaySummary(),
+            imageData: image?.jpegData(compressionQuality: 0.8)
+        )
+
+        modelContext.insert(incident)
+        try? modelContext.save()
+
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        showSavedToast = true
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            showSavedToast = false
+        }
+    }
+
+    private func clearForm() {
+        selectedSubject = nil
+        report = ExposureReport()
+        image = nil
+        classifierFailed = false
+        isClassifying = false
+    }
+
+    private func classify(_ image: UIImage) {
+        isClassifying = true
+        classifierFailed = false
+        Task {
+            defer { isClassifying = false }
+            do {
+                if let prediction = try await classifier.classify(image) {
+                    report.suspectedPlant = prediction.plantClass
+                    report.rawLabel = prediction.rawLabel
+                    report.confidence = prediction.confidence
+                } else {
+                    report.suspectedPlant = nil
+                    classifierFailed = true
+                }
+            } catch {
+                report.suspectedPlant = nil
+                classifierFailed = true
+            }
+        }
+    }
+
+    private func subjectIcon(_ subject: ExposureSubject) -> String {
+        switch subject {
+        case .dog:         return "pawprint.fill"
+        case .cat:         return "pawprint"
+        case .otherAnimal: return "hare.fill"
+        case .child:       return "figure.and.child.holdinghands"
+        case .adult:       return "person.fill"
+        }
+    }
 
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
@@ -363,34 +660,10 @@ struct EmergencyScreen: View {
                 .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
         }
     }
-
-    // MARK: - Classification
-
-    private func classify(_ image: UIImage) {
-        isClassifying = true
-        classifierFailed = false
-        Task {
-            defer { isClassifying = false }
-            do {
-                if let prediction = try await classifier.classify(image) {
-                    report.suspectedPlant = prediction.plantClass
-                    report.rawLabel = prediction.rawLabel
-                    report.confidence = prediction.confidence
-                } else {
-                    report.suspectedPlant = nil
-                    classifierFailed = true
-                }
-            } catch {
-                report.suspectedPlant = nil
-                classifierFailed = true
-            }
-        }
-    }
 }
 
-/// Minimal capture wrapper so the emergency flow does not depend on the main
-/// camera screen's cascade, zoom, or capture frame framing. Fewer moving parts in
-/// the path that matters most.
+// MARK: - Capture Sheet
+
 struct EmergencyCaptureSheet: View {
     let onCapture: (UIImage) -> Void
 

@@ -206,6 +206,7 @@ struct SettingsSheet: View {
     @Bindable var location: LocationService
     @Environment(\.dismiss) private var dismiss
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
     @State private var locationOn = false
 
     var body: some View {
@@ -215,6 +216,39 @@ struct SettingsSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("SEASONAL PALETTE")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .tracking(1.4)
+                                    .foregroundStyle(Palette.lichen)
+
+                                Spacer()
+
+                                HStack(spacing: 4) {
+                                    Image(systemName: SeasonTheme.active.season.icon)
+                                    Text(SeasonTheme.active.season.moodTitle)
+                                }
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Palette.ochre)
+                            }
+
+                            Picker("Season", selection: $seasonSetting) {
+                                Text("Auto (\(Season.current.rawValue))").tag("auto")
+                                ForEach(Season.allCases) { season in
+                                    Text(season.rawValue).tag(season.rawValue)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            Text("FloraFang automatically tunes its organic slate, moss, and foliage accents to match the natural seasons, keeping screens visible and true to life.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(Palette.lichen)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Divider().overlay(Palette.moss.opacity(0.4))
+
                         Toggle(isOn: $locationOn) {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Record location on scans")
