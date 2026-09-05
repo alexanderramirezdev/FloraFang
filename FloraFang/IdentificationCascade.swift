@@ -79,9 +79,11 @@ final class IdentificationCascade {
             if let prediction = try await classifier.classify(image) {
                 corePrediction = prediction
                 lastTrace.append("tier2a: \(prediction.rawLabel) @ \(pct(prediction.confidence))")
+                lastTrace.append("entropy: \(String(format: "%.2f", prediction.entropy)) (triggered: \(prediction.isHighEntropy))")
                 coreVerdict = gate.evaluate(
                     top: (prediction.spiderClass, prediction.confidence),
-                    runnerUp: prediction.runnerUpConfidence
+                    runnerUp: prediction.runnerUpConfidence,
+                    isHighEntropy: prediction.isHighEntropy
                 )
                 lastTrace.append("gate: \(coreVerdict)")
             }
@@ -242,7 +244,7 @@ final class IdentificationCascade {
 
         // A diagnostic marking outranks everything. The ventral hourglass and
         // the six eye arrangement are close to definitive, and a classifier
-        // trained on 79% widow recall should not be allowed to overrule one.
+        // with 66.5% widow recall measured on holdout should not be allowed to overrule one.
         if featureStrength == .diagnostic,
            let fc = featureClass,
            fc.isMedicallySignificant {
@@ -322,6 +324,7 @@ final class IdentificationCascade {
     private func withFeatures(_ base: Assessment, _ features: [DiagnosticFeature], tier: ResolutionTier) -> Assessment {
         var copy = base
         copy.observedFeatures = features
+        copy.tier = tier
         return copy
     }
 
@@ -383,7 +386,7 @@ final class IdentificationCascade {
         guard let cgImage = image.cgImage else { throw IdentificationError.badImage }
 
         var request = ClassifyImageRequest()
-        request.cropAndScaleAction = .centerCrop
+        request.cropAndScaleAction = .scaleToFit
         let observations = try await request.perform(on: cgImage)
 
         return observations.prefix(limit).map {
