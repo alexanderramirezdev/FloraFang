@@ -1,13 +1,25 @@
 //
 //  Assessment.swift
-//  Quadrat
+//  FloraFang
 //
 //  The single result type every tier of the cascade produces.
 //
-//  Design note: this deliberately separates "what we determined" from
-//  "what we ruled out." For a safety question, ruling out widow and recluse
-//  is often more valuable than naming the species — and it's a claim we can
-//  actually support. Most competitor apps only model the first half.
+//  Design note: `ruledOut` exists but is permanently empty, and that is the
+//  point. It used to carry "widow and recluse ruled out" whenever a benign
+//  class cleared the confidence floor, which meant the exclusion came from
+//  the same prediction that was wrong. A screen photo of an obvious black
+//  widow classified as huntsman at 86% displayed an affirmative claim that it
+//  was not a widow.
+//
+//  The reasoning was unsound even when the prediction is right. Ruling out a
+//  widow means observing the absence of a ventral hourglass, and absence
+//  cannot be established from a photo that may not show the underside. The
+//  same principle governs FeatureRules: evidence escalates, never downgrades.
+//
+//  The field is kept rather than deleted so the constraint stays visible. If
+//  an exclusion is ever reinstated it needs independent positive evidence of
+//  a different group, not the absence of evidence for this one, and it should
+//  never be reachable from a single classifier.
 //
 
 import Foundation
@@ -42,7 +54,7 @@ struct Assessment {
     /// 0...1. Meaningful only relative to the tier that produced it.
     let confidence: Double
 
-    let tier: ResolutionTier
+    var tier: ResolutionTier
 
     /// Groups we can affirmatively exclude. Empty is honest; don't fabricate.
     let ruledOut: [String]
