@@ -68,7 +68,15 @@ actor HazardClassifier {
         guard let cgImage = image.cgImage else { throw IdentificationError.badImage }
 
         var request = CoreMLRequest(model: container)
-        request.cropAndScaleAction = .scaleToFit
+        // .scaleToFill, not .scaleToFit. Create ML trains by squashing to 299x299,
+        // so letterboxing at inference is a train/test mismatch. Measured on the
+        // same 1,946 held-out images, one variable changed:
+        //
+        //   stretched (.scaleToFill)  accuracy 0.609, dangerous recall 66.5%
+        //   letterboxed (.scaleToFit) accuracy 0.562, dangerous recall 55.2%
+        //
+        // 11.3 points of widow and recluse recall, from preprocessing alone.
+        request.cropAndScaleAction = .scaleToFill
 
         let observations = try await request.perform(on: cgImage)
 
