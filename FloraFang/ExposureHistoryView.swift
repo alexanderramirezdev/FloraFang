@@ -223,7 +223,7 @@ struct ExposureIncidentDetailSheet: View {
                                 .tracking(1.2)
                                 .foregroundStyle(Palette.lichen)
 
-                            infoRow(label: "Who", value: incident.subjectDetail.isEmpty ? incident.displaySubject : "\(incident.displaySubject) — \(incident.subjectDetail)")
+                            infoRow(label: "Who", value: incident.subjectDetail.isEmpty ? incident.displaySubject : "\(incident.displaySubject) (\(incident.subjectDetail))")
                             infoRow(label: "Part eaten", value: incident.partEaten.label)
                             if !incident.amount.isEmpty {
                                 infoRow(label: "Amount", value: incident.amount)

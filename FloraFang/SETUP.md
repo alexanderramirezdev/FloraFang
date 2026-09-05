@@ -1,4 +1,4 @@
-# FloraFang — Project Setup & Architecture Guide
+# FloraFang :  Project Setup & Architecture Guide
 
 ## Environment Requirements
 

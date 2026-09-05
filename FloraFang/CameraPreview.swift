@@ -52,7 +52,7 @@ struct CameraPreview: UIViewRepresentable {
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let view else { return }
             let location = gesture.location(in: view)
-            // Convert view coordinates to the device's own normalized space —
+            // Convert view coordinates to the device's own normalized space:
             // this accounts for videoGravity, so it's correct even though the
             // preview is cropping the image.
             let devicePoint = view.videoPreviewLayer

@@ -37,7 +37,7 @@ enum ResolutionTier: String {
 
 struct Assessment {
     /// Unique per scan. Without this, two scans producing the identical result
-    /// (very common with refusals — same headline, same label, same tier) share
+    /// (very common with refusals: same headline, same label, same tier) share
     /// an identity, and SwiftUI's item-based presentation treats the second one
     /// as already-shown and silently skips it.
     let scanID = UUID()
@@ -45,7 +45,7 @@ struct Assessment {
     /// What we're calling it. May be a group ("Widow spider") rather than a species.
     let headline: String
 
-    /// Taxonomic framing: "Arachnid — Latrodectus", "Plant", etc.
+    /// Taxonomic framing: "Arachnid: Latrodectus", "Plant", etc.
     let group: String
 
     let hazard: Hazard

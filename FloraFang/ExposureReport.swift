@@ -93,7 +93,7 @@ struct ExposureReport {
             let pct = Int(confidence * 100)
             lines.append("POSSIBLE PLANT: \(plant.displayName)"
                          + (plant.scientificName.isEmpty ? "" : " (\(plant.scientificName))")
-                         + " — unconfirmed photo match, \(pct)% model confidence")
+                         + ", unconfirmed photo match at \(pct)% model confidence")
         } else {
             lines.append("POSSIBLE PLANT: not identified. Photo available.")
         }

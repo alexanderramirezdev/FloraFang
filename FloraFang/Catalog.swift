@@ -81,7 +81,7 @@ enum Catalog {
     static let unknownEntry = CatalogEntry(
         id: "unknown",
         displayName: "Not recognized",
-        group: "—",
+        group: "Unassigned",
         hazard: .unknown,
         hazardNote: "FloraFang couldn't place this in a known group. Treat any unidentified animal or plant as hands-off.",
         fieldNotes: [
@@ -89,7 +89,7 @@ enum Catalog {
             "Even lighting and a plain background improve results a lot.",
             "Get the distinguishing feature in shot: leaf shape, wing pattern, body markings."
         ],
-        nextStep: "Save it anyway — you can revisit the photo later.",
+        nextStep: "Save it anyway, as you can revisit the photo later.",
         matchTerms: []
     )
 
@@ -100,7 +100,7 @@ enum Catalog {
             displayName: "Spider",
             group: "Arachnid",
             hazard: .caution,
-            hazardNote: "Most spiders are harmless to people. A few groups — widows and recluses among them — can cause medically significant bites. Don't handle a spider you can't identify to species.",
+            hazardNote: "Most spiders are harmless to people. A few groups, including widows and recluses, can cause medically significant bites. Do not handle a spider you cannot identify to species.",
             fieldNotes: [
                 "Count the eyes and note the body markings; both are key to species ID.",
                 "Indoor spiders are usually harmless hunters that eat other pests.",
@@ -119,7 +119,7 @@ enum Catalog {
             fieldNotes: [
                 "Six legs and three body segments separate insects from arachnids.",
                 "Wing structure and antennae shape narrow the family quickly.",
-                "Note what it was on — host plant is a strong ID clue."
+                "Note what it was on: host plant is a strong ID clue."
             ],
             nextStep: "Leave nests alone and observe from a distance.",
             matchTerms: ["insect", "beetle", "ant", "wasp", "bee", "hornet", "cricket", "grasshopper", "dragonfly", "moth"]
@@ -128,12 +128,12 @@ enum Catalog {
         CatalogEntry(
             id: "butterfly",
             displayName: "Butterfly",
-            group: "Insect — Lepidoptera",
+            group: "Insect: Lepidoptera",
             hazard: .safe,
             hazardNote: "Harmless. Handling damages wing scales, so look but don't touch.",
             fieldNotes: [
                 "Wing pattern on the underside is often more diagnostic than the top.",
-                "Note the nectar plant — many species are host-specific.",
+                "Note the nectar plant: many species are host specific.",
                 "Clubbed antennae distinguish butterflies from most moths."
             ],
             nextStep: "Photograph perched with wings both open and closed if you can.",
@@ -148,7 +148,7 @@ enum Catalog {
             hazardNote: "Appearance alone doesn't establish edibility or toxicity. Never eat a plant identified only from a photo.",
             fieldNotes: [
                 "Petal count and arrangement are the fastest narrowing feature.",
-                "Photograph leaves and stem too — flowers alone are often ambiguous.",
+                "Photograph leaves and stem too, because flowers alone are often ambiguous.",
                 "Note the habitat: soil, sun exposure, and what's growing nearby."
             ],
             nextStep: "Cross-check with a regional flora before acting on any ID.",
@@ -162,7 +162,7 @@ enum Catalog {
             hazard: .caution,
             hazardNote: "Some common landscape and wild plants cause contact dermatitis. Treat unfamiliar foliage as look-only.",
             fieldNotes: [
-                "Leaf arrangement — opposite, alternate, whorled — is a core ID key.",
+                "Leaf arrangement (opposite, alternate, whorled) is a core ID key.",
                 "Leaves of three is worth learning by sight in your region.",
                 "Bark, buds, and growth habit matter as much as the leaf."
             ],
@@ -178,7 +178,7 @@ enum Catalog {
             hazardNote: "Do not eat any wild mushroom identified from an app. Several deadly species closely resemble edible ones, and photo ID is not sufficient for safety.",
             fieldNotes: [
                 "Gill attachment, spore print color, and stem base are essential for real ID.",
-                "Dig up the whole base — a volva at the bottom is a critical warning feature.",
+                "Dig up the whole base: a volva at the bottom is a critical warning feature.",
                 "Note the substrate: soil, hardwood, or conifer changes the likely species."
             ],
             nextStep: "For anything you intend to eat, consult a local mycological society.",
@@ -193,10 +193,10 @@ enum Catalog {
             hazardNote: "No risk from observation. Keep distance from nests, especially during breeding season.",
             fieldNotes: [
                 "Silhouette, bill shape, and behavior often beat color for ID.",
-                "Note the habitat and what it was doing — feeding style is diagnostic.",
+                "Note the habitat and what it was doing: feeding style is diagnostic.",
                 "Song is frequently the fastest identifier when the bird stays hidden."
             ],
-            nextStep: "Log the location — resident vs. migrant matters for ID.",
+            nextStep: "Log the location: resident vs migrant matters for ID.",
             matchTerms: ["bird", "sparrow", "finch", "hawk", "owl", "duck", "crow", "jay", "hummingbird"]
         ),
 
@@ -207,7 +207,7 @@ enum Catalog {
             hazard: .avoid,
             hazardNote: "Do not approach or handle. Venomous and non-venomous species overlap in appearance, and most bites happen during attempts to move or kill a snake.",
             fieldNotes: [
-                "Head shape is an unreliable field marker — many harmless snakes flatten their heads when threatened.",
+                "Head shape is an unreliable field marker: many harmless snakes flatten their heads when threatened.",
                 "Back away and give it a clear exit; snakes leave on their own.",
                 "Photograph from a safe distance with zoom rather than approaching."
             ],
@@ -223,7 +223,7 @@ enum Catalog {
             hazardNote: "Nearly all lizards in North America are harmless. They may bite defensively if grabbed.",
             fieldNotes: [
                 "Scale texture and tail length are useful ID features.",
-                "Many species drop their tail when grabbed — another reason not to.",
+                "Many species drop their tail when grabbed, which is another reason not to.",
                 "Basking behavior and time of day narrow the possibilities."
             ],
             nextStep: "Observe without cornering it.",

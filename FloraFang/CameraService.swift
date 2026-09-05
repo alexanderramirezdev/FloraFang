@@ -6,8 +6,8 @@
 //  (.builtInTripleCamera / .builtInDualWideCamera) rather than the plain wide
 //  angle. That matters more than it sounds:
 //
-//  The main wide camera has a minimum focus distance around 10–12cm. Closer
-//  than that it physically cannot focus — no software fix exists. Phones that
+//  The main wide camera has a minimum focus distance around 10 to 12cm. Closer
+//  than that it physically cannot focus: no software fix exists. Phones that
 //  do macro achieve it by switching to the ULTRA-WIDE lens, and that switch
 //  only happens automatically if the app asked for a virtual device in the
 //  first place. Asking for .builtInWideAngleCamera explicitly opts out of the
@@ -112,7 +112,7 @@ final class CameraService: NSObject {
 
         session.sessionPreset = .photo
 
-        // ORDER MATTERS. Virtual devices first — they're the ones that can
+        // ORDER MATTERS. Virtual devices first: they're the ones that can
         // switch lenses for macro. Plain wide angle is the last resort.
         let discovery = AVCaptureDevice.DiscoverySession(
             deviceTypes: [
@@ -152,7 +152,7 @@ final class CameraService: NSObject {
         guard (try? device.lockForConfiguration()) != nil else { return }
         defer { device.unlockForConfiguration() }
 
-        // Let the system switch constituent lenses on its own — this is what
+        // Let the system switch constituent lenses on its own: this is what
         // enables automatic macro when you move in close.
         if device.isVirtualDevice {
             device.setPrimaryConstituentDeviceSwitchingBehavior(
@@ -170,7 +170,7 @@ final class CameraService: NSObject {
             Task { @MainActor in
                 self.zoomFactor = factor
                 self.minZoom = device.minAvailableVideoZoomFactor
-                // Cap well below the hardware max — past ~8x it's pure upscaling
+                // Cap well below the hardware max: past ~8x it's pure upscaling
                 // and gives the classifier nothing but noise.
                 self.maxZoom = min(device.maxAvailableVideoZoomFactor, factor * 6)
             }
@@ -201,7 +201,7 @@ final class CameraService: NSObject {
     // MARK: - Zoom
 
     /// Fill the frame without physically moving closer. For a spider on a wall
-    /// this is almost always the right move — moving in hits the focus limit,
+    /// this is almost always the right move: moving in hits the focus limit,
     /// zooming doesn't.
     func setZoom(_ factor: CGFloat) {
         sessionQueue.async { [weak self] in
@@ -218,7 +218,7 @@ final class CameraService: NSObject {
 
     // MARK: - Focus
 
-    /// Point is normalized (0...1) in the device's coordinate space — get it
+    /// Point is normalized (0...1) in the device's coordinate space: get it
     /// from AVCaptureVideoPreviewLayer.captureDevicePointConverted.
     ///
     /// Autofocus hunts badly on a flat textured wall because there's no obvious
