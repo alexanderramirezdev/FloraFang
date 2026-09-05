@@ -484,7 +484,7 @@ struct EntryDetailScreen: View {
                 do {
                     let fieldNotesSummary = entry.displayFieldNotes.isEmpty ? "None recorded" : entry.displayFieldNotes.joined(separator: "; ")
                     let nextStepText = entry.nextStep.isEmpty ? "None provided" : entry.nextStep
-                    let locationContext = entry.placeName != nil ? "\nObservation region: \(entry.placeName!)" : ""
+                    let locationContext = entry.placeName.isEmpty ? "" : "\nObservation region: \(entry.placeName)"
 
                     let instructions = """
                     You are FloraFang's on-device field naturalist assistant. You are strictly grounded in this specific saved field log entry.
