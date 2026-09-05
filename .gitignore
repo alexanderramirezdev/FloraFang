@@ -11,3 +11,4 @@ florafang-rename-backup/
 *.backup
 *.aimodel/
 tokenizer/
+AGENTS.md
