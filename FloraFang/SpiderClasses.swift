@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum SpiderClass: String, CaseIterable, Sendable {
+nonisolated enum SpiderClass: String, CaseIterable, Sendable {
     case widow          = "widow"
     case recluse        = "recluse"
     case wolfSpider     = "wolf_spider"
