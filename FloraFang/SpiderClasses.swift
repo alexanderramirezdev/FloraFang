@@ -3,41 +3,26 @@
 //  FloraFang
 //
 //  The label space for the hazard model. These strings must match your
-//  Create ML folder names EXACTLY — the folder name becomes the class label.
+//  Create ML folder names EXACTLY: the folder name becomes the class label.
 //
 
 import Foundation
 
-/// nonisolated because HazardClassifier is an actor and reads these off the
-/// main actor. Under Swift 6 default main actor isolation every type is
-/// implicitly @MainActor, which makes that a hard error. Pure static data,
-/// no shared mutable state, so opting the whole type out is safe.
-nonisolated enum SpiderClass: String, CaseIterable {
-    case widow          // Latrodectus
-    case recluse        // Loxosceles
-    case wolfSpider
-    case orbWeaver
-    case jumpingSpider
-    case cellarSpider
-    case huntsman
-    case tarantula
-    case otherSpider
-    case notASpider
+enum SpiderClass: String, CaseIterable, Sendable {
+    case widow          = "widow"
+    case recluse        = "recluse"
+    case wolfSpider     = "wolf_spider"
+    case orbWeaver      = "orb_weaver"
+    case jumpingSpider  = "jumping_spider"
+    case cellarSpider   = "cellar_spider"
+    case huntsman       = "huntsman"
+    case tarantula      = "tarantula"
+    case otherSpider    = "other_spider"
+    case notASpider     = "not_a_spider"
 
     /// Folder name in your training data directory.
     var trainingLabel: String {
-        switch self {
-        case .widow:         return "widow"
-        case .recluse:       return "recluse"
-        case .wolfSpider:    return "wolf_spider"
-        case .orbWeaver:     return "orb_weaver"
-        case .jumpingSpider: return "jumping_spider"
-        case .cellarSpider:  return "cellar_spider"
-        case .huntsman:      return "huntsman"
-        case .tarantula:     return "tarantula"
-        case .otherSpider:   return "other_spider"
-        case .notASpider:    return "not_a_spider"
-        }
+        self.rawValue
     }
 
     static func from(label: String) -> SpiderClass? {
@@ -61,8 +46,8 @@ nonisolated enum SpiderClass: String, CaseIterable {
 
     var genus: String {
         switch self {
-        case .widow:   return "Arachnid — Latrodectus"
-        case .recluse: return "Arachnid — Loxosceles"
+        case .widow:   return "Arachnid: Latrodectus"
+        case .recluse: return "Arachnid: Loxosceles"
         default:       return "Arachnid"
         }
     }
@@ -121,7 +106,7 @@ nonisolated enum SpiderClass: String, CaseIterable {
         case .recluse:
             return [
                 "Uniform tan body with a darker violin shape on the back near the head.",
-                "Six eyes in three pairs — unusual, most spiders have eight.",
+                "Six eyes in three pairs (unusual, as most spiders have eight).",
                 "Hides in stored boxes, shoes, and clothing left undisturbed."
             ]
         case .wolfSpider:
@@ -134,7 +119,7 @@ nonisolated enum SpiderClass: String, CaseIterable {
             return [
                 "Sits in the center of a large circular web, often rebuilt nightly.",
                 "Bulbous abdomen, frequently patterned.",
-                "Webs are usually across open spans — doorways, between plants."
+                "Webs are usually across open spans such as doorways and between plants."
             ]
         case .jumpingSpider:
             return [
@@ -164,7 +149,7 @@ nonisolated enum SpiderClass: String, CaseIterable {
             return [
                 "Photograph from directly above with the whole body in frame.",
                 "A second shot showing the underside of the abdomen helps a lot.",
-                "Include something for scale — a coin or your fingertip nearby, not touching."
+                "Include something for scale, such as a coin or your fingertip nearby (not touching)."
             ]
         case .notASpider:
             return ["Try scanning again with the subject filling the frame."]
@@ -178,7 +163,7 @@ nonisolated enum SpiderClass: String, CaseIterable {
         case .otherSpider:
             return "Post the photo to iNaturalist or a local arachnology group for a human ID."
         default:
-            return "Leave it be — it's doing pest control for you."
+            return "Leave it be, as it is doing pest control for you."
         }
     }
 }

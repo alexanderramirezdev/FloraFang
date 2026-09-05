@@ -21,7 +21,7 @@ struct CameraScreen: View {
     @State private var trace: [String] = []
     @State private var errorMessage: String?
 
-    // Label inspector (development tool — long-press the shutter)
+    // Label inspector (development tool: long-press the shutter)
     @State private var rawLabels: [RankedLabel] = []
     @State private var inspectorImage: UIImage?
     @State private var showInspector = false
@@ -45,7 +45,7 @@ struct CameraScreen: View {
             case .denied:
                 message("Quadrat needs the camera to identify anything. Enable it in Settings → Quadrat.")
             case .interrupted:
-                message("Camera paused. This usually clears on its own — if it doesn't, switch tabs and come back.")
+                message("Camera paused. This usually clears on its own. If it does not, switch tabs and come back.")
             case .failed(let reason):
                 message(reason)
             case .idle:
@@ -212,7 +212,7 @@ struct CameraScreen: View {
         }
     }
 
-    /// Zoom is the answer for small subjects, not walking closer — moving in
+    /// Zoom is the answer for small subjects, not walking closer: moving in
     /// past the lens's minimum focus distance just produces a blurry photo.
     private var zoomControl: some View {
         VStack(spacing: 4) {
@@ -243,7 +243,7 @@ struct CameraScreen: View {
             if let cm = camera.minimumFocusDistanceCM {
                 Text(camera.supportsMacro
                      ? "closer than ~\(Int(cm))cm switches to macro automatically"
-                     : "can't focus closer than ~\(Int(cm))cm — zoom instead of moving in")
+                     : "can't focus closer than ~\(Int(cm))cm, zoom instead of moving in")
                     .font(.system(size: 9))
                     .foregroundStyle(Palette.lichen.opacity(0.7))
             }
@@ -408,7 +408,7 @@ struct CornerBracket: Shape {
     }
 }
 
-// Keyed on scanID, not content — see the note in Assessment.swift.
+// Keyed on scanID, not content: see the note in Assessment.swift.
 extension Assessment: Identifiable {
     var id: UUID { scanID }
 }

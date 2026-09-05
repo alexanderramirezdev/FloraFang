@@ -44,7 +44,7 @@ struct ConfidenceGate {
         case accept
         /// Report, but frame it as a possible hazard rather than an ID.
         case acceptAsWarning
-        /// Not good enough — try the next tier.
+        /// Not good enough: try the next tier.
         case escalate
     }
 

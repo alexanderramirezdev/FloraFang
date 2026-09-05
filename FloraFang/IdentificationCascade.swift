@@ -6,10 +6,10 @@
 //  answer. Tier 4 always answers, so this function never fails to produce
 //  something honest.
 //
-//    1. Vision coarse category   — offline, free, ~50ms
-//    2. Core ML hazard model     — offline, free, ~100ms   (skipped if absent)
-//    3. Remote model             — network, costs money     (off by default)
-//    4. Structured refusal       — always available
+//    1. Vision coarse category: offline, free, ~50ms
+//    2. Core ML hazard model:   offline, free, ~100ms (skipped if absent)
+//    3. Remote model:           network, costs money (off by default)
+//    4. Structured refusal:     always available
 //
 
 import Foundation
@@ -152,7 +152,7 @@ final class IdentificationCascade {
 
         var request = ClassifyImageRequest()
         // The image arriving here is ALREADY cropped to the capture square, so
-        // don't crop again — that would throw away the framing the user chose.
+        // don't crop again, because that would throw away the framing the user chose.
         request.cropAndScaleAction = .scaleToFit
         let observations = try await request.perform(on: cgImage)
 
@@ -177,11 +177,11 @@ final class IdentificationCascade {
 
         // SAFETY ROUTING. Taking the highest-ranked match is wrong here.
         //
-        // Vision confuses spiders with insects constantly — small dark body,
+        // Vision confuses spiders with insects constantly: small dark body,
         // many legs, similar context. If "insect" scores 0.25 and "spider"
         // scores 0.20, first-match-wins sends it down the insect path and the
         // hazard classifier never runs. After the model is trained, that means
-        // a widow gets reported as "Insect — most are harmless."
+        // a widow gets reported as "Insect: most are harmless."
         //
         // So: if a higher-hazard category appears anywhere in the plausible
         // range, prefer it. Being wrong toward caution costs a user nothing.
@@ -381,7 +381,7 @@ final class IdentificationCascade {
     // MARK: - Debug
 
     /// Vision's full ranked label list, unfiltered by the catalog.
-    /// Development tool — this is how you find labels your matchTerms miss.
+    /// Development tool: this is how you find labels your matchTerms miss.
     func rawLabels(_ image: UIImage, limit: Int = 20) async throws -> [RankedLabel] {
         guard let cgImage = image.cgImage else { throw IdentificationError.badImage }
 
@@ -488,21 +488,20 @@ final class IdentificationCascade {
     }
 
     /// A weak Tier 1 result. "Insect" in large type at 16% confidence reads as
-    /// an identification when it's closer to a coin flip — so we hedge the
+    /// an identification when it's closer to a coin flip, so we hedge the
     /// wording and keep the hazard framing conservative.
     private func uncertainCategory(_ coarse: Coarse) -> Assessment {
         let entry = coarse.entry
         return Assessment(
             headline: "Possibly \(article(for: entry.displayName)) \(entry.displayName.lowercased())",
             group: entry.group,
-            // Never downgrade to "safe" on weak evidence.
             hazard: entry.hazard == .safe ? .caution : entry.hazard,
             hazardNote: "Confidence is low, so treat this as a guess rather than an identification. \(entry.hazardNote)",
             confidence: coarse.confidence,
             tier: .coarse,
             ruledOut: [],
             fieldNotes: [
-                "Zoom in and retake so the subject fills the square — that alone usually fixes a weak result.",
+                "Zoom in and retake so the subject fills the square. That alone usually fixes a weak result.",
                 "Tap the subject on screen to lock focus before shooting.",
                 "Plain, evenly lit backgrounds help far more than bright light."
             ] + entry.fieldNotes.prefix(1),
@@ -518,7 +517,7 @@ final class IdentificationCascade {
 
     private func refusal(rawLabel: String, confidence: Double) -> Assessment {
         Assessment(
-            headline: "Spider — group not determined",
+            headline: "Spider: group not determined",
             group: "Arachnid",
             hazard: .caution,
             hazardNote: "This is a spider, but FloraFang can't tell you which group with enough confidence to be useful. It is NOT ruling out a widow or recluse. Don't handle it.",
@@ -534,7 +533,7 @@ final class IdentificationCascade {
             fieldNotes: [
                 "Retake from directly above with the whole spider in the square.",
                 "A shot of the underside of the abdomen is the single most useful angle.",
-                "Steady light beats bright light — flash washes out the markings that matter."
+                "Steady light beats bright light. Flash washes out the markings that matter."
             ],
             nextStep: "For a human answer, post the photo to iNaturalist or an arachnology group.",
             rawLabel: rawLabel,

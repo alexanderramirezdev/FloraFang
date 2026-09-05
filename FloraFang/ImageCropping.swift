@@ -6,7 +6,7 @@
 //
 //  Vision's .centerCrop takes the middle square of the FULL FRAME. When you
 //  photograph a spider on a wall from arm's length, that middle square is
-//  ~98% stucco. The classifier is not failing at spiders — it's correctly
+//  ~98% stucco. The classifier is not failing at spiders: it's correctly
 //  describing a wall, because that's what it was shown.
 //
 //  Cropping to the on-screen capture square before classification means the
@@ -39,7 +39,7 @@ extension UIImage {
     /// - Parameters:
     ///   - squareSide: side length of the capture square, in points
     ///   - previewSize: size of the preview view, in points
-    ///   - padding: extra margin around the square, 0.0–1.0. A little context
+    ///   - padding: extra margin around the square, 0.0 to 1.0. A little context
     ///     helps the classifier; too much reintroduces the background problem.
     func croppedToFrame(
         squareSide: CGFloat,

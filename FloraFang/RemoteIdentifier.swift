@@ -6,7 +6,7 @@
 //
 //  This exists so the cascade has a real seam to plug a network model into
 //  later. It never fires unless you explicitly enable it, and it never fires
-//  when Tier 2 was already confident — so a shipped v1 with this disabled
+//  when Tier 2 was already confident: so a shipped v1 with this disabled
 //  makes zero network calls, which is a real selling point against the
 //  competition.
 //
@@ -31,7 +31,7 @@ nonisolated struct DisabledRemoteIdentifier: RemoteIdentifying {
     func identify(_ image: UIImage) async throws -> Assessment? { nil }
 }
 
-/// Sketch of a real one. Left unwired on purpose — fill in when you pick a
+/// Sketch of a real one. Left unwired on purpose: fill in when you pick a
 /// backend, and read the warning below before you do.
 ///
 /// WARNING: if you point this at a general-purpose vision LLM, understand that

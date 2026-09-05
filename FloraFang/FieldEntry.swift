@@ -6,8 +6,8 @@
 import Foundation
 import SwiftData
 
-/// One saved observation. @Model is SwiftData's equivalent of an EF entity class —
-/// the macro generates the persistence plumbing so you just declare properties.
+/// One saved observation. @Model is SwiftData's equivalent of an EF entity class,
+/// where the macro generates the persistence plumbing so you just declare properties.
 @Model
 final class FieldEntry {
     var id: UUID
@@ -17,8 +17,8 @@ final class FieldEntry {
     var categoryKey: String
 
     /// The headline the assessment actually produced. Stored separately from
-    /// the catalog name because a refusal reads "Spider — group not determined"
-    /// while the catalog name is just "Spider" — showing the latter in the log
+    /// the catalog name because a refusal reads "Spider: group not determined"
+    /// while the catalog name is just "Spider". Showing the latter in the log
     /// makes a refusal look like a successful ID.
     /// Defaulted so existing stores migrate without a schema version.
     var headline: String = ""
@@ -28,7 +28,7 @@ final class FieldEntry {
 
     // The guidance text, stored rather than regenerated. A refusal's wording is
     // built at runtime and can't be reconstructed from the catalog, and catalog
-    // text may change between app versions — a log entry should show what the
+    // text may change between app versions. A log entry should show what the
     // app actually told you at the time, not what it would say today.
     var group: String = ""
     var hazardNote: String = ""
@@ -36,26 +36,13 @@ final class FieldEntry {
     var nextStep: String = ""
     var ruledOut: [String] = []
 
-    // Tester feedback. This is what turns a field log into calibration data.
-    //
-    // A confidence score is uninterpretable on its own. Setting a threshold
-    // requires pairs of "the model said 0.72" and "the model was right or
-    // wrong," and only the person who was standing there can supply the
-    // second half. Without this, more testers means more unlabelled photos
-    // rather than a faster calibration.
-    /// The cascade trace for this scan. Persisted rather than discarded,
-    /// because it is the only record of WHY a result came out the way it did,
-    /// and a refusal with no trace is undiagnosable after the fact. Also the
-    /// thing that makes a tester export useful: they cannot relay a trace
-    /// they never saw.
-    var traceLines: [String] = []
-
+    // Self-audit: did the app get it right?
+    // Blank until the user taps a verdict in the detail screen.
     var verdictRaw: String = ""
-
-    /// What it actually was, when the app got it wrong. Free text on purpose:
-    /// a picker would constrain people to the classes the model already
-    /// knows, and the useful corrections are often outside them.
     var actualIdentity: String = ""
+
+    // Complete audit trail of how this entry was resolved.
+    var traceLines: [String] = []
 
     /// The raw Vision label, kept so you can audit what the classifier actually said.
     var rawLabel: String
@@ -65,7 +52,7 @@ final class FieldEntry {
     /// migrations stay simple if the enum changes later.
     var hazardRaw: String
 
-    /// Photo stored as external data — SwiftData keeps large blobs out of the
+    /// Photo stored as external data: SwiftData keeps large blobs out of the
     /// main store file automatically with this attribute.
     @Attribute(.externalStorage) var imageData: Data?
 
@@ -123,7 +110,7 @@ final class FieldEntry {
 
     /// Falls back to catalog content for rows saved before these fields existed.
     var displayGroup: String {
-        group.isEmpty ? (category?.group ?? "—") : group
+        group.isEmpty ? (category?.group ?? "None") : group
     }
 
     var displayHazardNote: String {
@@ -140,7 +127,7 @@ final class FieldEntry {
 }
 
 extension FieldEntry {
-    /// Preferred way to build an entry — keeps every call site from having to
+    /// Preferred way to build an entry: keeps every call site from having to
     /// remember which of the dozen fields map to which part of the assessment.
     convenience init(assessment: Assessment, imageData: Data?, note: String) {
         self.init(

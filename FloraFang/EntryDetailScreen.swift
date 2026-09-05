@@ -188,7 +188,7 @@ struct EntryDetailScreen: View {
         )
     }
 
-    /// Editable in place — @Bindable writes straight through to SwiftData,
+    /// Editable in place: @Bindable writes straight through to SwiftData,
     /// so there's no explicit save call.
     private var noteEditor: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -224,7 +224,7 @@ struct EntryDetailScreen: View {
                     .foregroundStyle(Palette.lichen.opacity(0.6))
             }
 
-            Text("Ask about this observation — habitat, visible markings, photography advice, or safe non-contact relocation.")
+            Text("Ask about this observation: habitat, visible markings, photography advice, or safe non-contact relocation.")
                 .font(.system(size: 11.5))
                 .foregroundStyle(Palette.parchment.opacity(0.75))
 
@@ -449,7 +449,7 @@ struct EntryDetailScreen: View {
 
         // Change 1: Deterministic Swift filter before the model.
         // If the query touches symptoms, bites, treatments, or dosages,
-        // do NOT call the model at all — display the unbypassable Poison Control card.
+        // do NOT call the model at all: display the unbypassable Poison Control card.
         if isMedicalOrEmergencyQuery(q) {
             interceptedMedicalQuery = true
             naturalistAnswer = ""

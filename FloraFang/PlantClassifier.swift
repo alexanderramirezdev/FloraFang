@@ -43,7 +43,7 @@ actor PlantClassifier {
         guard let url = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc")
                      ?? Bundle.main.url(forResource: modelName, withExtension: "mlmodel")
         else {
-            print("[FloraFang] No \(modelName) model in bundle — plant classification disabled.")
+            print("[FloraFang] No \(modelName) model in bundle: plant classification disabled.")
             return
         }
 

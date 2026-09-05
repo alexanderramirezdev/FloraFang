@@ -115,7 +115,7 @@ struct FieldGuidanceView: View {
 
                     ForEach(photoAdvice, id: \.self) { tip in
                         HStack(alignment: .top, spacing: 7) {
-                            Text("—").foregroundStyle(Palette.ochre)
+                            Text("•").foregroundStyle(Palette.ochre)
                             Text(tip)
                                 .font(.system(size: 12))
                                 .foregroundStyle(Palette.parchment.opacity(0.85))
@@ -133,7 +133,7 @@ struct FieldGuidanceView: View {
                 VStack(alignment: .leading, spacing: 5) {
                     ForEach(generalNotes, id: \.self) { note in
                         HStack(alignment: .top, spacing: 7) {
-                            Text("—").foregroundStyle(Palette.lichen)
+                            Text("•").foregroundStyle(Palette.lichen)
                             Text(note)
                                 .font(.system(size: 12))
                                 .foregroundStyle(Palette.parchment.opacity(0.8))

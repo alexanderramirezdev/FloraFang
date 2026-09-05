@@ -124,7 +124,7 @@ struct OnboardingView: View {
                     icon: "plus.magnifyingglass",
                     color: Palette.ochre,
                     headline: "Use the Zoom Slider",
-                    detail: "Do not move too close — phone lenses cannot focus below ~10 cm. Stand back and use the slider to zoom until the subject fills the square."
+                    detail: "Do not move too close, because phone lenses cannot focus below ~10 cm. Stand back and use the slider to zoom until the subject fills the square."
                 ),
                 OnboardingPoint(
                     icon: "sun.max.fill",
@@ -163,7 +163,7 @@ struct OnboardingView: View {
                     icon: "xmark.shield.fill",
                     color: Palette.rust,
                     headline: "No Toxic Match ≠ Harmless",
-                    detail: "Finding no toxic match only means the specimen did not match our high-confidence hazard list — not that it is safe."
+                    detail: "Finding no toxic match only means the specimen did not match our high confidence hazard list, not that it is safe."
                 ),
                 OnboardingPoint(
                     icon: "questionmark.circle.fill",

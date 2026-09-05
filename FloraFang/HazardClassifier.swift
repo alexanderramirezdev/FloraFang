@@ -4,7 +4,7 @@
 //
 //  Tier 2. Wraps your trained Core ML model.
 //
-//  This compiles and runs with NO model present — isAvailable returns false
+//  This compiles and runs with NO model present: isAvailable returns false
 //  and the cascade skips straight past it. Drop SpiderHazard.mlmodel into the
 //  Xcode project and it lights up with no other code change.
 //
@@ -47,7 +47,7 @@ actor HazardClassifier {
         guard let url = Bundle.main.url(forResource: modelName, withExtension: "mlmodelc")
                      ?? Bundle.main.url(forResource: modelName, withExtension: "mlmodel")
         else {
-            print("[FloraFang] No \(modelName) model in bundle — Tier 2 disabled.")
+            print("[FloraFang] No \(modelName) model in bundle: Tier 2 disabled.")
             return
         }
 
