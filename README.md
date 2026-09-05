@@ -83,7 +83,7 @@ Identification runs through four orchestrated tiers:
 ## Key App Features
 
 * **Instant Shutter Viewfinder**: Zero-lag camera capture using `AVCaptureSession` photo preset. Square quadrat frame guides framing without edge clipping.
-* **On-Device Field Naturalist Chat**: Chat directly with Apple's Foundation Model in `EntryDetailScreen.swift`. Tap quick prompt chips (*"🐾 Dangerous to pets?"*, *"📦 Safe way to move it?"*, *"🩺 What if bitten?"*) or ask custom questions offline.
+* **On-Device Field Naturalist Chat**: Chat directly with Apple's Foundation Model in `EntryDetailScreen.swift`. Tap quick prompt chips (*"🚨 Exposure Protocol"*, *"📦 Safe way to move it?"*, *"🏠 Typical habitat?"*, *"📸 Best photo angles?"*) or ask grounded questions offline. Protected by a deterministic pre-model Swift filter that intercepts symptom, bite, treatment, and dosage queries before the LLM can run, presenting direct poison control hotlines and exposure routing instead.
 * **Emergency Exposure Protocol**: In `EmergencyScreen.swift`, one-tap direct dialing to **US Poison Control (1-800-222-1222)** and the **ASPCA Animal Poison Control Center (888-426-4435)**. Structures exposure notes for first responders before they pick up.
 * **Privacy-Preserving Field Log**: Entries saved in SwiftData. Optional location capture rounds coordinates to ~1 km (2 decimal places) and reverse-geocodes city names locally. Zero tracking, zero telemetry.
 * **Research Data Export**: Generates a standard `.zip` containing a `field_log.csv` and full-resolution images for offline data analysis and Create ML re-training.
