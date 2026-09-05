@@ -73,7 +73,7 @@ Identification runs through four orchestrated tiers:
 | Tier | Component | Function | Cost / Latency |
 |---|---|---|---|
 | **1** | **Apple Vision (`ClassifyImageRequest`)** | Coarse category identification (spider, plant, bird, insect). Non-spiders resolve immediately from local catalog. | Offline, ~40ms |
-| **2a** | **Core ML Hazard Model (`SpiderHazard.mlmodel`)** | 10-class image classifier trained on medically significant vs. common benign spider families. Evaluated with `.scaleToFit` to preserve all 8 legs. | Offline, ~60ms |
+| **2a** | **Core ML Hazard Model (`SpiderHazard.mlmodel`)** | 10-class image classifier trained on medically significant vs. common benign spider families. Evaluated with `.scaleToFill` to match Create ML's training preprocessing (recovering 11.3 points of dangerous recall over letterboxing). | Offline, ~60ms |
 | **2b** | **Apple Intelligence (`SystemLanguageModel`)** | Multimodal feature extraction. Inspects eye arrangements (e.g. 6 eyes in 3 pairs for Recluse), hourglass markings, and violin patterns. Isolates subject via Vision foreground instance masking. | Offline, on-device |
 | **3** | **Remote Cloud Fallback** | Remote API seam. **Disabled by default** to preserve 100% offline privacy and zero-network operation. | Disabled |
 | **4** | **Structured Refusal** | Delivers dynamic AI-generated feedback explaining what markings weren't visible (e.g., *"Not visible in photo: underside of abdomen"*), plain-English disagreement notes, and angle retake advice. | Instant |

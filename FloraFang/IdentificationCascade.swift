@@ -78,17 +78,12 @@ final class IdentificationCascade {
         if await classifier.isAvailable {
             if let prediction = try await classifier.classify(image) {
                 corePrediction = prediction
-                lastTrace.append("tier2a: \(prediction.rawLabel) @ \(pct(prediction.confidence)) (H=\(String(format: "%.2f", prediction.entropy)))")
+                lastTrace.append("tier2a: \(prediction.rawLabel) @ \(pct(prediction.confidence))")
                 coreVerdict = gate.evaluate(
                     top: (prediction.spiderClass, prediction.confidence),
-                    runnerUp: prediction.runnerUpConfidence,
-                    isHighEntropy: prediction.isHighEntropy
+                    runnerUp: prediction.runnerUpConfidence
                 )
-                if prediction.isHighEntropy {
-                    lastTrace.append("gate: high entropy / out-of-distribution, escalating")
-                } else {
-                    lastTrace.append("gate: \(coreVerdict)")
-                }
+                lastTrace.append("gate: \(coreVerdict)")
             }
         } else {
             lastTrace.append("tier2a: no model in bundle, skipped")
@@ -103,15 +98,13 @@ final class IdentificationCascade {
 
         if await featureExtractor.isAvailable {
             do {
-                extraction = try await featureExtractor.extract(from: image, isAlreadySegmented: false)
+                extraction = try await featureExtractor.extract(from: image)
                 if let ex = extraction {
                     let names = ex.report.visibleFeatures.map(\.rawValue).joined(separator: ", ")
                     lastTrace.append("tier2b: features [\(names.isEmpty ? "none visible" : names)]")
                     if let indicated = ex.verdict.indicatedClass {
                         lastTrace.append("tier2b: rules indicate \(indicated.trainingLabel), \(ex.verdict.strength)")
                     }
-                } else {
-                    lastTrace.append("tier2b: no diagnostic markings extracted")
                 }
             } catch {
                 lastTrace.append("tier2b: extraction failed, \(error.localizedDescription)")
@@ -140,7 +133,7 @@ final class IdentificationCascade {
 
         // ---- Tier 4: refuse, usefully -----------------------------------
         lastTrace.append("tier4: refusal")
-        return refusal(rawLabel: coarse.rawLabel, confidence: coarse.confidence, extraction: extraction)
+        return refusal(rawLabel: coarse.rawLabel, confidence: coarse.confidence)
     }
 
     // MARK: - Tier 1
@@ -256,8 +249,7 @@ final class IdentificationCascade {
             lastTrace.append("combine: diagnostic marking, features lead")
             var result = featureLedAssessment(fc, extraction: extraction, corroboratedBy: core)
             if let core, core.spiderClass != fc {
-                let desc = extraction?.report.plainDescription.isEmpty == false ? " (observation: \"\(extraction!.report.plainDescription)\")" : ""
-                result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()), but Apple Intelligence confirmed a diagnostic marking for \(fc.displayName.lowercased())\(desc). Treating it as the more dangerous of the two."
+                result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()), but a marking associated with \(fc.displayName.lowercased()) is visible. Treating it as the more dangerous of the two."
             }
             return result
         }
@@ -267,8 +259,7 @@ final class IdentificationCascade {
            fc.isMedicallySignificant, !core.spiderClass.isMedicallySignificant {
             lastTrace.append("combine: features escalate over benign Core ML call")
             var result = featureLedAssessment(fc, extraction: extraction, corroboratedBy: core)
-            let desc = extraction?.report.plainDescription.isEmpty == false ? " (observation: \"\(extraction!.report.plainDescription)\")" : ""
-            result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()). Apple Intelligence detected markings consistent with \(fc.displayName.lowercased())\(desc), so this is being treated as the more dangerous possibility."
+            result.disagreementNote = "The photo classifier suggested \(core.spiderClass.displayName.lowercased()). Markings consistent with \(fc.displayName.lowercased()) are also visible, so this is being treated as the more dangerous possibility."
             return result
         }
 
@@ -282,7 +273,7 @@ final class IdentificationCascade {
         // actually earned rather than asserted, so it gets its own tier label.
         if let fc = featureClass, fc == core.spiderClass {
             lastTrace.append("combine: agreement")
-            var result = assessment(from: core, asWarning: false, tier: .corroborated)
+            var result = assessment(from: core, asWarning: false)
             result = withFeatures(result, features, tier: .corroborated)
             return result
         }
@@ -290,11 +281,9 @@ final class IdentificationCascade {
         // No feature signal. Fall back to the gate's own verdict on Core ML.
         switch coreVerdict {
         case .accept:
-            // Layer 3 Corroboration: Uncorroborated benign calls are framed as warnings, never definitive safety.
-            let isUncorroboratedBenign = !core.spiderClass.isMedicallySignificant && featureClass == nil
-            return withFeatures(assessment(from: core, asWarning: isUncorroboratedBenign, tier: .hazard), features, tier: .hazard)
+            return withFeatures(assessment(from: core, asWarning: false), features, tier: .hazard)
         case .acceptAsWarning:
-            return withFeatures(assessment(from: core, asWarning: true, tier: .hazard), features, tier: .hazard)
+            return withFeatures(assessment(from: core, asWarning: true), features, tier: .hazard)
         case .escalate:
             return nil
         }
@@ -309,9 +298,6 @@ final class IdentificationCascade {
         let supporting = extraction?.verdict.supportingFeatures ?? []
 
         var notes = supporting.map { "Visible: \($0.userFacingDescription.lowercased())." }
-        if let plain = extraction?.report.plainDescription, !plain.isEmpty {
-            notes.append("Apple Intelligence: \"\(plain)\"")
-        }
         notes += sc.fieldNotes
 
         var result = Assessment(
@@ -407,41 +393,95 @@ final class IdentificationCascade {
 
     // MARK: - Building assessments
 
-    private func assessment(from prediction: HazardPrediction, asWarning: Bool, tier: ResolutionTier = .hazard) -> Assessment {
+    private func assessment(from prediction: HazardPrediction, asWarning: Bool) -> Assessment {
         let sc = prediction.spiderClass
 
-        // When we're only warning, don't claim an identification. Say what the
-        // evidence supports and no more.
         let headline = asWarning
             ? "Possibly a \(sc.displayName.lowercased())"
             : sc.displayName
 
-        let note = asWarning
-            ? "Evidence is weak, but consistent with a \(sc.displayName.lowercased()). Treat it as one until you know otherwise. \(sc.hazardNote)"
-            : sc.hazardNote
+        // THE CRITICAL DISTINCTION, measured rather than assumed.
+        //
+        // On 346 held-out real widows and recluses, a benign prediction shown
+        // above the 0.86 benignFloor was wrong 2 times, 0.6%. The same
+        // prediction shown above 0.38 was wrong 76 times, 22%.
+        //
+        // The 0.38 branch is worth keeping, because cutting it turns roughly
+        // 1,100 of 1,946 predictions into refusals and an app that refuses on
+        // most scans is useless in a different way. What is NOT acceptable is
+        // attaching a benign hazard note to it. SpiderClass.hazardNote for a
+        // huntsman says "not medically significant", and saying that on a
+        // prediction that is right about a third of the time is how 22% of
+        // widow holders get told to relax.
+        //
+        // So a low confidence benign call names the family and says nothing
+        // about safety. The hazard level is forced to .caution and the note
+        // carries the same non-exclusion language a refusal does.
+        let isWeakBenign = asWarning && !sc.isMedicallySignificant
+
+        let note: String
+        if isWeakBenign {
+            note = "The shape is consistent with a \(sc.displayName.lowercased()), but the evidence is weak and this is NOT ruling out a widow or recluse. Don't handle it."
+        } else if asWarning {
+            note = "Evidence is weak, but consistent with a \(sc.displayName.lowercased()). Treat it as one until you know otherwise. \(sc.hazardNote)"
+        } else {
+            note = sc.hazardNote
+        }
+
+        // A weak benign call must never present as safe, whatever the class
+        // would normally report.
+        let hazard = isWeakBenign ? Hazard.caution : sc.hazard
+
+        // Retake guidance rather than "leave it be, it's doing pest control
+        // for you", which is a safety claim in disguise.
+        let notes = isWeakBenign
+            ? ["Retake from directly above with the whole spider in the square.",
+               "A shot of the underside of the abdomen is the single most useful angle.",
+               "Steady light beats bright light. Flash washes out the markings that matter."]
+            : sc.fieldNotes
+
+        let next = isWeakBenign
+            ? "For a confident answer, post the photo to iNaturalist or an arachnology group."
+            : sc.nextStep
 
         return Assessment(
             headline: headline,
             group: sc.genus,
-            hazard: sc.hazard,
+            hazard: hazard,
             hazardNote: note,
             confidence: prediction.confidence,
-            tier: tier,
-            ruledOut: ruledOutGroups(given: sc, confidence: prediction.confidence, tier: tier),
-            fieldNotes: sc.fieldNotes,
-            nextStep: sc.nextStep,
+            tier: .hazard,
+            ruledOut: ruledOutGroups(given: sc, confidence: prediction.confidence),
+            fieldNotes: notes,
+            nextStep: next,
             rawLabel: prediction.rawLabel,
             categoryKey: "spider"
         )
     }
 
-    /// Only claim an exclusion when the evidence actually supports it.
-    /// Exclusions require cross-tier corroboration (both Core ML and visible markings agreement)
-    /// and high confidence (>= 0.85). A single uncorroborated classifier output must NEVER rule out
-    /// medically significant species (Widow or Recluse).
-    private func ruledOutGroups(given sc: SpiderClass, confidence: Double, tier: ResolutionTier) -> [String] {
-        guard !sc.isMedicallySignificant, tier == .corroborated, confidence >= 0.85 else { return [] }
-        return ["Widow (Latrodectus)", "Recluse (Loxosceles)"]
+    /// Always empty. Kept as a function so the call sites read explicitly
+    /// rather than silently passing [].
+    ///
+    /// WHY THIS WAS REMOVED, September 2026:
+    ///
+    /// It used to return "widow and recluse ruled out" whenever a benign
+    /// class cleared the confidence floor. A screen photo of an obvious black
+    /// widow classified as huntsman at 86% therefore displayed an affirmative
+    /// claim that it was not a widow. The exclusion was derived from the same
+    /// prediction that was wrong, so it carried no independent evidence and
+    /// simply amplified the error.
+    ///
+    /// The reasoning was unsound even when the prediction is correct. Ruling
+    /// out a widow means observing the absence of a ventral hourglass, and
+    /// absence cannot be established from a photo that may not show the
+    /// underside. That is the same principle FeatureRules already enforces:
+    /// features escalate, never downgrade.
+    ///
+    /// If an exclusion is ever reinstated it needs independent positive
+    /// evidence of a different group, not the absence of evidence for this
+    /// one, and it should never be reachable from a single classifier.
+    private func ruledOutGroups(given sc: SpiderClass, confidence: Double) -> [String] {
+        []
     }
 
     /// A weak Tier 1 result. "Insect" in large type at 16% confidence reads as
@@ -473,31 +513,26 @@ final class IdentificationCascade {
         "aeiouAEIOU".contains(word.first ?? "x") ? "an" : "a"
     }
 
-    private func refusal(rawLabel: String, confidence: Double, extraction: ExtractionResult? = nil) -> Assessment {
-        var notes: [String] = []
-
-        if let notVisible = extraction?.report.notVisible, !notVisible.isEmpty {
-            notes.append("Not visible in photo: \(notVisible.joined(separator: ", ")).")
-        }
-        if let desc = extraction?.report.plainDescription, !desc.isEmpty {
-            notes.append("Apple Intelligence observed: \"\(desc)\"")
-        }
-
-        notes += [
-            "Retake from directly above with the whole spider in the square.",
-            "A shot of the underside of the abdomen is the single most useful angle.",
-            "Steady light beats bright light — flash washes out the markings that matter."
-        ]
-
-        return Assessment(
+    private func refusal(rawLabel: String, confidence: Double) -> Assessment {
+        Assessment(
             headline: "Spider — group not determined",
             group: "Arachnid",
             hazard: .caution,
             hazardNote: "This is a spider, but FloraFang can't tell you which group with enough confidence to be useful. It is NOT ruling out a widow or recluse. Don't handle it.",
+            // Zero on purpose. This used to carry Tier 1's Vision confidence,
+            // which is how sure we are it is a spider at all, and has nothing
+            // to do with why the hazard call was refused. In an export that
+            // produced rows reading "0.9575, insufficient confidence", which
+            // is a contradiction on its face. A refusal has no confidence to
+            // report, and the trace explains what actually happened.
             confidence: 0,
             tier: .refusal,
             ruledOut: [],
-            fieldNotes: notes,
+            fieldNotes: [
+                "Retake from directly above with the whole spider in the square.",
+                "A shot of the underside of the abdomen is the single most useful angle.",
+                "Steady light beats bright light — flash washes out the markings that matter."
+            ],
             nextStep: "For a human answer, post the photo to iNaturalist or an arachnology group.",
             rawLabel: rawLabel,
             categoryKey: "spider"
