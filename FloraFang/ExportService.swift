@@ -183,11 +183,17 @@ enum ExportService {
     }
 
     /// Escapes a field for CSV. Notes are free text and will contain commas.
+    /// Defends against CSV formula injection (=, +, -, @, \t, \r) for downstream spreadsheet viewers.
     private static func csv(_ value: String) -> String {
-        guard value.contains(",") || value.contains("\"") || value.contains("\n") else {
-            return value
+        var sanitized = value
+        let formulaPrefixes: [Character] = ["=", "+", "-", "@", "\t", "\r"]
+        if let first = sanitized.first, formulaPrefixes.contains(first) {
+            sanitized = "'" + sanitized
         }
-        return "\"\(value.replacingOccurrences(of: "\"", with: "\"\""))\""
+        guard sanitized.contains(",") || sanitized.contains("\"") || sanitized.contains("\n") || sanitized.contains("\r") else {
+            return sanitized
+        }
+        return "\"\(sanitized.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 
     private static func readme() -> String {

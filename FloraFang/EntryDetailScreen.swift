@@ -41,7 +41,6 @@ struct EntryDetailScreen: View {
                     noteEditor
                     naturalistChatSection
                     verdictSection
-                    traceSection
                     metadata
                     deleteButton
                 }
@@ -182,26 +181,11 @@ struct EntryDetailScreen: View {
     }
 
     private var notes: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(entry.displayFieldNotes, id: \.self) { line in
-                HStack(alignment: .top, spacing: 7) {
-                    Text("—").foregroundStyle(Palette.ochre)
-                    Text(line)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Palette.parchment.opacity(0.8))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            if !entry.displayNextStep.isEmpty {
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "arrow.turn.down.right").font(.system(size: 11))
-                    Text(entry.displayNextStep).font(.system(size: 11.5))
-                }
-                .foregroundStyle(Palette.lichen)
-                .padding(.top, 4)
-            }
-        }
+        FieldGuidanceView(
+            notes: entry.displayFieldNotes,
+            nextStep: entry.displayNextStep,
+            wasRefusal: entry.wasRefusal
+        )
     }
 
     /// Editable in place — @Bindable writes straight through to SwiftData,
@@ -605,45 +589,6 @@ struct EntryDetailScreen: View {
         case .correct: return Palette.moss
         case .wrong:   return Palette.rust
         case .unsure:  return Palette.lichen.opacity(0.5)
-        }
-    }
-
-    /// Collapsed by default. This is a developer and tester affordance, not
-    /// something a normal user needs, but it is the only explanation of why
-    /// a scan came out the way it did and it has to survive the result screen.
-    @State private var showTrace = false
-
-    @ViewBuilder
-    private var traceSection: some View {
-        if !entry.traceLines.isEmpty {
-            VStack(alignment: .leading, spacing: 5) {
-                Button {
-                    withAnimation { showTrace.toggle() }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: showTrace ? "chevron.down" : "chevron.right")
-                            .font(.system(size: 9))
-                        Text("cascade trace")
-                            .font(.system(size: 10, design: .monospaced))
-                    }
-                    .foregroundStyle(Palette.lichen.opacity(0.7))
-                }
-
-                if showTrace {
-                    VStack(alignment: .leading, spacing: 3) {
-                        ForEach(entry.traceLines, id: \.self) { line in
-                            Text(line)
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundStyle(Palette.lichen.opacity(0.85))
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 6))
-                }
-            }
-            .padding(.top, 4)
         }
     }
 

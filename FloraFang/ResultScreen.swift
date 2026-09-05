@@ -15,7 +15,6 @@ struct ResultScreen: View {
     let onDismiss: () -> Void
 
     @State private var note = ""
-    @State private var showTrace = false
     @State private var showExposure = false
 
     var body: some View {
@@ -32,7 +31,6 @@ struct ResultScreen: View {
                     notes
                     noteField
                     buttons
-                    traceToggle
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -183,31 +181,11 @@ struct ResultScreen: View {
     // MARK: - Notes
 
     private var notes: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if assessment.isRefusal {
-                Text("TO GET A BETTER ANSWER")
-                    .font(.system(size: 10, weight: .semibold))
-                    .tracking(1.2)
-                    .foregroundStyle(Palette.lichen)
-            }
-
-            ForEach(assessment.fieldNotes, id: \.self) { line in
-                HStack(alignment: .top, spacing: 7) {
-                    Text("—").foregroundStyle(Palette.ochre)
-                    Text(line)
-                        .font(.system(size: 12.5))
-                        .foregroundStyle(Palette.parchment.opacity(0.8))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            HStack(alignment: .top, spacing: 6) {
-                Image(systemName: "arrow.turn.down.right").font(.system(size: 11))
-                Text(assessment.nextStep).font(.system(size: 11.5))
-            }
-            .foregroundStyle(Palette.lichen)
-            .padding(.top, 4)
-        }
+        FieldGuidanceView(
+            notes: assessment.fieldNotes,
+            nextStep: assessment.nextStep,
+            wasRefusal: assessment.isRefusal
+        )
     }
 
     /// Writes straight through to the saved entry, since it already exists.
@@ -254,38 +232,5 @@ struct ResultScreen: View {
             .foregroundStyle(Palette.lichen)
         }
         .padding(.top, 4)
-    }
-
-    private var traceToggle: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Button {
-                withAnimation { showTrace.toggle() }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: showTrace ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9))
-                    Text("cascade trace")
-                        .font(.system(size: 10, design: .monospaced))
-                }
-                .foregroundStyle(Palette.lichen.opacity(0.7))
-            }
-
-            if showTrace {
-                VStack(alignment: .leading, spacing: 3) {
-                    ForEach(trace, id: \.self) { line in
-                        Text(line)
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundStyle(Palette.lichen.opacity(0.8))
-                    }
-                    Text("label: \(assessment.rawLabel)")
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundStyle(Palette.lichen.opacity(0.6))
-                }
-                .padding(8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 6))
-            }
-        }
-        .padding(.top, 8)
     }
 }

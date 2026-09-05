@@ -127,10 +127,25 @@ Identification runs through four orchestrated tiers:
 ## Key App Features
 
 * **Instant Shutter Viewfinder**: Zero-lag camera capture using `AVCaptureSession` photo preset. Square quadrat frame guides framing without edge clipping.
-* **On-Device Field Naturalist Chat**: Chat directly with Apple's Foundation Model in `EntryDetailScreen.swift`. Tap quick prompt chips (*"🚨 Exposure Protocol"*, *"📦 Safe way to move it?"*, *"🏠 Typical habitat?"*, *"📸 Best photo angles?"*) or ask grounded questions offline. Protected by a deterministic pre-model Swift filter that intercepts symptom, bite, treatment, and dosage queries before the LLM can run, presenting direct poison control hotlines and exposure routing instead.
-* **Emergency Exposure Protocol**: In `EmergencyScreen.swift`, one-tap direct dialing to **US Poison Control (1-800-222-1222)** and the **ASPCA Animal Poison Control Center (888-426-4435)**. Structures exposure notes for first responders before they pick up.
-* **Privacy-Preserving Field Log**: Entries saved in SwiftData. Optional location capture rounds coordinates to ~1 km (2 decimal places) and reverse-geocodes city names locally. Zero tracking, zero telemetry.
-* **Research Data Export**: Generates a standard `.zip` containing a `field_log.csv` and full-resolution images for offline data analysis and Create ML re-training.
+* **Onboarding & Safety Framing (`OnboardingView.swift`)**: A 4-card illustrated first-launch flow explaining the app's triage philosophy, macro framing techniques (e.g. using the digital zoom slider to avoid iPhone minimum focal distance limits), clinical refusal boundaries (why an algorithm can never confirm a plant is safe to eat), and emergency protocol access.
+* **Dynamic Natural Seasonal Palette (`FloraFangApp.swift`)**: Automatically tunes organic botanical slate, moss, and foliage accents to match the four natural seasons (Spring Sprout, Summer Canopy, Autumn Cedar, Winter Spruce). Lifted from pitch-black for high outdoor sunlight readability with an interactive manual switcher in Settings.
+* **Emergency Exposure Protocol & Incident Log (`EmergencyScreen.swift`)**: Pinned 24/7 one-tap access to **US Poison Control (1-800-222-1222)** and the **ASPCA Animal Poison Control Center (888-426-4435)**. Features a subject-gated intake checklist (Child, Adult, Dog, Cat, Other Animal), streamlined specimen photo capture, and persistent SwiftData incident logging with history review (`ExposureHistoryView.swift`).
+* **Focused Triage Diagnostic Guidance (`FieldGuidanceView.swift`)**: Replaces walls of raw text with clean diagnostic chips focused strictly on medically decisive markers (eye arrangements, violin pattern, underside hourglass, dorsal spots) while discarding benign anatomical clutter.
+* **On-Device Field Naturalist Chat (`EntryDetailScreen.swift`)**: Chat directly with Apple's Foundation Model on-device. Protected by a deterministic pre-model Swift filter that intercepts symptom, bite, treatment, and dosage queries before the LLM can run, displaying unbypassable poison control hotlines instead.
+* **Privacy-Preserving Field Log**: Saved locally via SwiftData. Optional location capture rounds coordinates to ~1 km (2 decimal places) and reverse-geocodes city names locally.
+* **Hardened Research Data Export (`ExportService.swift`)**: Generates a standard `.zip` containing `field-log.csv` (retaining full cascade decision traces for ML evaluation) and full-resolution images, hardened against spreadsheet formula injection.
+
+---
+
+## Security, Privacy & Safety Architecture
+
+FloraFang is engineered for high-consequence field situations, where data exfiltration and software overreach can create legal, medical, and privacy liabilities:
+
+1. **100% Offline by Design**: FloraFang makes zero network calls. The Tier 3 remote seam defaults to `DisabledRemoteIdentifier`, failing closed. The app contains no third-party tracking, crash reporting, or analytics SDKs.
+2. **Location Coarsening**: When location capture is enabled, `LocationService.swift` deliberately rounds latitude and longitude to 2 decimal places (~1 km precision) and limits reverse-geocoding to city and region. Stored coordinates can never pinpoint a private home or backyard.
+3. **CSV Formula Injection Sanitization**: In `ExportService.swift`, user notes and labels are sanitized before CSV serialization. Any cell beginning with formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`) is safely escaped to prevent Dynamic Data Exchange (DDE) or formula execution in Microsoft Excel, Numbers, or LibreOffice.
+4. **Deterministic Clinical Interception**: Apple Intelligence is never allowed to freelance on emergency medical advice. A deterministic Swift keyword and regex validator checks queries for symptoms, bites, doses, or treatment terms before invoking `SystemLanguageModel`.
+5. **Static Dialer Integrity**: Emergency hotline URLs (`PoisonResources.swift`) use hardcoded digit strings without runtime string interpolation, preventing arbitrary scheme execution.
 
 ---
 
@@ -143,7 +158,8 @@ Identification runs through four orchestrated tiers:
 5. **Testing Tips**:
     * Test with real-world specimens or clear reference photographs.
     * Long-press the camera shutter to bring up the **Label Inspector** to see raw Vision classifications.
-    * Scroll to the bottom of any saved field entry to inspect the full **Cascade Decision Trace** (`tier1`, `tier2a`, `gate`, `tier2b`, `combine`).
+    * In **Field Log > Settings**, test the **Seasonal Palette** picker to switch between Spring, Summer, Autumn, and Winter themes in real time.
+    * Tap **Export field log** to inspect `field-log.csv`, which retains the complete internal **Cascade Decision Trace** (`tier1`, `tier2a`, `gate`, `tier2b`, `combine`) for ML diagnostics.
 
 ---
 
