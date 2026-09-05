@@ -24,6 +24,8 @@ struct EntryDetailScreen: View {
     @State private var naturalistQuery = ""
     @State private var naturalistAnswer = ""
     @State private var isNaturalistThinking = false
+    @State private var showEmergencySheet = false
+    @State private var interceptedMedicalQuery = false
 
     var body: some View {
         ZStack {
@@ -56,6 +58,13 @@ struct EntryDetailScreen: View {
         .fullScreenCover(isPresented: $showFullImage) {
             if let data = entry.imageData, let image = UIImage(data: data) {
                 ZoomableImageView(image: image)
+            }
+        }
+        .sheet(isPresented: $showEmergencySheet) {
+            if let data = entry.imageData, let img = UIImage(data: data) {
+                EmergencyScreen(prefilledImage: img)
+            } else {
+                EmergencyScreen()
             }
         }
         .confirmationDialog("Delete this entry?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -231,21 +240,38 @@ struct EntryDetailScreen: View {
                     .foregroundStyle(Palette.lichen.opacity(0.6))
             }
 
-            Text("Ask questions about this \(entry.displayTitle.lowercased()) — behavior, toxicity, pet safety, or safe handling.")
+            Text("Ask about this observation — habitat, visible markings, photography advice, or safe non-contact relocation.")
                 .font(.system(size: 11.5))
                 .foregroundStyle(Palette.parchment.opacity(0.75))
 
             // Quick Prompt Chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    quickChip("🐾 Dangerous to pets?")
+                    Button {
+                        showEmergencySheet = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "cross.case.fill")
+                            Text("Exposure Protocol")
+                        }
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Palette.rust.opacity(0.35), in: Capsule())
+                        .overlay(Capsule().stroke(Palette.rust.opacity(0.7), lineWidth: 1))
+                        .foregroundStyle(Palette.parchment)
+                    }
+                    .buttonStyle(.plain)
+
                     quickChip("📦 Safe way to move it?")
-                    quickChip("🩺 What if bitten?")
-                    quickChip("🏠 Where do they nest?")
+                    quickChip("🏠 Typical habitat?")
+                    quickChip("📸 Best photo angles?")
                 }
             }
 
-            if !naturalistAnswer.isEmpty {
+            if interceptedMedicalQuery {
+                poisonControlCard
+            } else if !naturalistAnswer.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text("ANSWER")
@@ -276,7 +302,7 @@ struct EntryDetailScreen: View {
 
             // Custom Question Input
             HStack(spacing: 8) {
-                TextField("ask anything about this organism…", text: $naturalistQuery)
+                TextField("ask about habitat, markings, or relocation…", text: $naturalistQuery)
                     .font(.system(size: 12.5))
                     .foregroundStyle(Palette.parchment)
                     .padding(9)
@@ -299,6 +325,85 @@ struct EntryDetailScreen: View {
         .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
     }
 
+    private var poisonControlCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Palette.rust)
+                    .font(.system(size: 13, weight: .bold))
+                Text("EXPOSURE ADVISORY")
+                    .font(.system(size: 10, weight: .bold))
+                    .tracking(1.0)
+                    .foregroundStyle(Palette.rust)
+            }
+
+            Text("FloraFang is not an emergency medical service and the AI chat does not provide bite, symptom, or treatment advice. For any bite, sting, or ingestion, contact Poison Control immediately.")
+                .font(.system(size: 12))
+                .foregroundStyle(Palette.parchment)
+                .lineSpacing(2)
+
+            VStack(spacing: 8) {
+                if let url = URL(string: "tel://18002221222") {
+                    Link(destination: url) {
+                        HStack {
+                            Image(systemName: "phone.fill")
+                            Text("Call Poison Control: 1-800-222-1222")
+                                .font(.system(size: 12, weight: .semibold))
+                            Spacer()
+                            Text("Free · 24/7")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Palette.parchment.opacity(0.7))
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
+                        .background(Palette.rust.opacity(0.35), in: RoundedRectangle(cornerRadius: 7))
+                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.rust.opacity(0.6), lineWidth: 1))
+                        .foregroundStyle(Palette.parchment)
+                    }
+                }
+
+                if let url = URL(string: "tel://8884264435") {
+                    Link(destination: url) {
+                        HStack {
+                            Image(systemName: "pawprint.fill")
+                            Text("ASPCA Pet Poison: (888) 426-4435")
+                                .font(.system(size: 12, weight: .semibold))
+                            Spacer()
+                            Text("Animal Hotline")
+                                .font(.system(size: 10))
+                                .foregroundStyle(Palette.parchment.opacity(0.7))
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity)
+                        .background(Palette.moss.opacity(0.3), in: RoundedRectangle(cornerRadius: 7))
+                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.moss.opacity(0.5), lineWidth: 1))
+                        .foregroundStyle(Palette.parchment)
+                    }
+                }
+
+                Button {
+                    showEmergencySheet = true
+                } label: {
+                    HStack {
+                        Image(systemName: "cross.case.fill")
+                        Text("Open Full Exposure Intake Checklist")
+                            .font(.system(size: 12, weight: .semibold))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11))
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.black.opacity(0.35), in: RoundedRectangle(cornerRadius: 7))
+                    .foregroundStyle(Palette.ochre)
+                }
+            }
+        }
+        .padding(12)
+        .background(Palette.rust.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.rust.opacity(0.4), lineWidth: 1))
+    }
+
     private func quickChip(_ text: String) -> some View {
         Button {
             submitNaturalistQuery(text)
@@ -313,9 +418,62 @@ struct EntryDetailScreen: View {
         .buttonStyle(.plain)
     }
 
+    private func isMedicalOrEmergencyQuery(_ query: String) -> Bool {
+        let lower = query.lowercased()
+
+        let biteTerms = ["bit", "bite", "bitten", "biting", "stung", "sting", "stings", "stinging", "fang", "fangs", "puncture", "nip", "nipped"]
+        let symptomTerms = ["symptom", "symptoms", "swelling", "swollen", "swell", "pain", "painful", "hurt", "hurts", "hurting", "ache", "aching", "necrosis", "necrotic", "rot", "rotting", "fever", "cramp", "cramps", "cramping", "spasm", "spasms", "nausea", "vomit", "vomiting", "dizzy", "dizziness", "itch", "itching", "itchy", "rash", "redness", "blister", "blisters", "wound", "pus", "infection", "infected", "hives", "allergic", "allergy", "anaphylaxis"]
+        let treatmentTerms = ["treatment", "treat", "treating", "cure", "curing", "remedy", "antivenom", "antidote", "first aid", "doctor", "hospital", "ambulance", "urgent care", "emergency room", "er", "911", "poison control", "call doctor"]
+        let medicationTerms = ["dose", "dosage", "medication", "medicine", "pill", "pills", "ointment", "cream", "ice", "tourniquet", "benadryl", "aspirin", "ibuprofen", "tylenol", "antihistamine", "prednisone", "epipen", "antibiotic"]
+        let ingestionTerms = ["ate", "eaten", "eat", "eating", "swallow", "swallowed", "swallowing", "ingest", "ingested", "ingesting", "chew", "chewed", "in mouth", "poisoned", "poisoning", "toxic reaction"]
+
+        let allCategories = [biteTerms, symptomTerms, treatmentTerms, medicationTerms, ingestionTerms]
+
+        for category in allCategories {
+            for term in category {
+                let pattern = "\\b\(NSRegularExpression.escapedPattern(for: term))\\b"
+                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+                   regex.firstMatch(in: lower, options: [], range: NSRange(location: 0, length: lower.utf16.count)) != nil {
+                    return true
+                }
+            }
+        }
+
+        let phrasePatterns = [
+            "what do i do if",
+            "what should i do if",
+            "what to do if",
+            "is my dog going to die",
+            "is my cat going to die",
+            "is my child going to",
+            "call 911",
+            "need a doctor",
+            "how to treat"
+        ]
+        for phrase in phrasePatterns {
+            if lower.contains(phrase) {
+                return true
+            }
+        }
+
+        return false
+    }
+
     private func submitNaturalistQuery(_ query: String) {
         let q = query.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty, !isNaturalistThinking else { return }
+
+        // Change 1: Deterministic Swift filter before the model.
+        // If the query touches symptoms, bites, treatments, or dosages,
+        // do NOT call the model at all — display the unbypassable Poison Control card.
+        if isMedicalOrEmergencyQuery(q) {
+            interceptedMedicalQuery = true
+            naturalistAnswer = ""
+            naturalistQuery = ""
+            return
+        }
+
+        interceptedMedicalQuery = false
         isNaturalistThinking = true
         naturalistAnswer = ""
 
@@ -324,22 +482,28 @@ struct EntryDetailScreen: View {
             #if canImport(FoundationModels)
             if #available(iOS 27.0, *) {
                 do {
-                    let knownNotes = entry.displayHazardNote.isEmpty ? "no additional notes" : entry.displayHazardNote
-                    let fieldNotesSummary = entry.displayFieldNotes.isEmpty ? "" : "\nField characteristics: " + entry.displayFieldNotes.joined(separator: "; ")
+                    let fieldNotesSummary = entry.displayFieldNotes.isEmpty ? "None recorded" : entry.displayFieldNotes.joined(separator: "; ")
+                    let nextStepText = entry.nextStep.isEmpty ? "None provided" : entry.nextStep
+                    let locationContext = entry.placeName != nil ? "\nObservation region: \(entry.placeName!)" : ""
 
                     let instructions = """
-                    You are FloraFang's on-device field naturalist. This observation has already been classified by the app — you do not re-identify it and you do not override, soften, or upgrade its verdict.
+                    You are FloraFang's on-device field naturalist assistant. You are strictly grounded in this specific saved field log entry.
 
-                    Observation: "\(entry.displayTitle)" (Category: \(entry.categoryKey))
-                    App's hazard verdict: \(entry.hazard.label)
-                    What the app already knows: \(knownNotes)\(fieldNotesSummary)
+                    LOGGED OBSERVATION CONTEXT:
+                    - Group: "\(entry.displayTitle)" (Category: \(entry.categoryKey))
+                    - Recorded field markings: \(fieldNotesSummary)
+                    - Retake & photo guidance: "\(nextStepText)"\(locationContext)
 
-                    Rules:
-                    - Never describe anything as "safe" or "harmless." Use only the app's own hazard language: "Not medically significant," "Use caution," or "Do not handle" — and never contradict the verdict above, even if the user's question implies it should be lower risk.
-                    - Apple's on-device classifier identifies categories, not species. Never claim species-level certainty (e.g. never say "this is a black widow"), even if the user asks you to confirm one.
-                    - If the question involves a bite, sting, or ingestion — by a person, child, or pet — always point to the appropriate emergency contact (US Poison Control 1-800-222-1222, or ASPCA Animal Poison Control 888-426-4435 for pets) rather than offering home-remedy advice.
-                    - Stay scoped to this observation. If asked something unrelated to it, say so briefly and redirect back.
-                    - Answer in 1-2 short, calm, practical paragraphs.
+                    STRICT OPERATIONAL RULES:
+                    1. NEVER RE-EVALUATE OR RESTATE A HAZARD VERDICT: The hazard assessment was computed exclusively by the app's deterministic confidence gate above. You must NEVER declare this organism "safe", "harmless", "dangerous", "deadly", or "not medically significant". If the user asks if this organism can hurt them, is venomous/poisonous, or is safe, instruct them: "Please refer to the hazard assessment banner at the top of this entry. FloraFang's chat does not render safety verdicts."
+                    2. NO MEDICAL ADVICE: Never answer questions about bites, stings, symptoms, treatments, medications, or first aid. If asked about exposure, direct the user to tap 'Exposure Protocol' or call Poison Control (1-800-222-1222).
+                    3. STRICTLY GROUNDED: Answer only regarding:
+                       - What visible physical markings were recorded in this scan.
+                       - Recommended photographic angles and lighting to improve identification on retakes.
+                       - Typical natural habitats and seasonal patterns for this group.
+                       - Safe, non-contact relocation techniques (e.g. cup-and-cardboard).
+                       Do NOT engage in open-ended zoological speculation or claim species-level identification beyond the group noted above.
+                    4. Answer concisely in 1-2 calm, factual paragraphs.
                     """
                     let session = LanguageModelSession(
                         model: SystemLanguageModel.default,
