@@ -283,6 +283,56 @@ struct SettingsSheet: View {
                                 .foregroundStyle(Palette.parchment.opacity(0.8))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
+
+                        Divider().overlay(Palette.moss.opacity(0.4))
+
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("MEDICAL DISCLAIMER")
+                                .font(.system(size: 10, weight: .semibold))
+                                .tracking(1.4)
+                                .foregroundStyle(Palette.rust)
+                            Text("FloraFang is an educational reference tool. It does not provide medical diagnosis or replace professional identification. In an emergency, always contact Poison Control or local emergency services.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Palette.parchment.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        Divider().overlay(Palette.moss.opacity(0.4))
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("LEGAL & SUPPORT")
+                                .font(.system(size: 10, weight: .semibold))
+                                .tracking(1.4)
+                                .foregroundStyle(Palette.lichen)
+
+                            if let privacyURL = URL(string: "https://ramirezlabs.app/florafang/privacy.html") {
+                                Link(destination: privacyURL) {
+                                    HStack {
+                                        Text("Privacy Policy")
+                                            .font(.system(size: 12.5))
+                                            .foregroundStyle(Palette.parchment)
+                                        Spacer()
+                                        Image(systemName: "arrow.up.right")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(Palette.lichen)
+                                    }
+                                }
+                            }
+
+                            if let supportURL = URL(string: "mailto:support@ramirezlabs.app") {
+                                Link(destination: supportURL) {
+                                    HStack {
+                                        Text("Contact Support")
+                                            .font(.system(size: 12.5))
+                                            .foregroundStyle(Palette.parchment)
+                                        Spacer()
+                                        Image(systemName: "envelope")
+                                            .font(.system(size: 11))
+                                            .foregroundStyle(Palette.lichen)
+                                    }
+                                }
+                            }
+                        }
                     }
                     .padding(20)
                 }
