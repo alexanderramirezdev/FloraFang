@@ -17,6 +17,8 @@ struct EntryDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+
     @State private var showFullImage = false
     @State private var confirmDelete = false
 

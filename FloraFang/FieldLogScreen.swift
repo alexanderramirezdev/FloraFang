@@ -12,6 +12,8 @@ struct FieldLogScreen: View {
     @Query(sort: \FieldEntry.capturedAt, order: .reverse)
     private var entries: [FieldEntry]
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+
     @State private var location = LocationService()
     @State private var exportURL: URL?
     @State private var exportError: String?
@@ -200,7 +202,7 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
-// MARK: - Settings
+// MARK: Settings
 
 struct SettingsSheet: View {
     @Bindable var location: LocationService
@@ -216,7 +218,7 @@ struct SettingsSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("SEASONAL PALETTE")
                                     .font(.system(size: 10, weight: .semibold))
@@ -233,13 +235,43 @@ struct SettingsSheet: View {
                                 .foregroundStyle(Palette.ochre)
                             }
 
-                            Picker("Season", selection: $seasonSetting) {
+                            Picker("Season", selection: $seasonSetting.animation(.easeInOut(duration: 0.25))) {
                                 Text("Auto (\(Season.current.rawValue))").tag("auto")
                                 ForEach(Season.allCases) { season in
                                     Text(season.rawValue).tag(season.rawValue)
                                 }
                             }
                             .pickerStyle(.segmented)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(SeasonTheme.active.season.moodDescription)
+                                    .font(.system(size: 11.5))
+                                    .foregroundStyle(Palette.parchment.opacity(0.92))
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                HStack(spacing: 6) {
+                                    ForEach([
+                                        ("Moss", Palette.moss),
+                                        ("Ochre", Palette.ochre),
+                                        ("Rust", Palette.rust),
+                                        ("Text", Palette.parchment),
+                                        ("Sage", Palette.lichen)
+                                    ], id: \.0) { label, color in
+                                        HStack(spacing: 4) {
+                                            Circle().fill(color).frame(width: 8, height: 8)
+                                            Text(label)
+                                                .font(.system(size: 10, weight: .medium))
+                                                .foregroundStyle(Palette.parchment.opacity(0.85))
+                                        }
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 3)
+                                        .background(color.opacity(0.18), in: Capsule())
+                                    }
+                                }
+                            }
+                            .padding(10)
+                            .background(Palette.moss.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.moss.opacity(0.25), lineWidth: 1))
 
                             Text("FloraFang automatically tunes its organic slate, moss, and foliage accents to match the natural seasons, keeping screens visible and true to life.")
                                 .font(.system(size: 11))

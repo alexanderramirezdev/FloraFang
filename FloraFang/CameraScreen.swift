@@ -10,6 +10,8 @@ import AVFoundation
 struct CameraScreen: View {
     @Environment(\.modelContext) private var modelContext
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+
     @State private var camera = CameraService()
     @State private var cascade = IdentificationCascade()
     @State private var location = LocationService()

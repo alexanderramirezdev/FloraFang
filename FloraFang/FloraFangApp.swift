@@ -18,42 +18,45 @@ struct FloraFangApp: App {
 
 struct RootView: View {
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
-    @AppStorage("app_season_setting") private var seasonSetting = "auto"
 
     var body: some View {
         Group {
             if hasSeenOnboarding {
                 MainTabs()
-                    .id(seasonSetting)
             } else {
                 OnboardingView { hasSeenOnboarding = true }
-                    .id(seasonSetting)
             }
         }
     }
 }
 
 struct MainTabs: View {
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+    @State private var selectedTab = 0
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             CameraScreen()
                 .tabItem { Label("Scan", systemImage: "camera.viewfinder") }
+                .tag(0)
 
             FieldLogScreen()
                 .tabItem { Label("Field Log", systemImage: "book.closed") }
+                .tag(1)
 
             // A tab rather than something tucked behind a menu. In an actual
             // poisoning nobody hunts for a feature, and a permanent tab costs
             // one slot to make it findable without thinking.
             EmergencyScreen()
                 .tabItem { Label("Exposure", systemImage: "cross.case") }
+                .tag(2)
         }
         .tint(Palette.ochre)
         .preferredColorScheme(.dark)
     }
 }
 
-// MARK: - Seasonal Color System
+// MARK: Seasonal Color System
 
 public enum Season: String, CaseIterable, Identifiable {
     case spring = "Spring"
@@ -81,6 +84,15 @@ public enum Season: String, CaseIterable, Identifiable {
         }
     }
 
+    public var moodDescription: String {
+        switch self {
+        case .spring: return "Sprout clover, daffodil gold, and dewy botanical moss slate."
+        case .summer: return "Lush emerald canopy, blazing sunflower amber, and deep shade."
+        case .autumn: return "Smoky cedar peat, golden maple olive, and fiery harvest pumpkin."
+        case .winter: return "Frosted arctic navy, crystalline glacial teal, and warm hearth gold."
+        }
+    }
+
     public static var current: Season {
         let month = Calendar.current.component(.month, from: .now)
         switch month {
@@ -94,51 +106,51 @@ public enum Season: String, CaseIterable, Identifiable {
 
 public struct SeasonTheme {
     public let season: Season
-    public let bark: Color       // Background - rich organic botanical slate (lifted from pitch black)
-    public let moss: Color       // Primary accent / brand tone
-    public let ochre: Color      // Attention / highlights / actionable buttons
-    public let parchment: Color  // High-legibility text / primary labels
-    public let rust: Color       // Urgent warnings / alerts
-    public let lichen: Color     // Subtitle / secondary captions / borders
+    public let bark: Color       // Background: rich organic botanical slate (lifted from pitch black)
+    public let moss: Color       // Primary accent, brand tone, safe indicator
+    public let ochre: Color      // Attention, highlights, actionable buttons, caution indicator
+    public let parchment: Color  // High legibility text, primary labels
+    public let rust: Color       // Urgent warnings, alerts, avoid indicator
+    public let lichen: Color     // Subtitle, secondary captions, borders, unknown indicator
 
     public static let spring = SeasonTheme(
         season: .spring,
-        bark: Color(red: 0.075, green: 0.118, blue: 0.090),      // Fresh deep sprout slate
-        moss: Color(red: 0.200, green: 0.520, blue: 0.345),      // Fresh spring fern moss
-        ochre: Color(red: 0.910, green: 0.655, blue: 0.210),     // Daffodil & meadow amber
-        parchment: Color(red: 0.950, green: 0.970, blue: 0.945), // Crisp white clover ivory
-        rust: Color(red: 0.790, green: 0.280, blue: 0.230),      // Sprouting berry red
-        lichen: Color(red: 0.575, green: 0.670, blue: 0.610)     // Dewy leaf sage
+        bark: Color(red: 0.043, green: 0.094, blue: 0.071),      // Deep sprout moss slate (#0A1712)
+        moss: Color(red: 0.176, green: 0.831, blue: 0.471),      // Radiant spring clover (#2CD378)
+        ochre: Color(red: 1.000, green: 0.820, blue: 0.231),     // Sunny daffodil gold (#FFD13A)
+        parchment: Color(red: 0.957, green: 0.984, blue: 0.965), // Crisp clover ivory (#F4FAF6)
+        rust: Color(red: 1.000, green: 0.302, blue: 0.259),      // Electric coral berry (#FF4D42)
+        lichen: Color(red: 0.494, green: 0.878, blue: 0.639)     // Dewy apple mint sage (#7DDFA2)
     )
 
     public static let summer = SeasonTheme(
         season: .summer,
-        bark: Color(red: 0.068, green: 0.112, blue: 0.092),      // Deep lush canopy slate
-        moss: Color(red: 0.185, green: 0.495, blue: 0.335),      // Vibrant emerald canopy
-        ochre: Color(red: 0.925, green: 0.630, blue: 0.165),     // Sunflower golden amber
-        parchment: Color(red: 0.960, green: 0.975, blue: 0.950), // Sunlit botanical ivory
-        rust: Color(red: 0.810, green: 0.265, blue: 0.210),      // Wild strawberry red
-        lichen: Color(red: 0.560, green: 0.665, blue: 0.600)     // Warm silver eucalyptus
+        bark: Color(red: 0.027, green: 0.090, blue: 0.078),      // Dense sunlit canopy slate (#061613)
+        moss: Color(red: 0.020, green: 0.820, blue: 0.480),      // Intense radiant emerald (#05D17A)
+        ochre: Color(red: 1.000, green: 0.690, blue: 0.125),     // Blazing solar sunflower (#FFAF1F)
+        parchment: Color(red: 0.980, green: 0.984, blue: 0.969), // Sunlit bleached ivory (#F9FAF7)
+        rust: Color(red: 1.000, green: 0.200, blue: 0.294),      // Wild strawberry crimson (#FF334A)
+        lichen: Color(red: 0.369, green: 0.918, blue: 0.831)     // Sunlit silver eucalyptus (#5EEAD3)
     )
 
     public static let autumn = SeasonTheme(
         season: .autumn,
-        bark: Color(red: 0.095, green: 0.095, blue: 0.080),      // Warm roasted cedar & peat slate
-        moss: Color(red: 0.265, green: 0.435, blue: 0.300),      // Golden cedar moss
-        ochre: Color(red: 0.875, green: 0.540, blue: 0.145),     // Harvest amber & golden oak
-        parchment: Color(red: 0.965, green: 0.955, blue: 0.925), // Warm pressed linen ivory
-        rust: Color(red: 0.780, green: 0.265, blue: 0.190),      // Autumn sumac & bittersweet red
-        lichen: Color(red: 0.640, green: 0.625, blue: 0.570)     // Dried lichen & hazel sage
+        bark: Color(red: 0.102, green: 0.063, blue: 0.035),      // Roasted cedar and peat bark (#1A1008)
+        moss: Color(red: 0.518, green: 0.800, blue: 0.086),      // Golden maple and cedar moss (#84CC15)
+        ochre: Color(red: 1.000, green: 0.478, blue: 0.000),     // Fiery harvest pumpkin (#FF7900)
+        parchment: Color(red: 1.000, green: 0.957, blue: 0.902), // Warm pressed linen (#FFF4E6)
+        rust: Color(red: 0.902, green: 0.224, blue: 0.000),      // Blazing sumac copper (#E63900)
+        lichen: Color(red: 0.878, green: 0.663, blue: 0.427)     // Toasted hazel and cedar dust (#DFA96C)
     )
 
     public static let winter = SeasonTheme(
         season: .winter,
-        bark: Color(red: 0.078, green: 0.096, blue: 0.110),      // Frosted spruce slate
-        moss: Color(red: 0.195, green: 0.400, blue: 0.355),      // Deep frosted pine & blue spruce
-        ochre: Color(red: 0.845, green: 0.530, blue: 0.225),     // Winter sol amber & rowan berry
-        parchment: Color(red: 0.945, green: 0.960, blue: 0.968), // Frosted snow ivory
-        rust: Color(red: 0.755, green: 0.235, blue: 0.220),      // Winterberry crimson
-        lichen: Color(red: 0.560, green: 0.620, blue: 0.630)     // Glacial silver lichen
+        bark: Color(red: 0.031, green: 0.063, blue: 0.094),      // Frosted arctic midnight navy (#071017)
+        moss: Color(red: 0.133, green: 0.827, blue: 0.933),      // Crystalline glacial teal (#21D2ED)
+        ochre: Color(red: 1.000, green: 0.663, blue: 0.302),     // Warm hearth candle gold (#FFA94D)
+        parchment: Color(red: 0.941, green: 0.976, blue: 1.000), // Brilliant snowdrift white (#EFF8FF)
+        rust: Color(red: 1.000, green: 0.165, blue: 0.333),      // Frosted winterberry (#FF2A54)
+        lichen: Color(red: 0.576, green: 0.773, blue: 0.992)     // Glacial arctic mist (#92C5FC)
     )
 
     public static var active: SeasonTheme {

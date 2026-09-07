@@ -14,6 +14,8 @@ import SwiftUI
 struct OnboardingView: View {
     let onFinish: () -> Void
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+
     @State private var page = 0
     private let totalPages = 4
 

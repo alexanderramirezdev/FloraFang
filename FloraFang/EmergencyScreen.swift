@@ -26,6 +26,8 @@ struct EmergencyScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \ExposureIncident.timestamp, order: .reverse) private var pastIncidents: [ExposureIncident]
 
+    @AppStorage("app_season_setting") private var seasonSetting = "auto"
+
     @State private var selectedSubject: ExposureSubject? = nil
     @State private var report = ExposureReport()
     @State private var image: UIImage?
