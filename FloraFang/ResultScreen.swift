@@ -42,7 +42,7 @@ struct ResultScreen: View {
         }
     }
 
-    // MARK: - Hero
+    // MARK: Hero
 
     private var hero: some View {
         ZStack(alignment: .topLeading) {
@@ -69,7 +69,7 @@ struct ResultScreen: View {
         .padding(.horizontal, -20)
     }
 
-    // MARK: - Headline
+    // MARK: Headline
 
     private var headline: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -89,9 +89,9 @@ struct ResultScreen: View {
                 .foregroundStyle(Palette.parchment)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // No confidence number on a refusal. A percentage next to "could
-            // not determine" reads as partial certainty.
-            if !assessment.isRefusal {
+            // No confidence number on a refusal or unrecognized subject. A percentage next to "could
+            // not determine" or "Subject not recognized" reads as partial certainty.
+            if !assessment.isRefusal && assessment.confidence > 0 && assessment.categoryKey != "unknown" {
                 Text("\(Int(assessment.confidence * 100))% confidence")
                     .font(.system(size: 11))
                     .foregroundStyle(Palette.lichen)
@@ -99,7 +99,7 @@ struct ResultScreen: View {
         }
     }
 
-    // MARK: - Hazard
+    // MARK: Hazard
 
     private var hazardBox: some View {
         HStack(alignment: .top, spacing: 9) {
@@ -171,14 +171,14 @@ struct ResultScreen: View {
 
     private var hazardTint: Color {
         switch assessment.hazard {
-        case .safe:    return Palette.moss
-        case .caution: return Palette.ochre
-        case .avoid:   return Palette.rust
+        case .safe:    return Palette.safe
+        case .caution: return Palette.warn
+        case .avoid:   return Palette.danger
         case .unknown: return Palette.lichen
         }
     }
 
-    // MARK: - Notes
+    // MARK: Notes
 
     private var notes: some View {
         FieldGuidanceView(

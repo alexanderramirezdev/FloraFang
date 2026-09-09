@@ -20,6 +20,34 @@
 import AVFoundation
 import UIKit
 
+enum CaptureMode: String, CaseIterable, Identifiable, Sendable {
+    case action = "action"
+    case detail = "detail"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .action: return "Action"
+        case .detail: return "Detail"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .action: return "Instant shutter for fast spiders and bugs"
+        case .detail: return "Deep Fusion for still plants and fungi"
+        }
+    }
+
+    var systemIcon: String {
+        switch self {
+        case .action: return "bolt.fill"
+        case .detail: return "sparkles"
+        }
+    }
+}
+
 @Observable
 final class CameraService: NSObject {
 
@@ -29,6 +57,9 @@ final class CameraService: NSObject {
     }
 
     private(set) var state: State = .idle
+
+    /// Active shutter mode: action for instant reflex release, detail for deep fusion
+    private(set) var captureMode: CaptureMode = .action
 
     /// Current zoom, in the device's own factor units.
     private(set) var zoomFactor: CGFloat = 1
@@ -59,11 +90,18 @@ final class CameraService: NSObject {
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
-    // MARK: - Lifecycle
+    // MARK: Lifecycle
 
     func start() async {
         guard await requestAccess() else {
             await MainActor.run { state = .denied }
+            return
+        }
+
+        if isConfigured && session.isRunning {
+            await MainActor.run {
+                if state != .denied { state = .ready }
+            }
             return
         }
 
@@ -77,15 +115,12 @@ final class CameraService: NSObject {
                     self.session.startRunning()
                 }
 
-                if self.isConfigured {
-                    Task { @MainActor in
-                        if self.state != .denied {
-                            self.state = self.session.isRunning ? .ready : .interrupted
-                        }
-                    }
-                }
                 continuation.resume()
             }
+        }
+
+        if isConfigured && state != .denied {
+            state = session.isRunning ? .ready : .interrupted
         }
     }
 
@@ -93,6 +128,9 @@ final class CameraService: NSObject {
         sessionQueue.async { [weak self] in
             guard let self, self.session.isRunning else { return }
             self.session.stopRunning()
+            Task { @MainActor in
+                self.state = .idle
+            }
         }
     }
 
@@ -104,7 +142,7 @@ final class CameraService: NSObject {
         }
     }
 
-    // MARK: - Configuration
+    // MARK: Configuration
 
     private func configure() {
         session.beginConfiguration()
@@ -144,8 +182,43 @@ final class CameraService: NSObject {
         }
         session.addOutput(photoOutput)
 
+        // Configure prioritization based on active mode
+        if captureMode == .action {
+            if photoOutput.isZeroShutterLagSupported {
+                photoOutput.isZeroShutterLagEnabled = true
+            }
+            photoOutput.maxPhotoQualityPrioritization = .speed
+        } else {
+            if photoOutput.isZeroShutterLagSupported {
+                photoOutput.isZeroShutterLagEnabled = false
+            }
+            photoOutput.maxPhotoQualityPrioritization = .quality
+        }
+
         configureDevice(device)
         isConfigured = true
+    }
+
+    func setCaptureMode(_ mode: CaptureMode) {
+        guard mode != captureMode else { return }
+        captureMode = mode
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            self.session.beginConfiguration()
+            defer { self.session.commitConfiguration() }
+
+            if mode == .action {
+                if self.photoOutput.isZeroShutterLagSupported {
+                    self.photoOutput.isZeroShutterLagEnabled = true
+                }
+                self.photoOutput.maxPhotoQualityPrioritization = .speed
+            } else {
+                if self.photoOutput.isZeroShutterLagSupported {
+                    self.photoOutput.isZeroShutterLagEnabled = false
+                }
+                self.photoOutput.maxPhotoQualityPrioritization = .quality
+            }
+        }
     }
 
     private func configureDevice(_ device: AVCaptureDevice) {
@@ -198,7 +271,7 @@ final class CameraService: NSObject {
         Task { @MainActor in self.state = .failed(reason) }
     }
 
-    // MARK: - Zoom
+    // MARK: Zoom
 
     /// Fill the frame without physically moving closer. For a spider on a wall
     /// this is almost always the right move: moving in hits the focus limit,
@@ -216,7 +289,7 @@ final class CameraService: NSObject {
         }
     }
 
-    // MARK: - Focus
+    // MARK: Focus
 
     /// Point is normalized (0...1) in the device's coordinate space: get it
     /// from AVCaptureVideoPreviewLayer.captureDevicePointConverted.
@@ -244,7 +317,7 @@ final class CameraService: NSObject {
         }
     }
 
-    // MARK: - Interruptions
+    // MARK: Interruptions
 
     private func observeSessionNotifications() {
         let center = NotificationCenter.default
@@ -278,11 +351,13 @@ final class CameraService: NSObject {
         }
     }
 
-    // MARK: - Capture
+    // MARK: Capture
 
-    func capturePhoto() async throws -> UIImage {
+    func capturePhoto(mode: CaptureMode? = nil) async throws -> UIImage {
         guard photoContinuation == nil else { throw CameraError.captureInProgress }
         guard isConfigured else { throw CameraError.notReady }
+
+        let targetMode = mode ?? self.captureMode
 
         return try await withCheckedThrowingContinuation { continuation in
             self.photoContinuation = continuation
@@ -295,7 +370,17 @@ final class CameraService: NSObject {
                     }
                     return
                 }
-                self.photoOutput.capturePhoto(with: AVCapturePhotoSettings(), delegate: self)
+
+                let settings: AVCapturePhotoSettings
+                if self.photoOutput.availablePhotoCodecTypes.contains(.jpeg) {
+                    settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
+                } else {
+                    settings = AVCapturePhotoSettings()
+                }
+
+                settings.photoQualityPrioritization = (targetMode == .action ? .speed : .quality)
+
+                self.photoOutput.capturePhoto(with: settings, delegate: self)
             }
         }
     }

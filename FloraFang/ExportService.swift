@@ -73,7 +73,7 @@ enum ExportService {
     /// of someone's photos, notes, and coordinates is sitting on disk with
     /// no reason to be. Called before building a new one and again after
     /// the share sheet closes.
-    static func cleanUpPreviousExports() {
+    nonisolated static func cleanUpPreviousExports() {
         let fm = FileManager.default
         guard let contents = try? fm.contentsOfDirectory(
             at: fm.temporaryDirectory,
@@ -149,6 +149,109 @@ enum ExportService {
         try? fm.removeItem(at: workDir)
 
         return archive
+    }
+
+    /// Builds a zip in the temp directory for selected exposure incident reports.
+    /// Produces a human readable intake report, CSV summary, and any attached photos.
+    static func exportExposureIncidents(_ incidents: [ExposureIncident]) throws -> URL {
+        guard !incidents.isEmpty else { throw ExportError.noEntries }
+
+        // Clear anything from a previous run before writing a new one.
+        cleanUpPreviousExports()
+
+        let fm = FileManager.default
+        let stamp = ISO8601DateFormatter().string(from: .now)
+            .replacingOccurrences(of: ":", with: "_")
+        let folderName = "florafang-export-exposure-\(stamp)"
+        let workDir = fm.temporaryDirectory.appendingPathComponent(folderName)
+
+        try? fm.removeItem(at: workDir)
+        try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+
+        var reportLines: [String] = [
+            "FLORAFANG CLINICAL EXPOSURE REPORT",
+            "Generated: \(Date.now.formatted(date: .abbreviated, time: .shortened))",
+            "Total Incident Records: \(incidents.count)",
+            String(repeating: "=", count: 48),
+            ""
+        ]
+
+        var csvRows: [String] = [
+            "record_id,timestamp,subject,subject_detail,plant_name,scientific_name,part_eaten,amount,time_of_exposure,symptoms,image_filename,notes"
+        ]
+
+        for (index, incident) in incidents.enumerated() {
+            let num = index + 1
+            let safeSubject = incident.subjectRaw.filter { $0.isLetter || $0.isNumber }
+            let safePlant = incident.plantName.filter { $0.isLetter || $0.isNumber }
+            let base = String(format: "%02d_%@_%@", num, safeSubject.isEmpty ? "subject" : safeSubject, safePlant.isEmpty ? "specimen" : safePlant)
+            var photoFilename = ""
+
+            if let data = incident.imageData {
+                photoFilename = "\(base).jpg"
+                try? data.write(to: workDir.appendingPathComponent(photoFilename))
+            }
+
+            reportLines.append("RECORD \(num)")
+            reportLines.append("Logged: \(incident.timestamp.formatted(date: .abbreviated, time: .shortened))")
+            let subjectDesc = incident.subjectDetail.isEmpty ? incident.displaySubject : "\(incident.displaySubject) (\(incident.subjectDetail))"
+            reportLines.append("Subject: \(subjectDesc)")
+            reportLines.append("Specimen: \(incident.displayPlant)")
+            if !incident.scientificName.isEmpty {
+                reportLines.append("Scientific Name: \(incident.scientificName)")
+            }
+            reportLines.append("Part Eaten: \(incident.partEaten.label)")
+            if !incident.amount.isEmpty {
+                reportLines.append("Amount Ingested: \(incident.amount)")
+            }
+            reportLines.append("Time of Exposure: \(incident.timeOfExposure.formatted(date: .abbreviated, time: .shortened))")
+            let signs = incident.symptomsRaw.isEmpty ? "None noted" : incident.symptomsRaw.joined(separator: ", ")
+            reportLines.append("Signs Observed: \(signs)")
+            if !incident.otherNotes.isEmpty {
+                reportLines.append("Notes: \(incident.otherNotes)")
+            }
+            if !photoFilename.isEmpty {
+                reportLines.append("Attached Photo: \(photoFilename)")
+            }
+            if !incident.relaySummaryText.isEmpty {
+                reportLines.append("")
+                reportLines.append("Dispatch Relay Script:")
+                reportLines.append(incident.relaySummaryText)
+            }
+            reportLines.append(String(repeating: "*", count: 40))
+            reportLines.append("")
+
+            csvRows.append([
+                csv(incident.id.uuidString),
+                csv(ISO8601DateFormatter().string(from: incident.timestamp)),
+                csv(incident.displaySubject),
+                csv(incident.subjectDetail),
+                csv(incident.displayPlant),
+                csv(incident.scientificName),
+                csv(incident.partEaten.label),
+                csv(incident.amount),
+                csv(ISO8601DateFormatter().string(from: incident.timeOfExposure)),
+                csv(signs),
+                csv(photoFilename),
+                csv(incident.otherNotes)
+            ].joined(separator: ","))
+        }
+
+        let reportURL = workDir.appendingPathComponent("exposure-report.txt")
+        try reportLines.joined(separator: "\n").write(to: reportURL, atomically: true, encoding: .utf8)
+
+        let csvURL = workDir.appendingPathComponent("exposure-log.csv")
+        try csvRows.joined(separator: "\n").write(to: csvURL, atomically: true, encoding: .utf8)
+
+        let archive = try zip(workDir, named: folderName)
+        try? fm.removeItem(at: workDir)
+
+        return archive
+    }
+
+    /// Exports a single exposure incident archive.
+    static func exportSingleExposureIncident(_ incident: ExposureIncident) throws -> URL {
+        try exportExposureIncidents([incident])
     }
 
     /// Foundation has no direct zip API, but NSFileCoordinator's

@@ -17,8 +17,9 @@ nonisolated enum SpiderClass: String, CaseIterable, Sendable {
     case cellarSpider   = "cellar_spider"
     case huntsman       = "huntsman"
     case tarantula      = "tarantula"
-    case otherSpider    = "other_spider"
-    case notASpider     = "not_a_spider"
+    case otherSpider                = "other_spider"
+    case notASpider                 = "not_a_spider"
+    case notMedicallySignificant   = "not_medically_significant"
 
     /// Folder name in your training data directory.
     var trainingLabel: String {
@@ -39,8 +40,9 @@ nonisolated enum SpiderClass: String, CaseIterable, Sendable {
         case .cellarSpider:  return "Cellar spider"
         case .huntsman:      return "Huntsman spider"
         case .tarantula:     return "Tarantula"
-        case .otherSpider:   return "Spider"
-        case .notASpider:    return "Not a spider"
+        case .otherSpider:               return "Spider"
+        case .notASpider:                return "Not a spider"
+        case .notMedicallySignificant:   return "Benign spider"
         }
     }
 
@@ -63,7 +65,7 @@ nonisolated enum SpiderClass: String, CaseIterable, Sendable {
             return .avoid
         case .tarantula, .huntsman, .wolfSpider, .otherSpider:
             return .caution
-        case .orbWeaver, .jumpingSpider, .cellarSpider:
+        case .orbWeaver, .jumpingSpider, .cellarSpider, .notMedicallySignificant:
             return .safe
         case .notASpider:
             return .unknown
@@ -92,6 +94,8 @@ nonisolated enum SpiderClass: String, CaseIterable, Sendable {
             return "Group not determined. Most spiders are not medically significant, but treat any unidentified spider as hands-off."
         case .notASpider:
             return "This doesn't appear to be a spider."
+        case .notMedicallySignificant:
+            return "Not medically significant. Harmless spider."
         }
     }
 
@@ -153,6 +157,12 @@ nonisolated enum SpiderClass: String, CaseIterable, Sendable {
             ]
         case .notASpider:
             return ["Try scanning again with the subject filling the frame."]
+        case .notMedicallySignificant:
+            return [
+                "Common harmless arachnid.",
+                "Presents no medical significance to humans or household pets.",
+                "Hunts nuisance insects such as flies, gnats, and mosquitoes."
+            ]
         }
     }
 

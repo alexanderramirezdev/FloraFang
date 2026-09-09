@@ -27,8 +27,8 @@ import Foundation
 /// Which tier produced the answer. Surfaced in the UI so the user can tell
 /// an offline guess from a network call, and so you can debug the cascade.
 enum ResolutionTier: String {
-    case coarse       = "on-device category"
-    case hazard       = "on-device hazard model"
+    case coarse       = "on device category"
+    case hazard       = "on device hazard model"
     case corroborated = "model and visible markings agree"
     case features     = "visible markings"
     case remote       = "remote model"
@@ -89,7 +89,7 @@ struct Assessment {
     var disagreementNote: String? = nil
 
     /// True when we stopped short of an identification on purpose.
-    var isRefusal: Bool { tier == .refusal }
+    var isRefusal: Bool { tier == .refusal || categoryKey == "unknown" }
 }
 
 extension Assessment {

@@ -105,8 +105,7 @@ struct ExposureHistoryView: View {
                     .frame(width: 40, height: 40)
                     .overlay(Circle().stroke(Palette.moss.opacity(0.6), lineWidth: 1))
 
-                Image(systemName: subjectIcon(incident.subject))
-                    .font(.system(size: 17))
+                subjectIconView(incident.subject, size: 17)
                     .foregroundStyle(Palette.parchment)
             }
 
@@ -152,18 +151,32 @@ struct ExposureHistoryView: View {
         .padding(.vertical, 4)
     }
 
+    @ViewBuilder
+    private func subjectIconView(_ subject: ExposureSubject, size: CGFloat = 13) -> some View {
+        if subject == .otherAnimal {
+            Image("raccoon")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+                .frame(width: size + 2, height: size + 2)
+        } else {
+            Image(systemName: subjectIcon(subject))
+                .font(.system(size: size))
+        }
+    }
+
     private func subjectIcon(_ subject: ExposureSubject) -> String {
         switch subject {
-        case .dog:         return "pawprint.fill"
-        case .cat:         return "pawprint"
-        case .otherAnimal: return "hare.fill"
+        case .dog:         return "dog.fill"
+        case .cat:         return "cat.fill"
+        case .otherAnimal: return "pawprint"
         case .child:       return "figure.and.child.holdinghands"
         case .adult:       return "person.fill"
         }
     }
 }
 
-// MARK: - Incident Detail Sheet
+// MARK: Incident Detail Sheet
 
 struct ExposureIncidentDetailSheet: View {
     let incident: ExposureIncident
@@ -172,6 +185,8 @@ struct ExposureIncidentDetailSheet: View {
 
     @State private var showCopied = false
     @State private var confirmDelete = false
+    @State private var exportURL: URL?
+    @State private var exportError: String?
 
     var body: some View {
         NavigationStack {
@@ -277,6 +292,22 @@ struct ExposureIncidentDetailSheet: View {
                                         .foregroundStyle(Palette.parchment)
                                 }
                             }
+
+                            Button {
+                                do {
+                                    exportURL = try ExportService.exportSingleExposureIncident(incident)
+                                } catch {
+                                    exportError = error.localizedDescription
+                                }
+                            } label: {
+                                Label("Export Incident Report", systemImage: "arrow.up.doc")
+                                    .font(.system(size: 12.5, weight: .semibold))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Palette.moss.opacity(0.20), in: RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.moss.opacity(0.5), lineWidth: 1))
+                                    .foregroundStyle(Palette.parchment)
+                            }
                         }
 
                         // Delete button
@@ -313,6 +344,20 @@ struct ExposureIncidentDetailSheet: View {
                     dismiss()
                 }
                 Button("Cancel", role: .cancel) {}
+            }
+            .sheet(item: Binding(
+                get: { exportURL.map { ShareItem(url: $0) } },
+                set: { if $0 == nil { exportURL = nil } }
+            )) { item in
+                ShareSheet(items: [item.url]) {
+                    exportURL = nil
+                    ExportService.cleanUpPreviousExports()
+                }
+            }
+            .alert("Export failed", isPresented: .constant(exportError != nil)) {
+                Button("OK") { exportError = nil }
+            } message: {
+                Text(exportError ?? "")
             }
         }
     }

@@ -35,21 +35,21 @@ enum PoisonResources {
     static let all: [PoisonResource] = [
         PoisonResource(
             name: "ASPCA Animal Poison Control",
-            phone: "(888) 426-4435",
+            phone: "(888) 426 4435",
             dialString: "8884264435",
             detail: "24 hours, every day. A consultation fee may apply.",
             audience: .pet
         ),
         PoisonResource(
             name: "Pet Poison Helpline",
-            phone: "(855) 764-7661",
+            phone: "(855) 764 7661",
             dialString: "8557647661",
             detail: "24 hours, every day. A consultation fee may apply.",
             audience: .pet
         ),
         PoisonResource(
             name: "Poison Control (people)",
-            phone: "1-800-222-1222",
+            phone: "(800) 222 1222",
             dialString: "18002221222",
             detail: "24 hours, every day. Free and confidential.",
             audience: .human
@@ -73,9 +73,19 @@ enum ExposureSubject: String, CaseIterable, Identifiable {
         switch self {
         case .dog:         return "Dog"
         case .cat:         return "Cat"
-        case .otherAnimal: return "Other animal"
+        case .otherAnimal: return "Other"
         case .child:       return "Child"
         case .adult:       return "Adult"
+        }
+    }
+
+    var placeholderDetail: String {
+        switch self {
+        case .dog:         return "60 lb lab, 4 years"
+        case .cat:         return "9 lb domestic shorthair, 3 years"
+        case .otherAnimal: return "25 lb pet, unknown age"
+        case .child:       return "35 lbs, 4 years old"
+        case .adult:       return "Adult, approx 160 lbs"
         }
     }
 
