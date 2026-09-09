@@ -2,11 +2,12 @@
 //  OnboardingView.swift
 //  FloraFang
 //
-//  Four splash cards shown on first launch:
+//  Five splash cards shown on first launch:
 //    1. What the app is for (Purpose & offline hazard detection)
 //    2. How to use it (Framing, zoom vs close-up, and lighting)
 //    3. What it does not do (Safety boundaries, refusal, never says safe to eat)
-//    4. Emergency protocol (Call first, exposure intake logging)
+//    4. Dynamic seasons (Automatic living palettes tuned to the year)
+//    5. Emergency protocol (Call first, exposure intake logging)
 //
 
 import SwiftUI
@@ -17,25 +18,23 @@ struct OnboardingView: View {
     @AppStorage("app_season_setting") private var seasonSetting = "auto"
 
     @State private var page = 0
-    private let totalPages = 4
+    private let totalPages = 5
 
     var body: some View {
         ZStack {
             Palette.bark.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar with Skip
+                // Top bar with Skip (fixed height and opacity to eliminate rough layout shifts)
                 HStack {
                     Spacer()
-                    if page < totalPages - 1 {
-                        Button("Skip", action: onFinish)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Palette.lichen)
-                            .padding(.horizontal, 24)
-                            .padding(.top, 16)
-                    } else {
-                        Color.clear.frame(height: 36)
-                    }
+                    Button("Skip", action: onFinish)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Palette.lichen)
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
+                        .opacity(page < totalPages - 1 ? 1 : 0)
+                        .disabled(page >= totalPages - 1)
                 }
 
                 // Cards carousel
@@ -43,7 +42,8 @@ struct OnboardingView: View {
                     pagePurpose.tag(0)
                     pageHowToUse.tag(1)
                     pageWhatItDoesNotDo.tag(2)
-                    pageEmergency.tag(3)
+                    pageSeasons.tag(3)
+                    pageEmergency.tag(4)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .always))
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
@@ -78,7 +78,7 @@ struct OnboardingView: View {
         }
     }
 
-    // MARK: - Page 1: Purpose
+    // MARK: Page 1: Purpose
 
     private var pagePurpose: some View {
         cardLayout(
@@ -111,17 +111,23 @@ struct OnboardingView: View {
         )
     }
 
-    // MARK: - Page 2: How to Use
+    // MARK: Page 2: How to Use
 
     private var pageHowToUse: some View {
         cardLayout(
-            badge: "HOW TO USE THE APP",
+            badge: "HOW TO USE THE CAMERA",
             badgeColor: Palette.ochre,
             symbol: "camera.viewfinder",
             symbolColor: Palette.ochre,
-            title: "Fill the square and tap to focus",
-            description: "To give on-device models the best chance to spot fine diagnostic markings, follow three simple rules:",
+            title: "Shutter modes and framing",
+            description: "To give on-device models the best chance to spot fine diagnostic markings, follow these key practices:",
             points: [
+                OnboardingPoint(
+                    icon: "bolt.fill",
+                    color: Color(red: 1.0, green: 0.82, blue: 0.20),
+                    headline: "Action vs Detail Shutter",
+                    detail: "Right beside the shutter, toggle Action (lightning bolt) for zero shutter lag on fast spiders and darting bugs so you can snap and step back safely. Toggle Detail (sparkles) for Deep Fusion texture on still plants and mushrooms."
+                ),
                 OnboardingPoint(
                     icon: "plus.magnifyingglass",
                     color: Palette.ochre,
@@ -144,7 +150,7 @@ struct OnboardingView: View {
         )
     }
 
-    // MARK: - Page 3: Boundaries
+    // MARK: Page 3: Boundaries
 
     private var pageWhatItDoesNotDo: some View {
         cardLayout(
@@ -177,7 +183,40 @@ struct OnboardingView: View {
         )
     }
 
-    // MARK: - Page 4: Emergency Protocol
+    // MARK: Page 4: Dynamic Seasons
+
+    private var pageSeasons: some View {
+        cardLayout(
+            badge: "DYNAMIC FIELD THEMES",
+            badgeColor: Palette.moss,
+            symbol: "sparkles",
+            symbolColor: Palette.moss,
+            title: "The app changes with the seasons",
+            description: "FloraFang shifts its interface palette and field aesthetics based on the actual calendar season, reflecting the colors of the wild around you.",
+            points: [
+                OnboardingPoint(
+                    icon: "circle.grid.2x2.fill",
+                    color: Palette.moss,
+                    headline: "Four Living Palettes",
+                    detail: "Cherry blossom pink and bee gold for Spring, sunlit canopy for Summer, warm pumpkin and amber for Autumn, and pale ice for Winter."
+                ),
+                OnboardingPoint(
+                    icon: "calendar.badge.clock",
+                    color: Palette.ochre,
+                    headline: "Automatic Calendar Sync",
+                    detail: "By default, FloraFang detects the solstice and equinox periods automatically so your field guide reflects your current outdoor environment."
+                ),
+                OnboardingPoint(
+                    icon: "slider.horizontal.3",
+                    color: Palette.lichen,
+                    headline: "Manual Override in Settings",
+                    detail: "Prefer autumn tones all year or exploring a different hemisphere? You can lock your preferred seasonal palette anytime in Settings."
+                )
+            ]
+        )
+    }
+
+    // MARK: Page 5: Emergency Protocol
 
     private var pageEmergency: some View {
         cardLayout(
@@ -210,7 +249,7 @@ struct OnboardingView: View {
         )
     }
 
-    // MARK: - Card Layout Helper
+    // MARK: Card Layout Helper
 
     private func cardLayout(
         badge: String,

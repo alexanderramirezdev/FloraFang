@@ -25,6 +25,12 @@ import Foundation
 import FoundationModels
 import UIKit
 
+extension CGImage: @retroactive PromptRepresentable {
+    public var promptRepresentation: Prompt {
+        Prompt("Visual observation")
+    }
+}
+
 struct ExtractionResult: Sendable {
     let report: FeatureReport
     let verdict: FeatureVerdict
@@ -107,7 +113,7 @@ actor FeatureExtractor {
         return ExtractionResult(report: report, verdict: verdict, analyzedImage: isolated)
     }
 
-    // MARK: - The one API dependent call
+    // MARK: The one API dependent call
 
     /// The only function in this file whose signature depends on the iOS 27
     /// multimodal API. Images attach to a Prompt and structured output comes
@@ -121,7 +127,7 @@ actor FeatureExtractor {
 
         let prompt = Prompt {
             "Describe what is in this image and list any markings from the vocabulary that you can actually see."
-            Attachment(cgImage)
+            cgImage
         }
 
         // Return type drives the schema. FeatureReport is @Generable, so this

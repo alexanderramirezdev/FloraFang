@@ -17,8 +17,6 @@ struct EntryDetailScreen: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
-    @AppStorage("app_season_setting") private var seasonSetting = "auto"
-
     @State private var showFullImage = false
     @State private var confirmDelete = false
 
@@ -77,7 +75,7 @@ struct EntryDetailScreen: View {
         }
     }
 
-    // MARK: - Pieces
+    // MARK: Pieces
 
     @ViewBuilder
     private var photo: some View {
@@ -123,8 +121,8 @@ struct EntryDetailScreen: View {
                 .foregroundStyle(Palette.parchment)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Same rule as the result screen: no confidence number on a refusal.
-            if !entry.wasRefusal {
+            // Same rule as the result screen: no confidence number on a refusal or unknown subject.
+            if !entry.wasRefusal && entry.confidence > 0 && entry.categoryKey != "unknown" {
                 Text("\(Int(entry.confidence * 100))% confidence")
                     .font(.system(size: 11))
                     .foregroundStyle(Palette.lichen)
@@ -175,9 +173,9 @@ struct EntryDetailScreen: View {
 
     private var hazardTint: Color {
         switch entry.hazard {
-        case .safe:    return Palette.moss
-        case .caution: return Palette.ochre
-        case .avoid:   return Palette.rust
+        case .safe:    return Palette.safe
+        case .caution: return Palette.warn
+        case .avoid:   return Palette.danger
         case .unknown: return Palette.lichen
         }
     }
@@ -207,7 +205,7 @@ struct EntryDetailScreen: View {
         }
     }
 
-    // MARK: - On-Device Field Naturalist (Apple Foundation Models)
+    // MARK: On-Device Field Naturalist (Apple Foundation Models)
 
     @ViewBuilder
     private var naturalistChatSection: some View {
@@ -476,20 +474,20 @@ struct EntryDetailScreen: View {
                     You are FloraFang's on-device field naturalist assistant. You are strictly grounded in this specific saved field log entry.
 
                     LOGGED OBSERVATION CONTEXT:
-                    - Group: "\(entry.displayTitle)" (Category: \(entry.categoryKey))
-                    - Recorded field markings: \(fieldNotesSummary)
-                    - Retake & photo guidance: "\(nextStepText)"\(locationContext)
+                    * Group: "\(entry.displayTitle)" (Category: \(entry.categoryKey))
+                    * Recorded field markings: \(fieldNotesSummary)
+                    * Retake & photo guidance: "\(nextStepText)"\(locationContext)
 
                     STRICT OPERATIONAL RULES:
                     1. NEVER RE-EVALUATE OR RESTATE A HAZARD VERDICT: The hazard assessment was computed exclusively by the app's deterministic confidence gate above. You must NEVER declare this organism "safe", "harmless", "dangerous", "deadly", or "not medically significant". If the user asks if this organism can hurt them, is venomous/poisonous, or is safe, instruct them: "Please refer to the hazard assessment banner at the top of this entry. FloraFang's chat does not render safety verdicts."
-                    2. NO MEDICAL ADVICE: Never answer questions about bites, stings, symptoms, treatments, medications, or first aid. If asked about exposure, direct the user to tap 'Exposure Protocol' or call Poison Control (1-800-222-1222).
+                    2. NO MEDICAL ADVICE: Never answer questions about bites, stings, symptoms, treatments, medications, or first aid. If asked about exposure, direct the user to tap 'Exposure Protocol' or call Poison Control at (800) 222 1222.
                     3. STRICTLY GROUNDED: Answer only regarding:
-                       - What visible physical markings were recorded in this scan.
-                       - Recommended photographic angles and lighting to improve identification on retakes.
-                       - Typical natural habitats and seasonal patterns for this group.
-                       - Safe, non-contact relocation techniques (e.g. cup-and-cardboard).
-                       Do NOT engage in open-ended zoological speculation or claim species-level identification beyond the group noted above.
-                    4. Answer concisely in 1-2 calm, factual paragraphs.
+                       * What visible physical markings were recorded in this scan.
+                       * Recommended photographic angles and lighting to improve identification on retakes.
+                       * Typical natural habitats and seasonal patterns for this group.
+                       * Safe non contact relocation techniques (such as cup and cardboard).
+                       Do NOT engage in open-ended zoological speculation or claim species level identification beyond the group noted above.
+                    4. Answer concisely in 1 to 2 calm, factual paragraphs.
                     """
                     let session = LanguageModelSession(
                         model: SystemLanguageModel.default,
@@ -500,7 +498,7 @@ struct EntryDetailScreen: View {
                     if let data = entry.imageData, let img = UIImage(data: data), let cg = img.cgImage {
                         prompt = Prompt {
                             q
-                            Attachment(cg)
+                            cg
                         }
                     } else {
                         prompt = Prompt {
@@ -599,9 +597,11 @@ struct EntryDetailScreen: View {
             Text(entry.capturedAt.formatted(date: .long, time: .shortened))
                 .font(.system(size: 11))
                 .foregroundStyle(Palette.lichen)
+            #if DEBUG
             Text("classifier label: \(entry.rawLabel)")
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundStyle(Palette.lichen.opacity(0.6))
+            #endif
         }
         .padding(.top, 4)
     }
@@ -624,7 +624,7 @@ struct EntryDetailScreen: View {
     }
 }
 
-// MARK: - Full-screen zoomable photo
+// MARK: Full-screen zoomable photo
 
 struct ZoomableImageView: View {
     let image: UIImage

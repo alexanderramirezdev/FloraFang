@@ -37,6 +37,7 @@ struct ExposureReport {
     var timeOfExposure: Date = .now
     var symptoms: Set<Symptom> = []
     var otherNotes: String = ""
+    var hasPhoto: Bool = false
 
     enum PlantPart: String, CaseIterable, Identifiable {
         case leaf, berryOrSeed, flower, stemOrBark, root, unknown
@@ -82,6 +83,34 @@ struct ExposureReport {
         }
     }
 
+    /// Converts elapsed seconds into human readable duration without confusing math.
+    static func formatElapsed(from date: Date, to now: Date = .now) -> String {
+        let seconds = now.timeIntervalSince(date)
+        if seconds < 120 {
+            return "just now"
+        }
+        let totalMinutes = max(1, Int(seconds / 60))
+        if totalMinutes < 60 {
+            return "\(totalMinutes) min\(totalMinutes == 1 ? "" : "s") ago"
+        }
+        let hours = totalMinutes / 60
+        let remMinutes = totalMinutes % 60
+        if hours < 24 {
+            if remMinutes == 0 {
+                return "\(hours) hr\(hours == 1 ? "" : "s") ago"
+            } else {
+                return "\(hours) hr\(hours == 1 ? "" : "s"), \(remMinutes) min ago"
+            }
+        }
+        let days = hours / 24
+        let remHours = hours % 24
+        if remHours == 0 {
+            return "\(days) day\(days == 1 ? "" : "s") ago"
+        } else {
+            return "\(days) day\(days == 1 ? "" : "s"), \(remHours) hr\(remHours == 1 ? "" : "s") ago"
+        }
+    }
+
     /// Formatted for reading aloud. Deliberately plain and ordered the way
     /// the call tends to go.
     func relaySummary() -> String {
@@ -89,13 +118,24 @@ struct ExposureReport {
 
         lines.append("WHO: \(subject.label)\(subjectDetail.isEmpty ? "" : ", \(subjectDetail)")")
 
-        if let plant = suspectedPlant {
+        if let plant = suspectedPlant, plant != .notKnownToxic {
             let pct = Int(confidence * 100)
-            lines.append("POSSIBLE PLANT: \(plant.displayName)"
-                         + (plant.scientificName.isEmpty ? "" : " (\(plant.scientificName))")
-                         + ", unconfirmed photo match at \(pct)% model confidence")
+            var plantLine = "POSSIBLE PLANT: \(plant.displayName)"
+            if !plant.scientificName.isEmpty {
+                plantLine += " (\(plant.scientificName))"
+            }
+            if hasPhoto {
+                plantLine += ", unconfirmed photo match at \(pct)% model confidence"
+            } else {
+                plantLine += ", suspected species"
+            }
+            lines.append(plantLine)
         } else {
-            lines.append("POSSIBLE PLANT: not identified. Photo available.")
+            if hasPhoto {
+                lines.append("POSSIBLE PLANT: not identified. Photo available.")
+            } else {
+                lines.append("POSSIBLE PLANT: not identified. No photo attached.")
+            }
         }
 
         lines.append("PART: \(partEaten.label)")
@@ -103,9 +143,9 @@ struct ExposureReport {
             lines.append("AMOUNT: \(amount)")
         }
 
-        let elapsed = Date.now.timeIntervalSince(timeOfExposure)
-        let minutes = max(0, Int(elapsed / 60))
-        lines.append("WHEN: \(timeOfExposure.formatted(date: .omitted, time: .shortened)), about \(minutes) minutes ago")
+        let elapsedDesc = Self.formatElapsed(from: timeOfExposure)
+        let timeStr = timeOfExposure.formatted(date: .omitted, time: .shortened)
+        lines.append("WHEN: \(timeStr), about \(elapsedDesc)")
 
         if symptoms.isEmpty {
             lines.append("SIGNS: none noticed yet")
