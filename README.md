@@ -41,6 +41,7 @@ To combat this, FloraFang employs a four-layer **Defense in Depth** pipeline:
 │  LAYER 2: Empirical Temperature Scaling (T = 1.53)               │
 │  P_calibrated ∝ P^(1/T). Fitted via NLL on 1,946 held-out photos.│
 │  Slashes ECE from 0.1014 to 0.0274. Sets benignFloor = 0.86.     │
+│  Dual-model agreement veto drops false reassurance to 0 of 346.  │
 └──────────────────────────────────────────────────────────────────┘
                                   │
                                   ▼
@@ -60,70 +61,226 @@ To combat this, FloraFang employs a four-layer **Defense in Depth** pipeline:
 ```
 
 1. **Layer 1 (Entropy & OOD Detection)**: Located in `HazardClassifier.swift` and `ConfidenceGate.swift`. Calculates Shannon Entropy across the 10-class distribution ($H = -\sum p_i \log_2 p_i$). Rejects out-of-distribution noise (screen moire, camera blur, non-biological surfaces) where probability is scattered diffusely across multiple classes ($H > 2.35$ and top-1 $< 0.55$). On our 1,946-image holdout set, this filter produces a **19.4% rejection rate**, deliberately sacrificing 127 correct predictions to catch 250 incorrect ones: a **2:1 ratio of wrong predictions caught to correct ones sacrificed**, accepted deliberately as an asymmetric safety filter. *Limitation acknowledged:* Entropy detects diffuse confusion, not sharp overconfident misclassifications; those are defended by downstream layers.
-2. **Layer 2 (Empirical Temperature Scaling & Calibrated Gates)**: Located in `HazardClassifier.swift` and `ConfidenceGate.swift`. Applies grid-searched temperature scaling ($T = 1.53$, NLL 1.2014) fitted on 1,946 unseen, held-out iNaturalist research-grade observations. This slashes Expected Calibration Error (ECE) by 73% (from 0.1014 to 0.0274) and derives `benignFloor = 0.86` for at least 95% reliable benign claims. Crucially, it controls the **false reassurance rate**: on 346 held-out real widows and recluses, an uncalibrated 0.38 floor emits a benign reassurance on **76 of 346 (22.0%)**, whereas the calibrated 0.86 floor drops false reassurance to just **1 of 346 (0.29%)**, which is a 75x reduction in dangerous false safety. The sweep also proves top-1 dangerous class recall plateaus at 66.5%, mathematically proving why a vision model cannot stand alone.
+2. **Layer 2 (Empirical Temperature Scaling, Calibrated Gates & Agreement Veto)**: Located in `HazardClassifier.swift` and `ConfidenceGate.swift`. Applies grid-searched temperature scaling ($T = 1.53$, NLL 1.2014) fitted on 1,946 unseen, held-out iNaturalist research-grade observations. This slashes Expected Calibration Error (ECE) by 73% (from 0.1014 to 0.0274) and derives `benignFloor = 0.86` for at least 95% reliable benign claims. Crucially, it controls the **false reassurance rate**: pairing the 10-class model with the secondary 3-class agreement veto on confident benign calls drops false reassurance from 1 of 346 (0.29%) down to **0 of 346 (0.00%)**. The sweep also proves top-1 dangerous class recall plateaus at 66.5%, mathematically proving why a vision model cannot stand alone.
 3. **Layer 3 (Dual-Tier Corroboration)**: Located in `IdentificationCascade.swift`. Compares Core ML's hazard prediction against Apple Intelligence's multimodal visual feature extraction (`SystemLanguageModel`). A benign call is never accepted as definitive on one model's vote alone, directly addressing the 33.5% dangerous false-negative ceiling of the vision classifier. *(Note: Requires iOS 27+ with Apple Intelligence support. Devices running earlier iOS versions or without Apple Intelligence fall back to Core ML and the calibrated confidence gate alone.)*
 4. **Layer 4 (Honest Clinical Framing)**: Located in `Catalog.swift` and `SpiderClasses.swift`. Uses clinical toxicology terminology (*"Not medically significant"* instead of *"Safe"*), reminding users that any wild animal can bite defensively if pinched.
 
 ***
 
-## Model Performance & Empirical Evaluation
+## Model Performance and Empirical Evaluation
 
-The Core ML hazard classifier (`SpiderHazard.mlmodel`) was trained on **~11,500 CC0 and CC-BY research-grade iNaturalist images** across ten classes (`widow`, `recluse`, `wolf_spider`, `orb_weaver`, `jumping_spider`, `cellar_spider`, `huntsman`, `tarantula`, `other_spider`, `not_a_spider`).
+Every number below was measured against a **1,946 image holdout set**: fresh
+research grade iNaturalist observations fetched separately, with every
+observation ID cross checked against the training set so nothing the model saw
+during training appears in the test. 346 of those images are real widows or
+recluses.
 
-### Validation vs. Holdout Generalization
+Create ML's own validation percentage is a random slice of the training data,
+drawn from the same photographers under the same conditions. It has flattered
+every model in this project by 13 to 28 points. Where the two disagree, the
+holdout number is the one reported.
 
-| Metric | Validation Set (Create ML split) | Held-Out Test Set (1,946 unseen images) | Finding / Tradeoff |
+### Shipping configuration
+
+| Component | Value | Source |
+|---|---|---|
+| Primary model | `SpiderHazard.mlmodel`, 10 class | ~11,500 CC0 and CC BY iNaturalist images |
+| Temperature | T = 1.53 | Grid searched NLL minimisation on holdout |
+| Expected calibration error | 0.1014 to 0.0274 | 73% reduction after scaling |
+| `benignFloor` | 0.86 | Confidence at which benign calls are >=95% correct |
+| `dangerousFloor` | 0.22 | Deliberately permissive |
+| Preprocessing | `.scaleToFill` | Matches Create ML training, see below |
+| Safety veto | `SpiderHazardGate.mlmodel`, 3 class | Vetoes confident benign calls only |
+| **False reassurance** | **0 of 346** | Real dangerous spiders told they are not medically significant |
+| Dangerous recall | 66.5% | Everything below this becomes a refusal, not a benign call |
+
+The distinction between the last two rows is the whole design. A third of real
+widows and recluses are not identified as dangerous. Almost none of them are
+told they are safe. Failing to an honest refusal is survivable; failing to a
+confident all clear is not.
+
+### The agreement veto
+
+The 10 class model told 1 real widow in 346 that it was not medically
+significant. One is not zero, and the app makes a safety claim above the
+benign floor.
+
+A second model trained on a different class structure fails on different
+images. Measured on the same holdout, the two disagree on 16.4% of images
+(320 of 1,946), and the single false reassurance fell inside that set.
+
+So a confident benign call now requires both models to agree:
+
+```
+10 class says benign at >= 0.86
+    AND 3 class gate says widow or recluse
+    -> refuse, and say why
+otherwise the 10 class result stands unchanged
+```
+
+The gate can never name a species, raise a confidence, or override a dangerous
+call. It has exactly one power: to stop a benign claim.
+
+| | 10 class alone | with agreement veto |
+|---|---|---|
+| False reassurance | 1 of 346 (0.29%) | **0 of 346** |
+| Confident benign answers | 219 | 204 |
+| Correct answers lost to refusal | 0 | 15 |
+
+Fifteen correct answers traded for one missed widow. By the asymmetry this app
+is built on, that is a good trade.
+
+Stated honestly: zero of 346 rests on one caught case. It is a measurement on
+one holdout, not a guarantee, and any future gate model has to be retested
+against the same benchmark rather than inheriting the result.
+
+The gate's standalone numbers are poor, 14.5% false reassurance, which is why
+it is documented in `HazardClassifier.swift` as a one direction veto and never
+as a triage authority.
+
+***
+
+## Null Results
+
+Four hypotheses tested and rejected. Documented because a negative result that
+is not written down gets retried.
+
+### 1. Subject segmentation with SAM3
+
+**Hypothesis.** Cropping to the subject was the largest accuracy fix in the app
+when applied at inference. A spider on a wall can be 2% of the pixels, and a
+classifier shown that is mostly learning stucco. Normalising subject size
+across the training set should help.
+
+**Method.** SAM3 over all ten class folders with the text prompt "spider",
+cropping to the returned bounding box with 15% padding. Box rather than mask
+deliberately: the app does not segment before Core ML, so erasing backgrounds
+in training would create a train/test mismatch. Detection was near total, zero
+errors across ~11,500 images, though cellar_spider lost 17.5% to non detection
+where every other class was under 6%.
+
+**Result.**
+
+| | Baseline | SAM3 tight crop |
+|---|---|---|
+| Validation | 68.0% | 70.0% |
+| Widow recall | 79% | 79% |
+| Recluse recall | 79% | 79% |
+
+The two classes the app exists to catch did not move. The validation gain is
+within run to run variance and three classes regressed.
+
+**Why.** The hypothesis assumed widow and recluse photos had a background
+problem to remove. They likely did not. People photographing a black widow get
+close and centre it, because it is the interesting and faintly alarming thing
+in front of them. Those images were already well framed.
+
+**Secondary finding.** Tight cropping upscales, and 26% of crops came out under
+200px before Create ML resizes to 299x299. The worry was that softness would
+correlate with class and become a learned feature. The data did not support it:
+widow had 40% of crops under 200px and stayed flat, tarantula had 40% and
+nudged up, cellar_spider had 12% and dropped. The planned follow up on a size
+filtered copy was dropped for lack of evidence.
+
+### 2. Hierarchical triage, three attempts
+
+**Hypothesis.** Ten way family classification is hard, and most of that
+difficulty buys nothing. Huntsman versus wolf spider is genuinely ambiguous
+from a photo and nobody is harmed by getting it wrong. Collapsing to widow,
+recluse, and one pooled benign class should free capacity for the distinction
+that matters.
+
+**Result, all three on the same holdout.**
+
+| Benign to dangerous ratio | Training images | Dangerous recall | Note |
 |---|---|---|---|
-| **Overall Accuracy** | **68.0%** | **60.9%** | **7.1-point generalization gap** reflecting honest domain shift to unseen observers |
-| **Exact Class Recall (Widow)** | **79.0%** | N/A | Create ML exact-class recall (true widow to predicted widow) |
-| **Exact Class Recall (Recluse)** | **79.0%** | N/A | Create ML exact-class recall (true recluse to predicted recluse) |
-| **Combined Dangerous Recall (Widow + Recluse)** | N/A | **66.5%** | Measured by `calibrate.py`: 33.5% of real dangerous spiders classified as benign top-1 |
-| **Expected Calibration Error (ECE)** | 0.1014 (uncalibrated) | 0.0274 (calibrated) | 73% drop in calibration error via temperature scaling ($T = 1.53$) |
-| **False Reassurance Rate on Dangerous Species** | N/A | **0.29%** (1 / 346) | Real widows/recluses labeled benign with high confidence ($\ge 0.86$) |
+| ~1 to 1 | 3,013 | 68.5% | Best of the three, 2 points over baseline |
+| 3 to 1 | 3,341 | 57.8% | More benign data, worse |
+| 12 to 1 | 8,814 | 8.1% | Majority class collapse |
 
-> [!NOTE]
-> **Measurement Distinction**: Create ML's validation recall is *exact-class recall* within the training distribution (e.g. true widow classified specifically as widow). In contrast, `calibrate.py` measures *group safety recall* across 346 real held-out widows and recluses on unseen images (evaluating whether a dangerous spider is classified into *any* dangerous class). Even under this broader safety grouping, dangerous recall plateaus at 66.5% on holdout, meaning 33.5% of real medically significant spiders are assigned a benign class as their top-1 prediction. This is the mathematical reason why downstream layers (Apple Intelligence corroboration and honest refusal) exist.
+**The 12 to 1 run is a textbook failure worth naming.** Create ML minimises
+symmetric cross entropy with uniform sample weights. With 85% of samples
+benign, the optimiser learned that answering benign is right most of the time
+and did exactly that. Holdout accuracy read 82.3%, which looks respectable and
+means nothing: a model that always says benign scores about the same on that
+distribution. Dangerous recall was 8.1%, and standalone false reassurance was
+91.9%.
 
-### The 3-Class Triage Gate Experiment: Why Holdout Testing Matters
+Capping the benign pool recovered most of the collapse, 8.1% to 57.8%,
+confirming the diagnosis. But it still landed below the 10 class baseline, and
+recall fell monotonically as benign volume rose. The best result came from the
+smallest, most balanced set.
 
-During architecture evaluation, we explored an alternative approach: collapsing all harmless spiders into a single class to create a dedicated 3-class primary hazard gate (`hazard3`: `widow`, `recluse`, `not_medically_significant`).
+**Conclusion.** Volume is not the bottleneck and adding benign data actively
+hurts. The one configuration that beat the baseline did so by 2 points, which
+does not justify running and calibrating two models for triage. The three class
+model was retained in a narrower role, as the agreement veto above, where its
+different failure profile is the point and its poor standalone accuracy does
+not matter.
 
-On paper in Create ML, this looked like an enormous breakthrough:
-* Create ML validation accuracy reached **85.0%**.
-* Create ML Widow recall reached **90.0%**.
-* Create ML Recluse recall reached **95.0%**.
+**Caveat on interpretation.** The capped runs drew widow and recluse from a more
+strictly cleaned dataset, so those classes had 730 and 611 images against the
+943 and 969 in the first attempt. Benign volume rose while dangerous volume
+fell slightly, which complicates a pure reading of the volume question.
 
-However, when this 3-class model was evaluated on the independent **1,946-image held-out test set**, empirical testing revealed a critical clinical failure:
+### 3. Synthetic augmentation
 
-| Model Architecture | Create ML Validation Accuracy | Holdout Dangerous Recall | Holdout False Reassurance Rate | Decision |
-|---|---|---|---|---|
-| **10-Class Baseline (`SpiderHazard.mlmodel`)** | 68.0% | **66.5%** (230 / 346) | **0.29%** (1 / 346) | **Production (v1.0)** |
-| **3-Class Hazard Gate (`hazard3`)** | 85.0% | **68.5%** (237 / 346) | **14.5%** (50 / 346) | **Rejected for v1.0** |
+| Configuration | Validation |
+|---|---|
+| No augmentations | **68.0%** |
+| 5 augmentations including blur and noise | 41.0% |
 
-On unseen data, the 3-class model only gained 2 percentage points of dangerous recall (68.5% vs 66.5%), but suffered a **14.5% false reassurance rate**: **50 out of 346 real venomous spiders** were confidently classified as `not_medically_significant` (above its derived 0.68 floor).
+Synthetic blur destroys the fine detail spiders are identified by: eye
+arrangement, leg spination, the edges of abdominal markings. Four runs to
+isolate, because blur was one of five augmentations enabled together.
 
-Why did this occur? In the 10-class model, when the network is uncertain about an ambiguous widow, probability scatters across multiple benign classes, failing the strict 0.86 benign floor and safely triggering refusal. In the 3-class model, any uncertainty between widow and recluse dumps entirely into the single benign bucket, creating high-confidence false all-clears.
+The corollary shaped the app. Poor captures are handled at runtime through the
+entropy filter and structured refusal, not by teaching the model to tolerate
+degradation.
 
-Because telling 1 in 7 patients that a black widow is safe is medical negligence, the 3-class gate was rejected for production. The calibrated 10-class model remains the only production model supported by empirical holdout safety metrics.
+Worth noting the effect is not universal. At ~470 images per class, turning
+augmentation off made things worse rather than better, 64% to 56%. With half
+the data the model needed variety more than it was hurt by degradation. The
+finding is specific to a configuration, not a rule.
 
-### Preprocessing Alignment: Stretched vs. Letterboxed
+### 4. Training volume
 
-While testing inference preprocessing, we uncovered a striking demonstration of train/test mismatch. An initial intuition was that we should letterbox photos (`.scaleToFit`) to avoid squashing spiders and preserve their 8-leg geometry. But when evaluated across the exact same 1,946 holdout images, changing only this single variable produced a decisive result:
+Halving the dataset to ~500 per class and cleaning it more strictly produced
+64% validation against 68%, with widow at 78% and recluse at 77%. Restoring the
+full set but applying the stricter standard produced 62%, and revealed the real
+problem: the strict criteria cut hardest on the classes with the fewest good
+photos to begin with. Recluse lost 43% of its images, widow 30%, while
+jumping_spider and not_a_spider lost almost none.
 
-| Preprocessing Method | Holdout Accuracy | Dangerous Class Recall | Fitted T (NLL) |
+Widow and recluse became the two smallest classes in the set, and recall
+dropped accordingly. Cleaning quality does not compensate for imbalance, and
+strict criteria applied uniformly do not produce uniform cuts.
+
+***
+
+## Preprocessing Alignment
+
+Testing inference preprocessing produced the largest single recall change in
+the project, from a one line setting.
+
+The intuition was that letterboxing (`.scaleToFit`) preserves leg geometry and
+avoids squashing the spider. Measured across the same 1,946 images with one
+variable changed:
+
+| Method | Holdout accuracy | Dangerous recall | Fitted T |
 |---|---|---|---|
-| **Stretched (`.scaleToFill`)** | **60.9%** | **66.5%** | 1.53 (1.2014) |
-| Letterboxed (`.scaleToFit`) | 56.2% | 55.2% | 1.64 (1.3323) |
+| Stretched (`.scaleToFill`) | **60.9%** | **66.5%** | 1.53 |
+| Letterboxed (`.scaleToFit`) | 56.2% | 55.2% | 1.64 |
 
-**Letterboxing caused an 11.3 percentage point collapse in dangerous class recall.** Apple's Create ML training pipeline squashes training images to 299 by 299 rather than letterboxing. The black padding bars introduced border artifacts the convolutional filters never saw in training, while shrinking the spider's pixel resolution. Setting `request.cropAndScaleAction` to `.scaleToFill` to match training recovered those 11.3 points instantly: a vivid reminder that preprocessing alignment often impacts medical recall far more than model hyperparameters.
+**11.3 points of dangerous recall, from padding.** Create ML squashes training
+images to 299x299 rather than letterboxing. The black bars introduced border
+artifacts the convolutional filters never saw in training, while shrinking the
+spider's effective resolution. Matching training with `.scaleToFill` recovered
+it immediately.
 
-### The Augmentation & Blur Finding
-
-During model training in Create ML, adding synthetic blur and noise degraded performance severely:
-* **No synthetic augmentations**: **68.0% validation accuracy**
-* **With 5 augmentations (including blur and noise)**: **41.0% validation accuracy**
-
-Synthetic blur and noise corrupted fine-grained biological features (ocular arrangements and spine structures on legs) that the classifier relied on to separate families. Rejecting synthetic blur in favor of clean training data, and handling poor captures via runtime entropy and refusal instead, was a key empirical discovery.
+The diagnosis was initially backwards: the calibration script was letterboxing
+and the app was not, so the fix looked like it belonged in the script. It
+belonged in the classifier.
 
 ***
 
@@ -135,6 +292,7 @@ Identification runs through four orchestrated tiers:
 |---|---|---|---|
 | **1** | **Apple Vision (`ClassifyImageRequest`)** | Coarse category identification (spider, plant, bird, insect). Non-spiders resolve immediately from local catalog. | Offline, ~40ms |
 | **2a** | **Core ML Hazard Model (`SpiderHazard.mlmodel`)** | 10-class image classifier trained on medically significant vs. common benign spider families. Evaluated with `.scaleToFill` to match Create ML training preprocessing. | Offline, ~60ms |
+| **2 gate** | **Agreement Veto Model (`SpiderHazardGate.mlmodel`)** | 3-class safety screen. Vetoes confident benign calls if danger is detected. Drops holdout false reassurance to 0 of 346. | Offline, ~30ms |
 | **2b** | **Apple Intelligence (`SystemLanguageModel`)** | Multimodal feature extraction. Inspects eye arrangements (6 eyes in 3 pairs for Recluse), hourglass markings, and violin patterns. Isolates subject via Vision foreground instance masking. *(Requires iOS 27+; earlier devices fall back to Core ML + Gate alone).* | Offline, on-device |
 | **3** | **Remote Cloud Fallback** | Remote API seam. **Disabled by default** to preserve 100% offline privacy and zero-network operation. | Disabled |
 | **4** | **Structured Refusal** | Delivers dynamic AI-generated feedback explaining what markings were not visible (e.g., *"Not visible in photo: underside of abdomen"*), plain-English disagreement notes, and angle retake advice. | Instant |
@@ -180,9 +338,28 @@ FloraFang is engineered for high-consequence field situations, where data exfilt
 
 ***
 
-## Known Limitations & v1.1 Roadmap
+## Known Limitations
 
-* **Dangerous Recall Ceiling on Legacy Devices (pre-iOS 27)**: On held-out testing, the vision classifier alone maxes out at 66.5% recall on dangerous species (missing 33.5% of real widows and recluses as top-1). While Layer 3 (Apple Intelligence multimodal feature corroboration) is designed to catch these missed cases, it requires iOS 27+ on supported Apple Silicon. On iOS 26 and earlier, devices fall back to Core ML and the confidence gate alone, meaning ambiguous specimens are escalated to caution rather than verified.
-* **In-Distribution Calibration**: Temperature scaling ($T = 1.53$) and gate thresholds (`benignFloor = 0.86`, `dangerousFloor = 0.22`) were fitted on 1,946 held-out iNaturalist research-grade photos. While unseen during training, these still represent naturalist photography with decent lighting. Calibration continues to be refined against uncurated phone captures under adverse field conditions (e.g. flash blowout, baseboards at midnight).
-* **v1.1 Dedicated Triage Gate Roadmap**: To safely realize the benefits of a hierarchical gate without the 14.5% false reassurance penalty observed in our 3-class prototype, v1.1 research will focus on expanding the training dataset beyond 3,013 images, applying asymmetric class loss weighting, and establishing a strict gate requirement that holdout false reassurance must remain below 0.3% before any architecture change is deployed.
-* **Plant Model Evaluation**: While the spider hazard model was evaluated on a 1,946-image holdout test set with temperature scaling and entropy gating, the plant hazard classifier currently relies on internal validation accuracy alone and has not yet undergone a separate held-out test sweep.
+**Dangerous recall is 66.5%.** A third of real widows and recluses are not
+classified into a dangerous group. Those become refusals rather than benign
+calls, which is safe but not useful. This is the main thing a future version
+should improve, and four experiments have failed to improve it.
+
+**Calibration is in distribution.** T = 1.53 and the gate thresholds were
+fitted on iNaturalist research grade photographs: daylight, decent cameras,
+photographers who chose to submit. Real use is a phone in a dim garage at
+midnight with flash. The thresholds are a large improvement on guesses and are
+not the final answer. Recalibration against real captures is pending tester
+data.
+
+**The plant model has no holdout.** `PlantHazard.mlmodel` reports 83%
+validation accuracy and has never been evaluated on unseen images. Every
+caveat above about Create ML's validation split applies to it, unmeasured.
+
+**Layer 3 requires iOS 27.** Multimodal corroboration through Apple
+Intelligence is unavailable on iOS 26 and earlier. Those devices fall back to
+the 10 class model, the calibrated gate, and the agreement veto, which is where
+the 0 of 346 figure comes from anyway.
+
+**Zero of 346 is a measurement, not a guarantee.** It rests on one caught case
+in one holdout. The true rate has real uncertainty around it.
