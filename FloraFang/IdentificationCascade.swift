@@ -115,10 +115,31 @@ final class IdentificationCascade {
             lastTrace.append("tier2b: language model unavailable, skipped")
         }
 
+        // Tier 2 gate veto model
+        // Runs when primary model makes a confident benign call (coreVerdict == .accept)
+        // to verify agreement before asserting safety.
+        var gatePrediction: GatePrediction?
+        let isGateAvailable = await classifier.isGateAvailable
+
+        if isGateAvailable {
+            if let core = corePrediction,
+               coreVerdict == .accept,
+               !core.spiderClass.isMedicallySignificant {
+                gatePrediction = try await classifier.classifyGate(image)
+                if let gp = gatePrediction {
+                    lastTrace.append("tier2 gate: \(gp.topClass) @ \(pct(gp.confidence))")
+                }
+            }
+        } else {
+            lastTrace.append("gate: no model in bundle, skipped")
+        }
+
         // ---- Combine ----------------------------------------------------
         if let combined = combine(core: corePrediction,
                                   coreVerdict: coreVerdict,
-                                  extraction: extraction) {
+                                  extraction: extraction,
+                                  gatePrediction: gatePrediction,
+                                  isGateAvailable: isGateAvailable) {
             return combined
         }
 
@@ -138,7 +159,7 @@ final class IdentificationCascade {
         return refusal(rawLabel: coarse.rawLabel, confidence: coarse.confidence)
     }
 
-    // MARK: - Tier 1
+    // MARK: Tier 1
 
     private struct Coarse {
         let entry: CatalogEntry
@@ -218,7 +239,7 @@ final class IdentificationCascade {
     /// Below this, we don't present the category as a finding.
     private let lowConfidenceFloor: Double = 0.30
 
-    // MARK: - Combining the two tier 2 signals
+    // MARK: Combining the two tier 2 signals
 
     /// Decides what to report given a Core ML prediction, its gate verdict,
     /// and whatever markings the language model claimed to see.
@@ -235,7 +256,9 @@ final class IdentificationCascade {
     private func combine(
         core: HazardPrediction?,
         coreVerdict: ConfidenceGate.Verdict,
-        extraction: ExtractionResult?
+        extraction: ExtractionResult?,
+        gatePrediction: GatePrediction?,
+        isGateAvailable: Bool
     ) -> Assessment? {
 
         let featureClass = extraction?.verdict.indicatedClass
@@ -275,6 +298,17 @@ final class IdentificationCascade {
         // actually earned rather than asserted, so it gets its own tier label.
         if let fc = featureClass, fc == core.spiderClass {
             lastTrace.append("combine: agreement")
+            // Confident benign check: even when corroborated, a benign call must satisfy the gate veto
+            if !core.spiderClass.isMedicallySignificant {
+                if isGateAvailable, let gp = gatePrediction {
+                    if gp.isDangerous {
+                        lastTrace.append("gate: vetoed benign call (flagged \(gp.topClass) @ \(pct(gp.confidence)))")
+                        return vetoAssessment(for: core.spiderClass, gatePrediction: gp, features: features)
+                    } else {
+                        lastTrace.append("gate: agrees on benign (\(pct(gp.confidence)))")
+                    }
+                }
+            }
             var result = assessment(from: core, asWarning: false)
             result = withFeatures(result, features, tier: .corroborated)
             return result
@@ -283,12 +317,54 @@ final class IdentificationCascade {
         // No feature signal. Fall back to the gate's own verdict on Core ML.
         switch coreVerdict {
         case .accept:
+            // Confident benign check: requires concurrence from the gate model.
+            // If the gate flags widow or recluse, the benign call is vetoed.
+            if !core.spiderClass.isMedicallySignificant {
+                if isGateAvailable, let gp = gatePrediction {
+                    if gp.isDangerous {
+                        lastTrace.append("gate: vetoed benign call (flagged \(gp.topClass) @ \(pct(gp.confidence)))")
+                        return vetoAssessment(for: core.spiderClass, gatePrediction: gp, features: features)
+                    } else {
+                        lastTrace.append("gate: agrees on benign (\(pct(gp.confidence)))")
+                    }
+                }
+            }
             return withFeatures(assessment(from: core, asWarning: false), features, tier: .hazard)
         case .acceptAsWarning:
             return withFeatures(assessment(from: core, asWarning: true), features, tier: .hazard)
         case .escalate:
             return nil
         }
+    }
+
+    private func vetoAssessment(
+        for sc: SpiderClass,
+        gatePrediction: GatePrediction,
+        features: [DiagnosticFeature]
+    ) -> Assessment {
+        let note = "One model classified this as a harmless \(sc.displayName.lowercased()), while a secondary safety screen flagged markings consistent with a \(gatePrediction.topClass). Because safety cannot be guaranteed, FloraFang will not call this safe. Treat with caution."
+        let disNote = "One model read this as a harmless family (\(sc.displayName.lowercased())), while another saw markings consistent with a dangerous one (\(gatePrediction.topClass)), so the app will not call it."
+
+        var a = Assessment(
+            headline: "Unresolved: Conflicting Safety Signals",
+            group: sc.genus,
+            hazard: .caution,
+            hazardNote: note,
+            confidence: max(gatePrediction.confidence, 0.50),
+            tier: .hazard,
+            ruledOut: [],
+            fieldNotes: [
+                "Two independent classifiers disagreed on whether this spider is medically significant.",
+                "Retake from directly above with steady lighting to reveal abdominal patterns.",
+                "Do not handle directly. For a definitive answer, submit to iNaturalist or consult an expert."
+            ],
+            nextStep: "Do not handle with bare hands. Compare with reference photos or seek expert verification.",
+            rawLabel: "veto:\(sc.trainingLabel)+gate:\(gatePrediction.topClass)",
+            categoryKey: "spider"
+        )
+        a.disagreementNote = disNote
+        a.observedFeatures = features
+        return a
     }
 
     private func featureLedAssessment(
@@ -328,7 +404,7 @@ final class IdentificationCascade {
         return copy
     }
 
-    // MARK: - Plant tier
+    // MARK: Plant tier
 
     /// Returns nil when the plant model is absent or produced nothing useful,
     /// so the caller can fall back to catalog level guidance.
@@ -378,7 +454,7 @@ final class IdentificationCascade {
         )
     }
 
-    // MARK: - Debug
+    // MARK: Debug
 
     /// Vision's full ranked label list, unfiltered by the catalog.
     /// Development tool: this is how you find labels your matchTerms miss.
@@ -394,7 +470,7 @@ final class IdentificationCascade {
         }
     }
 
-    // MARK: - Building assessments
+    // MARK: Building assessments
 
     private func assessment(from prediction: HazardPrediction, asWarning: Bool) -> Assessment {
         let sc = prediction.spiderClass
