@@ -482,16 +482,16 @@ final class IdentificationCascade {
         // THE CRITICAL DISTINCTION, measured rather than assumed.
         //
         // On 346 held-out real widows and recluses, a benign prediction shown
-        // above the 0.86 benignFloor was wrong 2 times, 0.6%. The same
-        // prediction shown above 0.38 was wrong 76 times, 22%.
+        // above the 0.86 benignFloor was wrong once, 0.29%. The same
+        // prediction shown above 0.38 was wrong 82 times, 23.7%.
         //
         // The 0.38 branch is worth keeping, because cutting it turns roughly
         // 1,100 of 1,946 predictions into refusals and an app that refuses on
         // most scans is useless in a different way. What is NOT acceptable is
         // attaching a benign hazard note to it. SpiderClass.hazardNote for a
         // huntsman says "not medically significant", and saying that on a
-        // prediction that is right about a third of the time is how 22% of
-        // widow holders get told to relax.
+        // prediction that is right about a third of the time is how a quarter
+        // of widow and recluse holders get told to relax.
         //
         // So a low confidence benign call names the family and says nothing
         // about safety. The hazard level is forced to .caution and the note

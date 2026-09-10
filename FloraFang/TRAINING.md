@@ -122,8 +122,9 @@ python3 calibrate.py --model SpiderHazard.mlmodel --holdout florafang-training/h
    * Calibrated ECE ($T = 1.53$): 0.0274 (a 73% drop in calibration error).
 2. **Deriving `benignFloor = 0.86`**:
    To ensure benign claims are at least 95% reliable, the benign confidence floor must be set to 0.86.
-3. **Controlling False Reassurance (0.29%)**:
-   On 346 real dangerous spiders in the holdout, an uncalibrated 0.38 floor emitted false reassurance on 76 of 346 (22.0%). At the calibrated 0.86 floor, false reassurance dropped to **1 of 346 (0.29%)**.
+3. **Controlling False Reassurance (0 of 346)**:
+   On 346 real dangerous spiders in the holdout under T = 1.53, a permissive 0.38 floor emitted false reassurance on 82 of 346 (23.7%). At the calibrated 0.86 floor, false reassurance dropped to **1 of 346 (0.29%)**, and the secondary agreement veto eliminated it entirely to **0 of 346 (0.00%)**.
+   Every one of the first five errors was a recluse, and the single 0.86 failure was a recluse too (`recluse_301073617.jpg` at 0.911 predicted as huntsman, which the secondary agreement veto catches). While widows fail more often in aggregate, the edge cases that survive above the floor are recluses misclassified as harmless wanderers at high confidence.
 4. **Dangerous Recall Plateau (66.5%)**:
    On the holdout set, the vision classifier alone achieved 66.5% top-1 recall on dangerous species, meaning 33.5% were assigned a benign top-1 label. This proved why Tier 2b (Apple Intelligence multimodal feature extraction) and Tier 4 (structured refusal) are mandatory safety layers.
 
