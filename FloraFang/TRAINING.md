@@ -129,35 +129,84 @@ python3 calibrate.py --model SpiderHazard.mlmodel --holdout florafang-training/h
 
 ***
 
-## Step 7: Case Study: The 3-Class Triage Experiment
+## Step 7: Case Study: Hierarchical Triage (Three Attempts)
 
-We conducted a controlled experiment exploring a dedicated 3-class primary gate (`hazard3`: `widow`, `recluse`, `not_medically_significant`) designed to ask "is this a widow or recluse?" before resolving taxonomy.
+We conducted three controlled experiments exploring a dedicated 3-class primary gate (`hazard3`: `widow`, `recluse`, `not_medically_significant`) designed to ask "is this a widow or recluse?" before resolving taxonomy.
 
-### The Contrast: Validation Flattery vs Holdout Reality
+### The Contrast: Three Attempts on the Same Holdout
 
-| Metric | Create ML Validation Split | Independent Holdout Test Set (1,946 images) |
-|---|---|---|
-| **Overall Accuracy** | 85.0% | 61.2% |
-| **Widow Recall** | 90.0% | 62.5% |
-| **Recluse Recall** | 95.0% | 76.7% |
-| **Combined Dangerous Recall** | N/A | 68.5% (237 / 346) |
-| **False Reassurance Rate** | N/A | **14.5%** (50 / 346) |
+| Benign to dangerous ratio | Training images | Dangerous recall | Note |
+|---|---|---|---|
+| ~1 to 1 | 3,013 | 68.5% | Best of the three, 2 points over baseline |
+| 3 to 1 | 3,341 | 57.8% | More benign data, worse |
+| 12 to 1 | 8,814 | 8.1% | Majority class collapse |
 
-### Why the 3-Class Gate Failed on Safety
+**The 12 to 1 run is a textbook failure worth naming.** Create ML minimises
+symmetric cross entropy with uniform sample weights. With 85% of samples
+benign, the optimiser learned that answering benign is right most of the time
+and did exactly that. Holdout accuracy read 82.3%, which looks respectable and
+means nothing: a model that always says benign scores about the same on that
+distribution. Dangerous recall was 8.1%, and standalone false reassurance was
+91.9%.
 
-While Create ML reported 90% to 95% recall on its randomized split, the model's true performance on unseen holdout photos was 68.5% dangerous recall: only 2 points better than the 10-class model (66.5%).
+Capping the benign pool recovered most of the collapse, 8.1% to 57.8%,
+confirming the diagnosis. But it still landed below the 10 class baseline, and
+recall fell monotonically as benign volume rose. The best result came from the
+smallest, most balanced set.
 
-More critically, the 3-class model produced a **14.5% false reassurance rate**: **50 out of 346 real venomous spiders** were confidently classified as harmless (`not_medically_significant` with confidence exceeding its 0.68 floor).
-
-In the 10-class model, ambiguous dangerous spiders scatter probability across multiple harmless families, failing the strict 0.86 floor and triggering refusal. In the 3-class model, all uncertainty between widow and recluse dumps directly into `not_medically_significant`, creating high-confidence false all-clears.
-
-Because mislabeling 1 in 7 venomous spiders as safe is unacceptable in medical triage, the 3-class gate was rejected for production. The calibrated 10-class model remains the production classifier.
+**Conclusion.** Volume is not the bottleneck and adding benign data actively
+hurts. The one configuration that beat the baseline did so by 2 points, which
+does not justify running and calibrating two models for triage. The three class
+model was retained in a narrower role, as the agreement veto in Step 8.
 
 ***
 
-## Step 8: v1.1 Research Roadmap for Hierarchical Gates
+## Step 8: The Agreement Veto (Zero False Reassurance)
 
-To realize the theoretical benefits of a hierarchical gate in v1.1 without the safety penalty:
-1. **Dataset Expansion**: Expand the primary gate training set significantly beyond 3,013 images to teach the network subtle distinctions across thousands of natural variations.
-2. **Asymmetric Loss Weighting**: Apply higher penalty loss to false negatives during training in PyTorch before exporting via `coremltools`.
-3. **Mandatory Safety Criterion**: Any prospective gate model must achieve a false reassurance rate below 0.3% on the 1,946-image holdout set before deployment.
+The 10 class model told 1 real widow in 346 that it was not medically
+significant. One is not zero, and the app makes a safety claim above the
+benign floor.
+
+A second model trained on a different class structure fails on different
+images. Measured on the same holdout, the two disagree on 16.4% of images
+(320 of 1,946), and the single false reassurance fell inside that set.
+
+So a confident benign call now requires both models to agree:
+
+```
+10 class says benign at >= 0.86
+    AND 3 class gate says widow or recluse
+    -> refuse, and say why
+otherwise the 10 class result stands unchanged
+```
+
+The gate can never name a species, raise a confidence, or override a dangerous
+call. It has exactly one power: to stop a benign claim.
+
+| | 10 class alone | with agreement veto |
+|---|---|---|
+| False reassurance | 1 of 346 (0.29%) | **0 of 346** |
+| Confident benign answers | 219 | 204 |
+| Correct answers lost to refusal | 0 | 15 |
+
+Fifteen correct answers traded for one missed widow. By the asymmetry this app
+is built on, that is a good trade.
+
+Stated honestly: zero of 346 rests on one caught case. It is a measurement on
+one holdout, not a guarantee, and any future gate model has to be retested
+against the same benchmark rather than inheriting the result.
+
+The gate's standalone numbers are poor, 14.5% false reassurance, which is why
+it is documented in `HazardClassifier.swift` as a one direction veto and never
+as a triage authority.
+
+***
+
+## Step 9: Null Results and Empirical Rules
+
+Four hypotheses tested and rejected:
+
+1. **Subject segmentation with SAM3**: Normalising subject size across training with SAM3 bounding box crops did not improve dangerous recall (widow and recluse recall remained flat at 79% validation).
+2. **Hierarchical triage**: Three attempts showed adding unweighted benign volume degraded dangerous recall from 68.5% down to 8.1% (majority class collapse).
+3. **Synthetic augmentation**: Artificial blur and noise reduced validation accuracy from 68.0% to 41.0%, destroying fine ocular and leg spine features.
+4. **Training volume cuts**: Halving training data and applying strict criteria cut hardest on the rarest classes (recluse lost 43% of images, widow 30%), exacerbating class imbalance.

@@ -23,9 +23,9 @@ FloraFang runs 100% on-device and requires three privacy keys configured in `Inf
 ## Active Codebase Map
 
 ### Core Identification & AI
-* `IdentificationCascade.swift`: Central coordinator for multi-tier evaluation, routing, and refusal generation.
-* `HazardClassifier.swift`: Core ML wrapper with **Mathematical Temperature Scaling ($T = 1.6$)** and **Shannon Entropy ($H$)** calculation.
-* `ConfidenceGate.swift`: Calibrated asymmetric confidence thresholds (`dangerousFloor = 0.22`, `benignFloor = 0.55`, `minimumMargin = 0.06`).
+* `IdentificationCascade.swift`: Central coordinator for multi-tier evaluation, routing, refusal generation, and agreement veto.
+* `HazardClassifier.swift`: Core ML wrapper with **Empirical Temperature Scaling ($T = 1.53$)**, **Shannon Entropy ($H$)** calculation, and **SpiderHazardGate** agreement veto.
+* `ConfidenceGate.swift`: Calibrated asymmetric confidence thresholds (`dangerousFloor = 0.22`, `benignFloor = 0.86`, `minimumMargin = 0.06`).
 * `FeatureExtractor.swift`: Apple Intelligence multimodal feature extractor using on-device `SystemLanguageModel`.
 * `SubjectSegmenter.swift`: Apple Vision foreground instance masking (`VNGenerateForegroundInstanceMaskRequest`).
 * `ImageProcessor.swift`: Downscales and pre-processes images for Apple Foundation Model inference.
