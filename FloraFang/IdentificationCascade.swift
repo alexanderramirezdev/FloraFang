@@ -115,47 +115,6 @@ final class IdentificationCascade {
             lastTrace.append("tier2b: language model unavailable, skipped")
         }
 
-        // ---- Tier 2c: Benign Family Sub Classifier ----------------------
-        // If Tier 2a cleared the spider as not medically significant, and Tier 2b
-        // did not see a diagnostic dangerous marking, roll into Tier 2c to resolve
-        // the specific harmless family (e.g. jumping spider, cellar spider, wolf spider).
-        if let core = corePrediction,
-           core.spiderClass == .notMedicallySignificant,
-           (coreVerdict == .accept || coreVerdict == .acceptAsWarning),
-           (extraction?.verdict.indicatedClass?.isMedicallySignificant != true) {
-
-            if await classifier.isFamilyAvailable {
-                if let familyPred = try await classifier.classifyFamily(image) {
-                    lastTrace.append("tier2c: \(familyPred.rawLabel) @ \(pct(familyPred.confidence))")
-
-                    if familyPred.spiderClass.isMedicallySignificant {
-                        // Safety backup triggered: If the family model has extreme conviction
-                        // on a dangerous class, treat as caution rather than asserting benign.
-                        lastTrace.append("tier2c: dangerous backup alert")
-                        var alert = assessment(from: familyPred, asWarning: true)
-                        alert.disagreementNote = "Primary screening cleared this spider, but secondary analysis flagged possible \(familyPred.spiderClass.displayName.lowercased()) features. Treating with caution."
-                        alert.tier = .hazard
-                        if let ex = extraction {
-                            alert.observedFeatures = ex.report.visibleFeatures
-                        }
-                        return alert
-                    } else if familyPred.confidence >= 0.25 {
-                        // Successfully resolved to a specific benign family!
-                        lastTrace.append("tier2c: resolved \(familyPred.spiderClass.displayName)")
-                        let asWarning = familyPred.confidence < 0.45
-                        var familyAssessment = assessment(from: familyPred, asWarning: asWarning)
-                        familyAssessment.tier = .hazard
-                        if let ex = extraction {
-                            familyAssessment.observedFeatures = ex.report.visibleFeatures
-                        }
-                        return familyAssessment
-                    }
-                }
-            } else {
-                lastTrace.append("tier2c: family model unavailable")
-            }
-        }
-
         // ---- Combine ----------------------------------------------------
         if let combined = combine(core: corePrediction,
                                   coreVerdict: coreVerdict,
