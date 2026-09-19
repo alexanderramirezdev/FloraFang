@@ -24,8 +24,11 @@ struct ConfidenceGate {
     /// warning. With 10 classes, anything above 22% is more than 2x random chance.
     /// Note: On our 1,946-image holdout sweep, top-1 recall on real widows and recluses
     /// maxed out at 66.5% regardless of threshold. A low floor surfaces any dangerous
-    /// signal, but safety relies on Tier 2b (multimodal Foundation Model inspection)
-    /// to catch cases where the vision model ranked a benign class higher.
+    /// signal, but the property that actually protects a wrongly-ranked benign call
+    /// on every OS version is the Tier 2 gate agreement veto in IdentificationCascade
+    /// (see combine()), not Tier 2b. Tier 2b (multimodal Foundation Model inspection)
+    /// only runs on iOS 27+ and is a second, independent signal when it is available,
+    /// it is not what today's zero-false-reassurance holdout result depends on.
     var dangerousFloor: Double = 0.22
 
     /// A benign class must clear this before we report an identification.

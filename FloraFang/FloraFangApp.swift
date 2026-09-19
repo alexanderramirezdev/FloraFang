@@ -8,9 +8,23 @@ import SwiftData
 
 @main
 struct FloraFangApp: App {
+    // One-time unlock (Flora chat, field log export, ID cards, life list,
+    // full catalog). Lives at the app root so every screen reads the same
+    // instance via the environment. See PurchaseManager.swift for exactly
+    // what this does and, just as importantly, does not gate.
+    @State private var purchases = PurchaseManager()
+
+    init() {
+        // Must run before SwiftData's ModelContainer touches Application
+        // Support, so protection is in place before the store's first
+        // write, not applied after the fact. See DataProtection.swift.
+        DataProtection.secureApplicationSupport()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(purchases)
         }
         .modelContainer(for: [FieldEntry.self, ExposureIncident.self])
     }

@@ -211,3 +211,64 @@ Four hypotheses tested and rejected:
 2. **Hierarchical triage**: Three attempts showed adding unweighted benign volume degraded dangerous recall from 68.5% down to 8.1% (majority class collapse).
 3. **Synthetic augmentation**: Artificial blur and noise reduced validation accuracy from 68.0% to 41.0%, destroying fine ocular and leg spine features.
 4. **Training volume cuts**: Halving training data and applying strict criteria cut hardest on the rarest classes (recluse lost 43% of images, widow 30%), exacerbating class imbalance.
+
+***
+
+## Step 10: Plant Model Calibration
+
+`PlantHazard.mlmodel` went through the same holdout methodology as the
+spider model, extended to plants: `fetch_holdout.py --dataset plants`
+excludes any observation ID already present in the training `raw/` folder,
+and `calibrate_plants.py` runs the model over what's left.
+
+```bash
+python3 fetch_holdout.py --dataset plants --per-class 200
+python3 calibrate_plants.py --model PlantHazard.mlmodel --holdout florafang-training/plants/holdout
+```
+
+### Empirical Calibration Findings
+
+1. **Empirical Temperature Scaling (T = 1.62)**: Uncalibrated accuracy on
+   the 1,711-image holdout was 76.4%, ECE 0.095. Fitting temperature the
+   same way as the spider model converged at T = 1.62, cutting ECE to
+   0.019.
+
+2. **A calibration-space bug, not just a missing number.** Unlike
+   `HazardClassifier.swift`, which applies temperature scaling on device
+   before any threshold sees the result, `PlantClassifier.swift` compared
+   its `namingFloor` against raw, uncalibrated softmax. The threshold
+   derived from calibration and the value it was compared against in the
+   app were in two different spaces. Caught during a full-codebase review
+   that compared the two classifiers side by side, and fixed to match the
+   spider pattern (`pow(raw, 1/T)` renormalized, mathematically identical
+   to scaling logits by T when only final probabilities are available).
+
+3. **Deriving `namingFloor = 0.82`** (in the now-correct calibrated space):
+
+   | | `namingFloor` | Named-species accuracy | Toxic recall, named calls |
+   |---|---|---|---|
+   | Old (raw space, as shipped) | 0.45 | 80.5% | 93.1% |
+   | New (calibrated space) | 0.82 | 95.0% | 58.0% |
+
+   Raising the floor to hit 95% species accuracy costs 35 points of
+   recall on named calls. Not a strict improvement, a precision/recall
+   trade, made in favor of not sending someone to a vet with a wrong
+   species name.
+
+4. **The gap a threshold can't fix.** The model's top-1 pick lands on some
+   toxic class, right or wrong species, for 97.5% of real toxic holdout
+   images (only 2.5% land on `notKnownToxic`). So most of what
+   `namingFloor` discards below 0.82 is still correctly "this is toxic,"
+   just unconfident about which species, and today that signal is thrown
+   away entirely. A middle "likely toxic, species unclear" tier was the
+   obvious next step, and it was tried and rejected: deriving it from the
+   model's own output (aggregate non-benign probability mass, or
+   top-1-is-toxic at any confidence) fails because **61.5% of the 200
+   genuinely benign holdout images still get a toxic species as top-1, at
+   any confidence threshold at all.** The model does not separate its own
+   benign class well enough for a threshold on its own output to do this
+   job. Spiders solve the equivalent problem with a second, independently
+   trained model (`SpiderHazardGate.mlmodel`) that votes on a different
+   class structure and only ever vetoes. Plants have no equivalent second
+   model; that, or a much larger and more diverse `notKnownToxic` training
+   set, is the real fix, not yet built.
