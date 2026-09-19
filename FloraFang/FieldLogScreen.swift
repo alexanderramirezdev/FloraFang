@@ -55,6 +55,7 @@ enum LogSection: String, CaseIterable, Identifiable {
 
 struct FieldLogScreen: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PurchaseManager.self) private var purchases
 
     @Query(sort: \FieldEntry.capturedAt, order: .reverse)
     private var entries: [FieldEntry]
@@ -70,6 +71,9 @@ struct FieldLogScreen: View {
     @State private var exportError: String?
     @State private var showSettings = false
     @State private var showExportConfirm = false
+    @State private var showPaywall = false
+    @State private var showLifeList = false
+    @State private var showCatalog = false
     @State private var selectedIncident: ExposureIncident?
     @State private var incidentToDelete: ExposureIncident?
     @State private var filter: LogFilter = .all
@@ -121,11 +125,44 @@ struct FieldLogScreen: View {
                     Menu {
                         if selectedSection == .field {
                             Button {
-                                showExportConfirm = true
+                                if purchases.isUnlocked {
+                                    showExportConfirm = true
+                                } else {
+                                    showPaywall = true
+                                }
                             } label: {
-                                Label("Export field log", systemImage: "square.and.arrow.up")
+                                Label(
+                                    purchases.isUnlocked ? "Export field log" : "Export field log (unlock)",
+                                    systemImage: purchases.isUnlocked ? "square.and.arrow.up" : "lock.fill"
+                                )
                             }
                             .disabled(entries.isEmpty)
+
+                            Button {
+                                if purchases.isUnlocked {
+                                    showLifeList = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                Label(
+                                    purchases.isUnlocked ? "Species life list" : "Species life list (unlock)",
+                                    systemImage: purchases.isUnlocked ? "checklist" : "lock.fill"
+                                )
+                            }
+
+                            Button {
+                                if purchases.isUnlocked {
+                                    showCatalog = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                Label(
+                                    purchases.isUnlocked ? "Browse full catalog" : "Browse full catalog (unlock)",
+                                    systemImage: purchases.isUnlocked ? "books.vertical" : "lock.fill"
+                                )
+                            }
                         } else {
                             if !isSelectingIncidents {
                                 Button {
@@ -181,6 +218,15 @@ struct FieldLogScreen: View {
                 ExportConfirmSheet(summary: ExportSummary.of(entries)) {
                     exportLog()
                 }
+            }
+            .sheet(isPresented: $showPaywall) {
+                PaywallSheet()
+            }
+            .sheet(isPresented: $showLifeList) {
+                SpeciesLifeListScreen()
+            }
+            .sheet(isPresented: $showCatalog) {
+                CatalogBrowseScreen()
             }
             .sheet(item: Binding(
                 get: { exportURL.map { ShareItem(url: $0) } },

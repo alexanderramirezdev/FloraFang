@@ -16,9 +16,12 @@ struct EntryDetailScreen: View {
     @Bindable var entry: FieldEntry
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(PurchaseManager.self) private var purchases
 
     @State private var showFullImage = false
     @State private var confirmDelete = false
+    @State private var showPaywall = false
+    @State private var cardImage: UIImage?
 
     // On-device Field Naturalist (Apple Foundation Models)
     @State private var naturalistQuery = ""
@@ -54,6 +57,32 @@ struct EntryDetailScreen: View {
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Palette.bark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    if purchases.isUnlocked {
+                        cardImage = IdentificationCardRenderer.render(entry)
+                    } else {
+                        showPaywall = true
+                    }
+                } label: {
+                    Image(systemName: purchases.isUnlocked ? "square.and.arrow.up" : "lock.fill")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Palette.ochre)
+                }
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { cardImage != nil },
+            set: { if !$0 { cardImage = nil } }
+        )) {
+            if let cardImage {
+                ShareSheet(items: [cardImage]) { self.cardImage = nil }
+            }
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallSheet()
+        }
         .fullScreenCover(isPresented: $showFullImage) {
             if let data = entry.imageData, let image = UIImage(data: data) {
                 ZoomableImageView(image: image)
@@ -228,82 +257,93 @@ struct EntryDetailScreen: View {
                 .font(.system(size: 11.5))
                 .foregroundStyle(Palette.parchment.opacity(0.75))
 
-            // Quick Prompt Chips
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    Button {
-                        showEmergencySheet = true
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: "cross.case.fill")
-                            Text("Exposure Protocol")
+            if purchases.isUnlocked {
+                // Quick Prompt Chips
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        Button {
+                            showEmergencySheet = true
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "cross.case.fill")
+                                Text("Exposure Protocol")
+                            }
+                            .font(.system(size: 11.5, weight: .semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Palette.rust.opacity(0.35), in: Capsule())
+                            .overlay(Capsule().stroke(Palette.rust.opacity(0.7), lineWidth: 1))
+                            .foregroundStyle(Palette.parchment)
                         }
-                        .font(.system(size: 11.5, weight: .semibold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Palette.rust.opacity(0.35), in: Capsule())
-                        .overlay(Capsule().stroke(Palette.rust.opacity(0.7), lineWidth: 1))
-                        .foregroundStyle(Palette.parchment)
-                    }
-                    .buttonStyle(.plain)
+                        .buttonStyle(.plain)
 
-                    quickChip("📦 Safe way to move it?")
-                    quickChip("🏠 Typical habitat?")
-                    quickChip("📸 Best photo angles?")
+                        quickChip("📦 Safe way to move it?")
+                        quickChip("🏠 Typical habitat?")
+                        quickChip("📸 Best photo angles?")
+                    }
                 }
-            }
 
-            if interceptedMedicalQuery {
-                poisonControlCard
-            } else if !naturalistAnswer.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("ANSWER")
-                            .font(.system(size: 9.5, weight: .bold))
-                            .tracking(1.0)
-                            .foregroundStyle(Palette.moss)
-                        Spacer()
+                if interceptedMedicalQuery {
+                    poisonControlCard
+                } else if !naturalistAnswer.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("ANSWER")
+                                .font(.system(size: 9.5, weight: .bold))
+                                .tracking(1.0)
+                                .foregroundStyle(Palette.moss)
+                            Spacer()
+                        }
+                        Text(naturalistAnswer)
+                            .font(.system(size: 12.5))
+                            .foregroundStyle(Palette.parchment)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    Text(naturalistAnswer)
+                    .padding(12)
+                    .background(Palette.moss.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.moss.opacity(0.3), lineWidth: 1))
+                }
+
+                if isNaturalistThinking {
+                    HStack(spacing: 8) {
+                        ProgressView().tint(Palette.ochre)
+                        Text("Consulting on-device model…")
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(Palette.lichen)
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                // Custom Question Input
+                HStack(spacing: 8) {
+                    TextField("ask about habitat, markings, or relocation…", text: $naturalistQuery)
                         .font(.system(size: 12.5))
                         .foregroundStyle(Palette.parchment)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(12)
-                .background(Palette.moss.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.moss.opacity(0.3), lineWidth: 1))
-            }
+                        .padding(9)
+                        .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+                        .onSubmit {
+                            submitNaturalistQuery(naturalistQuery)
+                        }
 
-            if isNaturalistThinking {
-                HStack(spacing: 8) {
-                    ProgressView().tint(Palette.ochre)
-                    Text("Consulting on-device model…")
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(Palette.lichen)
-                }
-                .padding(.vertical, 4)
-            }
-
-            // Custom Question Input
-            HStack(spacing: 8) {
-                TextField("ask about habitat, markings, or relocation…", text: $naturalistQuery)
-                    .font(.system(size: 12.5))
-                    .foregroundStyle(Palette.parchment)
-                    .padding(9)
-                    .background(Palette.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
-                    .onSubmit {
+                    Button {
                         submitNaturalistQuery(naturalistQuery)
+                    } label: {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundStyle(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty ? Palette.lichen.opacity(0.4) : Palette.ochre)
                     }
-
-                Button {
-                    submitNaturalistQuery(naturalistQuery)
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 24))
-                        .foregroundStyle(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty ? Palette.lichen.opacity(0.4) : Palette.ochre)
+                    .disabled(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty || isNaturalistThinking)
                 }
-                .disabled(naturalistQuery.trimmingCharacters(in: .whitespaces).isEmpty || isNaturalistThinking)
+            } else {
+                PremiumLockCard(
+                    title: "Flora, the field naturalist",
+                    message: "Ask about habitat, markings, and safe handling for this observation. Unlock once, use forever.",
+                    symbol: "sparkles"
+                ) {
+                    showPaywall = true
+                }
             }
+
         }
         .padding(12)
         .background(Color.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))

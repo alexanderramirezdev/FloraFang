@@ -116,15 +116,24 @@ final class IdentificationCascade {
         }
 
         // Tier 2 gate veto model
-        // Runs when primary model makes a confident benign call (coreVerdict == .accept)
-        // to verify agreement before asserting safety.
+        // Runs whenever the primary model is about to be treated as a confident
+        // benign call, whether it earned that on its own (coreVerdict == .accept)
+        // or via Tier 2b agreement, since combine() upgrades an agreed-upon benign
+        // class to full, non-warning confidence regardless of coreVerdict. Without
+        // the second condition, a merely acceptAsWarning benign call that Tier 2b
+        // happens to agree with would be asserted at full confidence with no gate
+        // check at all. Deliberately still skipped for a bare acceptAsWarning call
+        // with no Tier 2b agreement, that scope was chosen explicitly (see
+        // IdentificationCascade combine() and TRAINING.md) to keep the veto's cost
+        // to the 15 confident-benign refusals measured on holdout, not the far
+        // larger universal-scope cost.
         var gatePrediction: GatePrediction?
         let isGateAvailable = await classifier.isGateAvailable
 
         if isGateAvailable {
             if let core = corePrediction,
-               coreVerdict == .accept,
-               !core.spiderClass.isMedicallySignificant {
+               !core.spiderClass.isMedicallySignificant,
+               (coreVerdict == .accept || extraction?.verdict.indicatedClass == core.spiderClass) {
                 gatePrediction = try await classifier.classifyGate(image)
                 if let gp = gatePrediction {
                     lastTrace.append("tier2 gate: \(gp.topClass) @ \(pct(gp.confidence))")

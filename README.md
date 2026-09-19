@@ -284,6 +284,63 @@ belonged in the classifier.
 
 ***
 
+## Plant Model: Calibration and a Structural Gap
+
+`PlantHazard.mlmodel` had never been evaluated on unseen images until this
+pass. The same `fetch_holdout.py` / `calibrate.py` methodology used for
+spiders was extended to plants (`calibrate_plants.py`): a 1,711-image
+leakage-protected holdout, observation IDs cross-checked against the training
+set the same way.
+
+**Uncalibrated accuracy was 76.4%, ECE 0.095.** Fitting temperature the same
+way as the spider model converged at **T = 1.62**, cutting Expected
+Calibration Error to **0.019**.
+
+**A real bug turned up in the process, not just a missing number.**
+`HazardClassifier.swift` (spiders) applies temperature scaling on device
+before any threshold sees the result: raise each softmax value to `1/T` and
+renormalize, which is mathematically identical to scaling logits by `T`
+when only final probabilities are available. `PlantClassifier.swift` never
+did this. It compared `namingFloor` against raw, uncalibrated softmax
+straight off Core ML, so the threshold and the value it was compared against
+lived in two different spaces. Fixed to match the spider pattern.
+
+| | `namingFloor` | Space compared in | Named-species accuracy | Toxic recall, named calls |
+|---|---|---|---|---|
+| Before | 0.45 | Raw, uncalibrated | 80.5% | 93.1% |
+| After | 0.82 | Calibrated (T = 1.62) | 95.0% | 58.0% |
+
+This is a trade, not a strict improvement. Naming a species has to clear 95%
+to be worth sending someone to a vet with a specific name in hand, and that
+costs real recall: 42% of real toxic plants that used to get a (frequently
+wrong) species name now surface no name at all.
+
+**What happens to that discarded 42% matters, and here the news is worse
+than a threshold problem.** The model's top-1 pick lands on *some* toxic
+class, right or wrong species, for 97.5% of real toxic holdout images.
+Only 2.5% land on `notKnownToxic`. So most of what `namingFloor` discards is
+still correctly "this is toxic," just not confidently one species, and today
+that signal is thrown away along with the bad guess.
+
+The obvious fix, a middle "likely toxic, species unclear" tier, was tried and
+rejected. Two ways of deriving it from the model's own output were tested:
+aggregate non-benign probability mass, and top-1-is-toxic at any confidence.
+Both fail the same way: **61.5% of the 200 genuinely benign holdout images
+still get a toxic species as top-1, at any confidence threshold at all.** The
+model does not separate its own benign class well enough for any threshold on
+its own output to serve as that middle tier; it would flag most harmless
+garden plants as possibly toxic.
+
+Spiders protect against the equivalent failure with a second, independently
+trained model, `SpiderHazardGate.mlmodel`, that votes on a different class
+structure and only ever vetoes, never asserts. Two models that fail
+differently agreeing is real information; reading one model's output two
+ways is not. Plants have no equivalent second model. Building one, or
+substantially growing and diversifying the `notKnownToxic` training set, is
+the actual fix, tracked as backlog rather than shipped here.
+
+***
+
 ## Identification Cascade
 
 Identification runs through four orchestrated tiers:
@@ -293,6 +350,7 @@ Identification runs through four orchestrated tiers:
 | **1** | **Apple Vision (`ClassifyImageRequest`)** | Coarse category identification (spider, plant, bird, insect). Non-spiders resolve immediately from local catalog. | Offline, ~40ms |
 | **2a** | **Core ML Hazard Model (`SpiderHazard.mlmodel`)** | 10-class image classifier trained on medically significant vs. common benign spider families. Evaluated with `.scaleToFill` to match Create ML training preprocessing. | Offline, ~60ms |
 | **2 gate** | **Agreement Veto Model (`SpiderHazardGate.mlmodel`)** | 3-class safety screen. Vetoes confident benign calls if danger is detected. Drops holdout false reassurance to 0 of 346. | Offline, ~30ms |
+| **2 (plant)** | **Plant Toxicity Model (`PlantHazard.mlmodel`)** | 11-class model (10 toxic species + not-known-toxic) for plant/flower/mushroom categories. Species name gated at calibrated confidence >= 0.82 (see Plant Model section); below that, defers to catalog rather than guessing a species. | Offline, ~60ms |
 | **2b** | **Apple Intelligence (`SystemLanguageModel`)** | Multimodal feature extraction. Inspects eye arrangements (6 eyes in 3 pairs for Recluse), hourglass markings, and violin patterns. Isolates subject via Vision foreground instance masking. *(Requires iOS 27+; earlier devices fall back to Core ML + Gate alone).* | Offline, on-device |
 | **3** | **Remote Cloud Fallback** | Remote API seam. **Disabled by default** to preserve 100% offline privacy and zero-network operation. | Disabled |
 | **4** | **Structured Refusal** | Delivers dynamic AI-generated feedback explaining what markings were not visible (e.g., *"Not visible in photo: underside of abdomen"*), plain-English disagreement notes, and angle retake advice. | Instant |
@@ -312,6 +370,24 @@ Identification runs through four orchestrated tiers:
 
 ***
 
+## Monetization
+
+One non-consumable StoreKit 2 purchase (`com.aramirez.FloraFang.fullunlock`), no subscription, no server-side receipt validation: `PurchaseManager.swift` tracks entitlement from `Transaction.currentEntitlements` and `Transaction.updates` alone.
+
+**The line that matters:** identification is not the product being sold. The camera scan, every spider and plant hazard verdict, the exposure intake checklist, and exporting an exposure incident report are free forever and contain no reference to `PurchaseManager` anywhere in their call path. What sits behind the unlock is five explicitly non-safety extras:
+
+| Feature | File |
+|---|---|
+| Field Naturalist chat | `EntryDetailScreen.swift` |
+| Personal field log export (ZIP/CSV) | `FieldLogScreen.swift`, `ExportService.swift` |
+| Shareable identification card | `ShareableIDCard.swift` |
+| Species life list | `SpeciesLifeListScreen.swift` |
+| Full species catalog browser | `CatalogBrowseScreen.swift` |
+
+The exposure-incident export is a separate code path (`ExposureHistoryView.swift` / `ExposureIncidentDetailSheet`) from the field-log export and is deliberately left ungated: it exists to get a record into a vet's or doctor's hands, not to journal a hobby, and gating it would violate the same free-identification principle above by another name.
+
+***
+
 ## Security, Privacy & Safety Architecture
 
 FloraFang is engineered for high-consequence field situations, where data exfiltration and software overreach can create legal, medical, and privacy liabilities:
@@ -321,6 +397,7 @@ FloraFang is engineered for high-consequence field situations, where data exfilt
 3. **CSV Formula Injection Sanitization**: In `ExportService.swift`, user notes and labels are sanitized before CSV serialization. Any cell beginning with formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`) is safely escaped to prevent Dynamic Data Exchange (DDE) or formula execution in Microsoft Excel, Numbers, or LibreOffice.
 4. **Deterministic Clinical Interception**: Apple Intelligence is never allowed to freelance on emergency medical advice. A deterministic Swift keyword and regex validator checks queries for symptoms, bites, doses, or treatment terms before invoking `SystemLanguageModel`.
 5. **Static Dialer Integrity**: Emergency hotline URLs (`PoisonResources.swift`) use hardcoded digit strings without runtime string interpolation, preventing arbitrary scheme execution.
+6. **Data-at-Rest Protection**: `DataProtection.swift` applies `.complete` file protection (inaccessible whenever the device is locked) and `isExcludedFromBackup` to the app's Application Support directory at launch, covering the SwiftData store: field log entries, exposure incident records, and their photos. Neither was set before this pass; the OS default (`.completeUntilFirstUserAuthentication`, included in backups) was weaker than the app's on-device-only privacy claim implied.
 
 ***
 
@@ -352,9 +429,17 @@ midnight with flash. The thresholds are a large improvement on guesses and are
 not the final answer. Recalibration against real captures is pending tester
 data.
 
-**The plant model has no holdout.** `PlantHazard.mlmodel` reports 83%
-validation accuracy and has never been evaluated on unseen images. Every
-caveat above about Create ML's validation split applies to it, unmeasured.
+**The plant model has a holdout now, and it found a real gap.** On a
+1,711-image leakage-protected holdout, the model's own benign class
+(`notKnownToxic`) does not separate well: 61.5% of genuinely benign plants
+still get a toxic species as the model's top-1 guess, at any confidence.
+Unlike the spider side, there is no second, independently trained gate model
+to catch this, so it cannot be fixed with a threshold. `namingFloor` was
+recalibrated (0.45 to 0.82, and moved into the correct calibrated confidence
+space, see Plant Model section) so a named species is at least 95% reliable,
+but that is a narrower fix than the underlying gap. Building a plant-side
+gate model or substantially growing the `notKnownToxic` training set is
+unstarted work.
 
 **Layer 3 requires iOS 27.** Multimodal corroboration through Apple
 Intelligence is unavailable on iOS 26 and earlier. Those devices fall back to
