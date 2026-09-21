@@ -6,12 +6,26 @@
 //  while locked, never as an interruption on launch or on the camera/scan
 //  flow — nothing safety related routes through this file.
 //
+//  Each feature gets a small concrete preview alongside its description
+//  ("show, don't tell") instead of relying on a free trial to prove value.
+//  Considered a trial and decided against it: this is a one-time unlock on
+//  an occasional-use utility, not a subscription, and of the five gated
+//  features only Flora (the chat) really benefits from being experienced
+//  rather than described — a static sample exchange covers that instead.
+//  The other four (export, ID card, checklist, catalog) are exactly as
+//  self-explanatory as anything already free, once you can see one.
+//
 
 import SwiftUI
 import StoreKit
 
+enum PaywallFeatureKind {
+    case chat, export, idCard, checklist, catalog
+}
+
 struct PaywallFeature: Identifiable {
-    let id = UUID()
+    var id: String { title }
+    let kind: PaywallFeatureKind
     let symbol: String
     let title: String
     let detail: String
@@ -20,26 +34,31 @@ struct PaywallFeature: Identifiable {
 enum PaywallCatalog {
     static let features: [PaywallFeature] = [
         PaywallFeature(
+            kind: .chat,
             symbol: "sparkles",
             title: "Flora, the field naturalist",
             detail: "Ask follow-up questions about anything you've logged, like habitat, markings, or safe handling, answered on-device."
         ),
         PaywallFeature(
+            kind: .export,
             symbol: "square.and.arrow.up",
             title: "Export your field log",
             detail: "Pull your full scan history out as a ZIP with photos and a CSV, yours to keep or hand off."
         ),
         PaywallFeature(
+            kind: .idCard,
             symbol: "rectangle.portrait.on.rectangle.portrait",
             title: "Shareable ID cards",
             detail: "Turn any logged observation into a clean image card you can text, post, or save."
         ),
         PaywallFeature(
+            kind: .checklist,
             symbol: "checklist",
             title: "Field checklist",
             detail: "Track which spiders and toxic plants you've actually encountered, checklist style."
         ),
         PaywallFeature(
+            kind: .catalog,
             symbol: "books.vertical",
             title: "Full species catalog",
             detail: "Browse everything FloraFang can recognize, not just what you've already scanned."
@@ -112,26 +131,175 @@ struct PaywallSheet: View {
     private var featureList: some View {
         VStack(spacing: 10) {
             ForEach(PaywallCatalog.features) { feature in
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: feature.symbol)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Palette.moss)
-                        .frame(width: 22)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(feature.title)
-                            .font(.system(size: 13.5, weight: .semibold))
-                            .foregroundStyle(Palette.parchment)
-                        Text(feature.detail)
-                            .font(.system(size: 11.5))
-                            .foregroundStyle(Palette.parchment.opacity(0.75))
-                            .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: feature.symbol)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Palette.moss)
+                            .frame(width: 22)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(feature.title)
+                                .font(.system(size: 13.5, weight: .semibold))
+                                .foregroundStyle(Palette.parchment)
+                            Text(feature.detail)
+                                .font(.system(size: 11.5))
+                                .foregroundStyle(Palette.parchment.opacity(0.75))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
                     }
-                    Spacer(minLength: 0)
+                    preview(for: feature.kind)
+                        .padding(.leading, 34)
                 }
+                .padding(12)
+                .background(Palette.moss.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
             }
         }
-        .padding(14)
-        .background(Palette.moss.opacity(0.14), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    @ViewBuilder
+    private func preview(for kind: PaywallFeatureKind) -> some View {
+        switch kind {
+        case .chat:            chatPreview
+        case .export:          exportPreview
+        case .idCard:          idCardPreview
+        case .checklist:       checklistPreview
+        case .catalog:         catalogPreview
+        }
+    }
+
+    private var chatPreview: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            Text("Is this safe to touch?")
+                .font(.system(size: 10.5))
+                .foregroundStyle(Palette.parchment)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(Palette.lichen.opacity(0.25), in: RoundedRectangle(cornerRadius: 10))
+
+            Text("Non-venomous to humans. Safe to observe — just give it space if it's guarding an egg sac.")
+                .font(.system(size: 10.5))
+                .foregroundStyle(Palette.parchment)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(Palette.moss.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+    }
+
+    private var exportPreview: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "doc.zipper")
+                .font(.system(size: 18))
+                .foregroundStyle(Palette.ochre)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("florafang_export.zip")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Palette.parchment)
+                Text("Photos + observations.csv")
+                    .font(.system(size: 9.5))
+                    .foregroundStyle(Palette.lichen)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .background(Palette.bark.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var idCardPreview: some View {
+        HStack(spacing: 10) {
+            Group {
+                if let image = UIImage(named: "ref_wolf_spider") {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Palette.bark
+                }
+            }
+            .frame(width: 48, height: 48)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("SPIDER")
+                    .font(.system(size: 8, weight: .semibold))
+                    .tracking(1.2)
+                    .foregroundStyle(Palette.lichen)
+                Text("Wolf Spider")
+                    .font(.system(size: 13, weight: .semibold, design: .serif))
+                    .foregroundStyle(Palette.parchment)
+                HStack(spacing: 4) {
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 8))
+                        .foregroundStyle(Palette.ochre)
+                    Text("Identified with FloraFang")
+                        .font(.system(size: 8.5))
+                        .foregroundStyle(Palette.lichen)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .background(Palette.bark.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private var checklistPreview: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            checklistPreviewRow(title: "Wolf Spider", found: true)
+            checklistPreviewRow(title: "Black Widow", found: false)
+            checklistPreviewRow(title: "Poison Ivy", found: true)
+        }
+        .padding(8)
+        .background(Palette.bark.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func checklistPreviewRow(title: String, found: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: found ? "checkmark.circle.fill" : "circle.dashed")
+                .font(.system(size: 11))
+                .foregroundStyle(found ? Palette.moss : Palette.lichen.opacity(0.5))
+            Text(title)
+                .font(.system(size: 11))
+                .foregroundStyle(found ? Palette.parchment : Palette.lichen)
+        }
+    }
+
+    private var catalogPreview: some View {
+        HStack(spacing: 8) {
+            catalogChip(name: "Bird", image: "ref_sub_bird_northern_cardinal")
+            catalogChip(name: "Lizard", image: "ref_sub_lizard_gila_monster")
+            catalogChip(name: "Plant", image: "ref_poison_ivy_oak")
+            VStack(spacing: 2) {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Palette.lichen)
+                Text("more")
+                    .font(.system(size: 8.5))
+                    .foregroundStyle(Palette.lichen)
+            }
+            .frame(width: 40, height: 40)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func catalogChip(name: String, image: String) -> some View {
+        VStack(spacing: 3) {
+            Group {
+                if let uiImage = UIImage(named: image) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    Palette.bark
+                }
+            }
+            .frame(width: 40, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            Text(name)
+                .font(.system(size: 8.5))
+                .foregroundStyle(Palette.lichen)
+        }
     }
 
     private var freeForeverNote: some View {
