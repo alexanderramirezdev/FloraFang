@@ -51,6 +51,7 @@ struct PaywallSheet: View {
     @Environment(PurchaseManager.self) private var purchases
     @Environment(\.dismiss) private var dismiss
     @State private var isWorking = false
+    @State private var showUnlockCelebration = false
 
     var body: some View {
         NavigationStack {
@@ -86,7 +87,10 @@ struct PaywallSheet: View {
                 Text(purchases.lastError ?? "")
             }
             .onChange(of: purchases.isUnlocked) { _, unlocked in
-                if unlocked { dismiss() }
+                if unlocked { showUnlockCelebration = true }
+            }
+            .fullScreenCover(isPresented: $showUnlockCelebration) {
+                UnlockCelebrationScreen(onContinue: { dismiss() })
             }
         }
     }

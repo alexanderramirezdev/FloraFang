@@ -159,7 +159,7 @@ struct FieldLogScreen: View {
                                 }
                             } label: {
                                 Label(
-                                    purchases.isUnlocked ? "Browse full catalog" : "Browse full catalog (unlock)",
+                                    purchases.isUnlocked ? "Full species catalog" : "Full species catalog (unlock)",
                                     systemImage: purchases.isUnlocked ? "books.vertical" : "lock.fill"
                                 )
                             }
