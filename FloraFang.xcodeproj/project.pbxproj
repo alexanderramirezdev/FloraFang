@@ -19,6 +19,7 @@
 		5E4CE972305E37B400128263 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE96C305E37B400128263 /* PurchaseManager.swift */; };
 		5E4CE973305E37B400128263 /* CatalogBrowseScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE96A305E37B400128263 /* CatalogBrowseScreen.swift */; };
 		5E4CE9C63060B1C300128263 /* CatalogSubSpecies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */; };
+		2FB5C698FD004B25BE14B909 /* UnlockCelebrationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */; };
 		5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B693039F6E7008FEC56 /* TRAINING.md */; };
 		5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B663039F6E7008FEC56 /* SETUP.md */; };
 		5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */; };
@@ -70,6 +71,7 @@
 		5E4CE96E305E37B400128263 /* SpeciesLifeListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeciesLifeListScreen.swift; sourceTree = "<group>"; };
 		5E4CE9C430606CA700128263 /* FloraFang.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = FloraFang.storekit; sourceTree = "<group>"; };
 		5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogSubSpecies.swift; sourceTree = "<group>"; };
+		BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockCelebrationScreen.swift; sourceTree = "<group>"; };
 		5E9248E2302142BF0001493F /* FloraFang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloraFang.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EA57B4E3039F6E7008FEC56 /* Assessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assessment.swift; sourceTree = "<group>"; };
 		5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 				5EA57B523039F6E7008FEC56 /* CameraService.swift */,
 				5EA57B533039F6E7008FEC56 /* Catalog.swift */,
 				5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */,
+				BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */,
 				5EA57B543039F6E7008FEC56 /* ConfidenceGate.swift */,
 				5EA57B573039F6E7008FEC56 /* EmergencyScreen.swift */,
 				5EA57B583039F6E7008FEC56 /* EntryDetailScreen.swift */,
@@ -304,6 +307,7 @@
 				5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */,
 				5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */,
 				5E4CE9C63060B1C300128263 /* CatalogSubSpecies.swift in Sources */,
+				2FB5C698FD004B25BE14B909 /* UnlockCelebrationScreen.swift in Sources */,
 				5EA57B893039F988008FEC56 /* FloraFangApp.swift in Sources */,
 				5EA57B8B303B5A4B008FEC56 /* PlantHazard.mlmodel in Sources */,
 				5E4CE969305E2D5E00128263 /* DataProtection.swift in Sources */,

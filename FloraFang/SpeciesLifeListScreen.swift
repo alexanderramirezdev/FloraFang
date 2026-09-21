@@ -50,6 +50,19 @@ struct SpeciesLifeListScreen: View {
                 Palette.bark.ignoresSafeArea()
                 List {
                     Section {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "exclamationmark.shield")
+                                .foregroundStyle(Palette.warn)
+                            Text("Reference only. Never approach, handle, or corner wildlife or an unfamiliar plant to get a closer look or a photo — observe from a safe distance.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Palette.parchment.opacity(0.85))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .listRowBackground(Palette.surface)
+
+                    Section {
                         progressRow(title: "Spiders", found: foundSpiderCount, total: spiderSpecies.count)
                         progressRow(title: "Toxic plants", found: foundPlantCount, total: plantSpecies.count)
                     }
