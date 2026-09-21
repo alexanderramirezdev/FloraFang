@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ref_sub_lizard_new_mexico_whiptail.jpeg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

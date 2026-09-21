@@ -8,7 +8,7 @@ import SwiftData
 
 @main
 struct FloraFangApp: App {
-    // One-time unlock (Flora chat, field log export, ID cards, life list,
+    // One-time unlock (Flora chat, field log export, ID cards, field checklist,
     // full catalog). Lives at the app root so every screen reads the same
     // instance via the environment. See PurchaseManager.swift for exactly
     // what this does and, just as importantly, does not gate.

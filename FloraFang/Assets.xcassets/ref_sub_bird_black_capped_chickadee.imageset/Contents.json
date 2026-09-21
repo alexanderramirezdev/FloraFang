@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ref_sub_bird_black_capped_chickadee.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

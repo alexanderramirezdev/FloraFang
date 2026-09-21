@@ -1,0 +1,31 @@
+{
+  "identifier" : "048741B0-8CC2-40F2-957A-86A08F98472F",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "3F8A6EED-C8C5-48CA-A000-B5B039035946",
+      "localizations" : [
+        {
+          "description" : "Unlocks the Flora field naturalist chat, personal field log export, shareable ID cards, the field checklist, and the full species catalog browser.",
+          "displayName" : "Full Unlock",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.aramirez.FloraFang.fullunlock",
+      "referenceName" : "Full Unlock",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_lastSynchronizedSyncToken" : ""
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

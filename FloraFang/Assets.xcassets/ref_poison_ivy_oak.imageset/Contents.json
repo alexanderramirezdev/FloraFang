@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ref_poison_ivy_oak.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

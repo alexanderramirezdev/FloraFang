@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "ref_sub_lizard_desert_spiny_lizard.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
