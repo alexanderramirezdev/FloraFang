@@ -146,7 +146,7 @@ struct FieldLogScreen: View {
                                 }
                             } label: {
                                 Label(
-                                    purchases.isUnlocked ? "Species life list" : "Species life list (unlock)",
+                                    purchases.isUnlocked ? "Field checklist" : "Field checklist (unlock)",
                                     systemImage: purchases.isUnlocked ? "checklist" : "lock.fill"
                                 )
                             }
@@ -815,8 +815,36 @@ struct SettingsSheet: View {
     @AppStorage("autumn_visitor_setting") private var autumnVisitorSetting = "auto"
     @AppStorage("winter_holiday_setting") private var winterHolidaySetting = "auto"
     @AppStorage("spring_holiday_setting") private var springHolidaySetting = "auto"
+    @AppStorage("betaInterestSubmitted") private var betaInterestSubmitted = false
     @State private var locationOn = false
     @State private var showDeleteConfirm = false
+    @State private var betaFirstName = ""
+
+    /// Builds a mailto: link the same way "Contact Support" does, rather than
+    /// MFMailComposeViewController: it works with whatever mail app is set as
+    /// the system default (Gmail, Outlook, Mail), not just Mail specifically.
+    /// The person's email address is never typed or stored anywhere; it comes
+    /// for free as the From address on whatever they send.
+    private func joinBetaList() {
+        let name = betaFirstName.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return }
+
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "support@ramirezlabs.app"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "FloraFang beta interest"),
+            URLQueryItem(name: "body", value: """
+                Hi, I'd like to join the FloraFang field data beta program when it's ready.
+
+                First name: \(name)
+                """)
+        ]
+
+        guard let url = components.url else { return }
+        UIApplication.shared.open(url)
+        betaInterestSubmitted = true
+    }
 
     private var locationPrivacyRadiusText: String {
         let system = Locale.current.measurementSystem
@@ -1044,6 +1072,58 @@ struct SettingsSheet: View {
                                             .foregroundStyle(theme.lichen)
                                     }
                                 }
+                            }
+                        }
+
+                        Divider().overlay(theme.moss.opacity(0.4))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("COMING SOON: FIELD DATA PROGRAM")
+                                .font(.system(size: 10, weight: .semibold))
+                                .tracking(1.4)
+                                .foregroundStyle(theme.lichen)
+
+                            Text("We're exploring an opt-in program where testers send real field photos and self-marked corrections to help improve the identification models. Nothing is collected today. No location, no notes, ever, even once it exists. Give us your first name and we'll email you when it's ready.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(theme.parchment.opacity(0.8))
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            if betaInterestSubmitted {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(theme.moss)
+                                    Text("You're on the list. We'll email you when it's ready.")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(theme.parchment)
+                                }
+                                .padding(.top, 2)
+                            } else {
+                                TextField("First name", text: $betaFirstName)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(theme.parchment)
+                                    .padding(9)
+                                    .background(theme.moss.opacity(0.18), in: RoundedRectangle(cornerRadius: 7))
+
+                                Button {
+                                    joinBetaList()
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "envelope.badge")
+                                            .font(.system(size: 12))
+                                        Text("Join the List")
+                                            .font(.system(size: 13, weight: .medium))
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 9)
+                                    .background(theme.moss.opacity(0.25), in: RoundedRectangle(cornerRadius: 8))
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.moss.opacity(0.5), lineWidth: 1))
+                                    .foregroundStyle(theme.parchment)
+                                }
+                                .disabled(betaFirstName.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                                Text("Opens your mail app with your name filled in. Your email address comes from your own mail account. We never ask you to type it.")
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(theme.lichen.opacity(0.75))
                             }
                         }
 

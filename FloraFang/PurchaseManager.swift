@@ -12,7 +12,7 @@
 //
 //  What IS behind the unlock is explicitly non-safety: the Flora field
 //  naturalist chat, exporting your personal field log, the shareable ID
-//  card, the species life list, and the full species catalog browser. See
+//  card, the field checklist, and the full species catalog browser. See
 //  PaywallSheet.swift for the feature list shown to the user.
 //
 //  One non-consumable product, no subscription, no server, no receipt

@@ -25,7 +25,7 @@ struct SpeciesLifeListScreen: View {
 
     // Excludes the catch-all and negative classes (otherSpider, notASpider,
     // notMedicallySignificant, notKnownToxic) — those aren't species, so a
-    // life list checklist of them would be meaningless.
+    // checklist of them would be meaningless.
     private var spiderSpecies: [SpiderClass] {
         SpiderClass.allCases.filter {
             $0 != .otherSpider && $0 != .notASpider && $0 != .notMedicallySignificant
@@ -79,7 +79,7 @@ struct SpeciesLifeListScreen: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Species Life List")
+            .navigationTitle("Field Checklist")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {

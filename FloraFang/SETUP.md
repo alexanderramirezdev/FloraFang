@@ -55,7 +55,7 @@ FloraFang runs 100% on-device and requires three privacy keys configured in `Inf
 * `SpeciesLifeListScreen.swift`: Checklist of named spider/plant species logged vs. not. Premium.
 * `CatalogBrowseScreen.swift`: Full reference browser for every species and general category, whether or not it's been scanned. Premium.
 
-**What is and is not gated, on purpose:** the camera scan, every hazard verdict, the exposure intake checklist, and exporting an exposure incident report (the thing you hand a vet or doctor) are free forever and never check `isUnlocked`. Only non-safety extras sit behind the unlock: the Field Naturalist chat, exporting your personal field log, the shareable ID card, the species life list, and the full catalog browser.
+**What is and is not gated, on purpose:** the camera scan, every hazard verdict, the exposure intake checklist, and exporting an exposure incident report (the thing you hand a vet or doctor) are free forever and never check `isUnlocked`. Only non-safety extras sit behind the unlock: the Field Naturalist chat, exporting your personal field log, the shareable ID card, the field checklist, and the full catalog browser.
 
 ---
 

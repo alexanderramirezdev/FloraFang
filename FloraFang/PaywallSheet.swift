@@ -22,7 +22,7 @@ enum PaywallCatalog {
         PaywallFeature(
             symbol: "sparkles",
             title: "Flora, the field naturalist",
-            detail: "Ask follow-up questions about anything you've logged — habitat, markings, safe handling — answered on-device."
+            detail: "Ask follow-up questions about anything you've logged, like habitat, markings, or safe handling, answered on-device."
         ),
         PaywallFeature(
             symbol: "square.and.arrow.up",
@@ -36,7 +36,7 @@ enum PaywallCatalog {
         ),
         PaywallFeature(
             symbol: "checklist",
-            title: "Species life list",
+            title: "Field checklist",
             detail: "Track which spiders and toxic plants you've actually encountered, checklist style."
         ),
         PaywallFeature(
