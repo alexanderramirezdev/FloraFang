@@ -45,9 +45,11 @@ public struct SeasonalAtmosphereView: View {
 
     @ViewBuilder
     private func springAtmosphere(in size: CGSize, theme: SeasonTheme) -> some View {
-        // Cherry blossom tree anchored to right edge
-        SpringCherryBlossomTree()
-            .frame(width: size.width, height: size.height)
+        // Cherry blossom tree anchored to right edge, swaying gently
+        GentleSway(reduceMotion: reduceMotion, anchor: UnitPoint(x: 0.94, y: 1.0)) {
+            SpringCherryBlossomTree()
+        }
+        .frame(width: size.width, height: size.height)
 
         // Drifting cherry blossom petals
         ForEach(0..<14, id: \.self) { index in
@@ -104,10 +106,12 @@ public struct SeasonalAtmosphereView: View {
 
     @ViewBuilder
     private func summerAtmosphere(in size: CGSize, theme: SeasonTheme) -> some View {
-        // Blades of grass along bottom edge
-        SummerGrassSilhouette(theme: theme)
-            .frame(width: size.width, height: 60)
-            .position(x: size.width * 0.5, y: size.height - 30)
+        // Blades of grass along bottom edge, rustling in the breeze
+        GentleSway(reduceMotion: reduceMotion, anchor: .bottom, maxAngle: 1.6, duration: 2.6) {
+            SummerGrassSilhouette(theme: theme)
+        }
+        .frame(width: size.width, height: 60)
+        .position(x: size.width * 0.5, y: size.height - 30)
 
         // Gentle warm summer wind streams drifting across meadow
         SummerWindStreamItem(
@@ -175,9 +179,11 @@ public struct SeasonalAtmosphereView: View {
 
     @ViewBuilder
     private func autumnAtmosphere(in size: CGSize, theme: SeasonTheme) -> some View {
-        // Full canopy tree with rich turning autumn foliage
-        AutumnLeafyCanopyTree()
-            .frame(width: size.width, height: size.height)
+        // Full canopy tree with rich turning autumn foliage, swaying gently
+        GentleSway(reduceMotion: reduceMotion, anchor: UnitPoint(x: 0.95, y: 1.0)) {
+            AutumnLeafyCanopyTree()
+        }
+        .frame(width: size.width, height: size.height)
 
         // Resident Autumn Hedgehog nestled securely on the thick tree bough
         AutumnHedgehogItem(
@@ -192,12 +198,14 @@ public struct SeasonalAtmosphereView: View {
 
         // Harvest Pumpkin nestled along the left shoulder of the tab menu
         AutumnPumpkinMark(
-            size: 68,
+            size: 104,
             pumpkinColor: theme.accent,
             stemColor: theme.accentAlt,
-            isJackOLantern: isOctober
+            isJackOLantern: isOctober,
+            reduceMotion: reduceMotion
         )
-        .position(x: size.width * 0.16, y: size.height - 96 - 16)
+        .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 6)
+        .position(x: size.width * 0.18, y: size.height - 96 - 32)
         .opacity(0.95)
 
         // October Halloween Surprise: Bat swooping across sky
@@ -238,9 +246,11 @@ public struct SeasonalAtmosphereView: View {
 
     @ViewBuilder
     private func winterAtmosphere(in size: CGSize, theme: SeasonTheme) -> some View {
-        // Bare frost dusted tree silhouette relocated from autumn
-        WinterBareFrostTreeSilhouette()
-            .frame(width: size.width, height: size.height)
+        // Bare frost dusted tree silhouette relocated from autumn, swaying gently
+        GentleSway(reduceMotion: reduceMotion, anchor: UnitPoint(x: 0.97, y: 1.0)) {
+            WinterBareFrostTreeSilhouette()
+        }
+        .frame(width: size.width, height: size.height)
 
         // Christmas Winter Holiday Overlay
         let month = Calendar.current.component(.month, from: .now)
@@ -277,6 +287,33 @@ public struct SeasonalAtmosphereView: View {
                 reduceMotion: reduceMotion
             )
         }
+    }
+}
+
+// MARK: Gentle Canopy Sway
+
+/// Wraps a season's tree/canopy illustration with a slow, continuous sway
+/// so it reads as something the wind is moving through, not artwork glued
+/// to the screen. Anchored near the trunk base so limbs swing, not the
+/// whole scene.
+private struct GentleSway<Content: View>: View {
+    let reduceMotion: Bool
+    var anchor: UnitPoint = .bottomTrailing
+    var maxAngle: Double = 0.9
+    var duration: Double = 5.0
+    @ViewBuilder var content: () -> Content
+
+    @State private var angle: Double = 0
+
+    var body: some View {
+        content()
+            .rotationEffect(.degrees(angle), anchor: anchor)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+                    angle = maxAngle
+                }
+            }
     }
 }
 
@@ -1062,6 +1099,9 @@ private struct AutumnPumpkinMark: View {
     let pumpkinColor: Color
     let stemColor: Color
     var isJackOLantern: Bool = false
+    var reduceMotion: Bool = false
+
+    @State private var flicker: Double = 1.0
 
     var body: some View {
         Canvas { context, sz in
@@ -1101,8 +1141,8 @@ private struct AutumnPumpkinMark: View {
 
             // Carved glowing Jack o Lantern face when Halloween is active
             if isJackOLantern {
-                let candleGold = Color(red: 1.0, green: 0.88, blue: 0.25).opacity(0.98)
-                let glowHalo = Color(red: 1.0, green: 0.72, blue: 0.15).opacity(0.35)
+                let candleGold = Color(red: 1.0, green: 0.88, blue: 0.25).opacity(0.98 * flicker)
+                let glowHalo = Color(red: 1.0, green: 0.72, blue: 0.15).opacity(0.35 * flicker)
 
                 // Left triangular eye centered on middle left lobe
                 var leftEye = Path()
@@ -1150,6 +1190,12 @@ private struct AutumnPumpkinMark: View {
         }
         .frame(width: size, height: size * 0.85)
         .drawingGroup()
+        .onAppear {
+            guard isJackOLantern, !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
+                flicker = 0.55
+            }
+        }
     }
 }
 
@@ -1895,36 +1941,43 @@ private struct AutumnHedgehogMark: View {
             context.fill(Path(ellipseIn: shadowRect), with: .color(Color.black.opacity(0.20)))
 
             // Hedgehog Spiny Dome
+            let domeCenter = CGPoint(x: w * 0.42, y: h * 0.52)
+            let domeRadiusX = w * 0.34
+            let domeRadiusY = h * 0.34
             let domeRect = CGRect(x: w * 0.08, y: h * 0.18, width: w * 0.68, height: h * 0.68)
             context.fill(Path(ellipseIn: domeRect), with: .color(quillDark))
 
-            // Layered quill spine tips radiating outward along the back
-            let quillSpines: [(CGFloat, CGFloat, CGFloat, CGFloat, Color)] = [
-                // Outer perimeter spines
-                (w * 0.14, h * 0.32, w * 0.04, h * 0.22, quillLight),
-                (w * 0.24, h * 0.22, w * 0.18, h * 0.08, quillTan),
-                (w * 0.38, h * 0.16, w * 0.35, h * 0.04, quillLight),
-                (w * 0.52, h * 0.18, w * 0.54, h * 0.06, quillTan),
-                (w * 0.64, h * 0.26, w * 0.70, h * 0.14, quillLight),
-                (w * 0.10, h * 0.48, w * 0.01, h * 0.44, quillTan),
-                (w * 0.10, h * 0.64, w * 0.02, h * 0.66, quillLight),
-                (w * 0.14, h * 0.76, w * 0.08, h * 0.84, quillTan),
-                // Inner layered highlights
-                (w * 0.26, h * 0.36, w * 0.22, h * 0.26, quillLight),
-                (w * 0.40, h * 0.30, w * 0.40, h * 0.18, quillTan),
-                (w * 0.54, h * 0.34, w * 0.58, h * 0.24, quillLight),
-                (w * 0.24, h * 0.52, w * 0.16, h * 0.48, quillLight),
-                (w * 0.36, h * 0.46, w * 0.34, h * 0.38, quillTan),
-                (w * 0.48, h * 0.48, w * 0.52, h * 0.40, quillLight),
-                (w * 0.22, h * 0.68, w * 0.15, h * 0.70, quillTan),
-                (w * 0.34, h * 0.62, w * 0.30, h * 0.58, quillLight)
-            ]
+            // A true jagged crown of spikes around the back, not flat lines,
+            // so the silhouette itself reads as a hedgehog rather than a
+            // smooth, striped chipmunk back.
+            func domePoint(angleDegrees: Double, radiusScale: CGFloat) -> CGPoint {
+                let rad = angleDegrees * .pi / 180
+                return CGPoint(
+                    x: domeCenter.x + domeRadiusX * radiusScale * CGFloat(cos(rad)),
+                    y: domeCenter.y + domeRadiusY * radiusScale * CGFloat(sin(rad))
+                )
+            }
 
-            for (x0, y0, x1, y1, col) in quillSpines {
-                var spine = Path()
-                spine.move(to: CGPoint(x: x0, y: y0))
-                spine.addLine(to: CGPoint(x: x1, y: y1))
-                context.stroke(spine, with: .color(col), style: StrokeStyle(lineWidth: 2.4, lineCap: .round))
+            let spikeColors: [Color] = [quillDark, quillTan, quillLight]
+            let spikeCount = 13
+            let spikeStartAngle = 95.0
+            let spikeSweep = 250.0
+
+            for i in 0..<spikeCount {
+                let t = Double(i) / Double(spikeCount - 1)
+                let centerAngle = spikeStartAngle + spikeSweep * t
+                let tipScale: CGFloat = 1.28 + CGFloat(i % 3) * 0.08
+                let baseLeft = domePoint(angleDegrees: centerAngle - 8.5, radiusScale: 0.96)
+                let baseRight = domePoint(angleDegrees: centerAngle + 8.5, radiusScale: 0.96)
+                let tip = domePoint(angleDegrees: centerAngle, radiusScale: tipScale)
+
+                var spike = Path()
+                spike.move(to: baseLeft)
+                spike.addLine(to: tip)
+                spike.addLine(to: baseRight)
+                spike.closeSubpath()
+                context.fill(spike, with: .color(spikeColors[i % spikeColors.count]))
+                context.stroke(spike, with: .color(quillDark.opacity(0.45)), lineWidth: 0.6)
             }
 
             // Plump soft face and snout
