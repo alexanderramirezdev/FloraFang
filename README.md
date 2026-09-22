@@ -381,7 +381,7 @@ One non-consumable StoreKit 2 purchase (`com.aramirez.FloraFang.fullunlock`), no
 | Field Naturalist chat | `EntryDetailScreen.swift` |
 | Personal field log export (ZIP/CSV) | `FieldLogScreen.swift`, `ExportService.swift` |
 | Shareable identification card | `ShareableIDCard.swift` |
-| Species life list | `SpeciesLifeListScreen.swift` |
+| Field checklist | `SpeciesLifeListScreen.swift` |
 | Full species catalog browser | `CatalogBrowseScreen.swift` |
 
 The exposure-incident export is a separate code path (`ExposureHistoryView.swift` / `ExposureIncidentDetailSheet`) from the field-log export and is deliberately left ungated: it exists to get a record into a vet's or doctor's hands, not to journal a hobby, and gating it would violate the same free-identification principle above by another name.

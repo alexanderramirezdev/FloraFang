@@ -175,7 +175,7 @@ public struct SeasonalAtmosphereView: View {
         )
     }
 
-    // MARK: Autumn Atmosphere (Canopy Tree, Hedgehog, Falling Leaves, Pumpkin, Holiday Visitors)
+    // MARK: Autumn Atmosphere (Canopy Tree, Fox, Falling Leaves, Pumpkin, Holiday Visitors)
 
     @ViewBuilder
     private func autumnAtmosphere(in size: CGSize, theme: SeasonTheme) -> some View {
@@ -185,9 +185,10 @@ public struct SeasonalAtmosphereView: View {
         }
         .frame(width: size.width, height: size.height)
 
-        // Resident Autumn Hedgehog nestled securely on the thick tree bough
-        AutumnHedgehogItem(
-            branchPoint: CGPoint(x: size.width - 76, y: size.height - 232),
+        // Resident Autumn Fox settled on the ground at the foot of the
+        // tree, not up in the branches like the hedgehog it replaced
+        AutumnFoxItem(
+            groundPoint: CGPoint(x: size.width * 0.74, y: size.height - 96 - 18),
             reduceMotion: reduceMotion
         )
 
@@ -198,14 +199,14 @@ public struct SeasonalAtmosphereView: View {
 
         // Harvest Pumpkin nestled along the left shoulder of the tab menu
         AutumnPumpkinMark(
-            size: 104,
+            size: 150,
             pumpkinColor: theme.accent,
             stemColor: theme.accentAlt,
             isJackOLantern: isOctober,
             reduceMotion: reduceMotion
         )
-        .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 6)
-        .position(x: size.width * 0.18, y: size.height - 96 - 32)
+        .shadow(color: .black.opacity(0.4), radius: 10, x: 0, y: 8)
+        .position(x: size.width * 0.23, y: size.height - 30)
         .opacity(0.95)
 
         // October Halloween Surprise: Bat swooping across sky
@@ -1269,7 +1270,7 @@ private struct AutumnLeafyCanopyTree: View {
             let amberOchre = Color(red: 0.88, green: 0.60, blue: 0.18).opacity(0.82)
             let russetChestnut = Color(red: 0.70, green: 0.36, blue: 0.16).opacity(0.80)
 
-            // Leaf sprays along upper limbs and twigs (Leaving branch at w-76, h-232 clean for hedgehog)
+            // Leaf sprays along upper limbs and twigs
             let treeLeaves: [(CGFloat, CGFloat, CGFloat, CGFloat, Double, Color)] = [
                 // Upper crown canopy (crimson, scarlet, golden)
                 (w - 24, h - 575, 26, 15, -0.6, scarletRed),
@@ -1292,7 +1293,7 @@ private struct AutumnLeafyCanopyTree: View {
                 (w - 36, h - 372, 27, 15, -0.6, burntOrange),
                 (w - 18, h - 356, 25, 14, -0.4, goldenAspen),
 
-                // Lower canopy twigs (Kept away from hedgehog perch at w-76, h-232)
+                // Lower canopy twigs
                 (w - 64, h - 342, 27, 15, -1.1, amberOchre),
                 (w - 85, h - 332, 26, 14, -1.5, scarletRed),
                 (w - 104, h - 316, 28, 16, -1.9, burntOrange),
@@ -1914,9 +1915,9 @@ private struct DriftingAutumnLeafItem: View {
     }
 }
 
-// MARK: Autumn Hedgehog (Storybook Cute Nestled on Tree Bough)
+// MARK: Autumn Fox (Storybook Cute, Grounded at the Tree's Foot)
 
-private struct AutumnHedgehogMark: View {
+private struct AutumnFoxMark: View {
     let size: CGFloat
     let breathe: Bool
 
@@ -1925,115 +1926,113 @@ private struct AutumnHedgehogMark: View {
             let w = sz.width
             let h = sz.height
 
-            let quillDark = Color(red: 0.38, green: 0.22, blue: 0.12)
-            let quillTan = Color(red: 0.72, green: 0.54, blue: 0.36)
-            let quillLight = Color(red: 0.88, green: 0.76, blue: 0.58)
-            let faceCream = Color(red: 0.96, green: 0.91, blue: 0.82)
-            let innerEarPink = Color(red: 0.96, green: 0.68, blue: 0.75)
-            let cheekBlush = Color(red: 0.98, green: 0.55, blue: 0.60).opacity(0.42)
-            let berryRed = Color(red: 0.88, green: 0.18, blue: 0.16)
-            let leafGreen = Color(red: 0.45, green: 0.75, blue: 0.35)
-            let darkEye = Color(red: 0.12, green: 0.08, blue: 0.10)
-            let darkNose = Color(red: 0.18, green: 0.10, blue: 0.10)
+            let foxOrange = Color(red: 0.85, green: 0.42, blue: 0.16)
+            let foxOrangeDeep = Color(red: 0.70, green: 0.30, blue: 0.12)
+            let foxCream = Color(red: 0.97, green: 0.93, blue: 0.85)
+            let foxDark = Color(red: 0.16, green: 0.11, blue: 0.10)
+            let darkEye = Color(red: 0.10, green: 0.07, blue: 0.08)
 
             // Ground bark shadow
-            let shadowRect = CGRect(x: w * 0.12, y: h * 0.82, width: w * 0.74, height: h * 0.14)
+            let shadowRect = CGRect(x: w * 0.10, y: h * 0.84, width: w * 0.72, height: h * 0.13)
             context.fill(Path(ellipseIn: shadowRect), with: .color(Color.black.opacity(0.20)))
 
-            // Hedgehog Spiny Dome
-            let domeCenter = CGPoint(x: w * 0.42, y: h * 0.52)
-            let domeRadiusX = w * 0.34
-            let domeRadiusY = h * 0.34
-            let domeRect = CGRect(x: w * 0.08, y: h * 0.18, width: w * 0.68, height: h * 0.68)
-            context.fill(Path(ellipseIn: domeRect), with: .color(quillDark))
-
-            // A true jagged crown of spikes around the back, not flat lines,
-            // so the silhouette itself reads as a hedgehog rather than a
-            // smooth, striped chipmunk back.
-            func domePoint(angleDegrees: Double, radiusScale: CGFloat) -> CGPoint {
-                let rad = angleDegrees * .pi / 180
-                return CGPoint(
-                    x: domeCenter.x + domeRadiusX * radiusScale * CGFloat(cos(rad)),
-                    y: domeCenter.y + domeRadiusY * radiusScale * CGFloat(sin(rad))
-                )
-            }
-
-            let spikeColors: [Color] = [quillDark, quillTan, quillLight]
-            let spikeCount = 13
-            let spikeStartAngle = 95.0
-            let spikeSweep = 250.0
-
-            for i in 0..<spikeCount {
-                let t = Double(i) / Double(spikeCount - 1)
-                let centerAngle = spikeStartAngle + spikeSweep * t
-                let tipScale: CGFloat = 1.28 + CGFloat(i % 3) * 0.08
-                let baseLeft = domePoint(angleDegrees: centerAngle - 8.5, radiusScale: 0.96)
-                let baseRight = domePoint(angleDegrees: centerAngle + 8.5, radiusScale: 0.96)
-                let tip = domePoint(angleDegrees: centerAngle, radiusScale: tipScale)
-
-                var spike = Path()
-                spike.move(to: baseLeft)
-                spike.addLine(to: tip)
-                spike.addLine(to: baseRight)
-                spike.closeSubpath()
-                context.fill(spike, with: .color(spikeColors[i % spikeColors.count]))
-                context.stroke(spike, with: .color(quillDark.opacity(0.45)), lineWidth: 0.6)
-            }
-
-            // Plump soft face and snout
-            var face = Path()
-            face.move(to: CGPoint(x: w * 0.48, y: h * 0.40))
-            face.addCurve(
-                to: CGPoint(x: w * 0.90, y: h * 0.56),
-                control1: CGPoint(x: w * 0.65, y: h * 0.38),
-                control2: CGPoint(x: w * 0.82, y: h * 0.48)
+            // Bushy tail, curling up and around behind the body, white tipped
+            var tail = Path()
+            tail.move(to: CGPoint(x: w * 0.10, y: h * 0.62))
+            tail.addCurve(
+                to: CGPoint(x: w * 0.02, y: h * 0.30),
+                control1: CGPoint(x: w * 0.02, y: h * 0.52),
+                control2: CGPoint(x: w * 0.00, y: h * 0.40)
             )
-            face.addCurve(
-                to: CGPoint(x: w * 0.52, y: h * 0.82),
-                control1: CGPoint(x: w * 0.84, y: h * 0.72),
-                control2: CGPoint(x: w * 0.68, y: h * 0.82)
+            tail.addCurve(
+                to: CGPoint(x: w * 0.24, y: h * 0.04),
+                control1: CGPoint(x: w * 0.05, y: h * 0.14),
+                control2: CGPoint(x: w * 0.14, y: h * 0.04)
             )
-            face.closeSubpath()
-            context.fill(face, with: .color(faceCream))
+            tail.addCurve(
+                to: CGPoint(x: w * 0.34, y: h * 0.22),
+                control1: CGPoint(x: w * 0.32, y: h * 0.04),
+                control2: CGPoint(x: w * 0.36, y: h * 0.12)
+            )
+            tail.addCurve(
+                to: CGPoint(x: w * 0.20, y: h * 0.58),
+                control1: CGPoint(x: w * 0.30, y: h * 0.36),
+                control2: CGPoint(x: w * 0.24, y: h * 0.48)
+            )
+            tail.closeSubpath()
+            context.fill(tail, with: .color(foxOrange))
 
-            // Rosy chubby cheek blush
-            let blushRect = CGRect(x: w * 0.64, y: h * 0.62, width: 9, height: 6)
-            context.fill(Path(ellipseIn: blushRect), with: .color(cheekBlush))
+            // White tail tip
+            let tailTip = CGRect(x: w * 0.09, y: h * 0.02, width: w * 0.20, height: h * 0.18)
+            context.fill(Path(ellipseIn: tailTip), with: .color(foxCream))
 
-            // Cute small round ear with pink interior
-            let earOuter = CGRect(x: w * 0.46, y: h * 0.36, width: 8.5, height: 8.5)
-            context.fill(Path(ellipseIn: earOuter), with: .color(faceCream))
-            let earInner = CGRect(x: w * 0.48, y: h * 0.38, width: 5.0, height: 5.0)
-            context.fill(Path(ellipseIn: earInner), with: .color(innerEarPink))
+            // Round sitting body and haunch
+            let bodyRect = CGRect(x: w * 0.12, y: h * 0.34, width: w * 0.56, height: h * 0.56)
+            context.fill(Path(ellipseIn: bodyRect), with: .color(foxOrange))
 
-            // Large glossy storybook eye with twin specular highlights
-            let eyeRect = CGRect(x: w * 0.66, y: h * 0.48, width: 7.2, height: 7.2)
+            // Cream chest patch
+            let chestRect = CGRect(x: w * 0.22, y: h * 0.54, width: w * 0.32, height: h * 0.34)
+            context.fill(Path(ellipseIn: chestRect), with: .color(foxCream))
+
+            // Head
+            let headRect = CGRect(x: w * 0.40, y: h * 0.12, width: w * 0.42, height: h * 0.40)
+            context.fill(Path(ellipseIn: headRect), with: .color(foxOrange))
+
+            // Back ear
+            var earBack = Path()
+            earBack.move(to: CGPoint(x: w * 0.44, y: h * 0.16))
+            earBack.addLine(to: CGPoint(x: w * 0.40, y: h * 0.02))
+            earBack.addLine(to: CGPoint(x: w * 0.54, y: h * 0.13))
+            earBack.closeSubpath()
+            context.fill(earBack, with: .color(foxOrangeDeep))
+
+            // Front ear
+            var earFront = Path()
+            earFront.move(to: CGPoint(x: w * 0.60, y: h * 0.14))
+            earFront.addLine(to: CGPoint(x: w * 0.64, y: h * 0.01))
+            earFront.addLine(to: CGPoint(x: w * 0.74, y: h * 0.12))
+            earFront.closeSubpath()
+            context.fill(earFront, with: .color(foxOrange))
+
+            // Cream inner ear
+            var innerEar = Path()
+            innerEar.move(to: CGPoint(x: w * 0.64, y: h * 0.11))
+            innerEar.addLine(to: CGPoint(x: w * 0.655, y: h * 0.04))
+            innerEar.addLine(to: CGPoint(x: w * 0.70, y: h * 0.105))
+            innerEar.closeSubpath()
+            context.fill(innerEar, with: .color(foxCream))
+
+            // Pointed cream muzzle
+            var muzzle = Path()
+            muzzle.move(to: CGPoint(x: w * 0.56, y: h * 0.28))
+            muzzle.addCurve(
+                to: CGPoint(x: w * 0.92, y: h * 0.40),
+                control1: CGPoint(x: w * 0.72, y: h * 0.26),
+                control2: CGPoint(x: w * 0.86, y: h * 0.32)
+            )
+            muzzle.addCurve(
+                to: CGPoint(x: w * 0.58, y: h * 0.48),
+                control1: CGPoint(x: w * 0.84, y: h * 0.48),
+                control2: CGPoint(x: w * 0.68, y: h * 0.50)
+            )
+            muzzle.closeSubpath()
+            context.fill(muzzle, with: .color(foxCream))
+
+            // Nose
+            let noseRect = CGRect(x: w * 0.89, y: h * 0.37, width: 4.6, height: 4.2)
+            context.fill(Path(ellipseIn: noseRect), with: .color(foxDark))
+
+            // Alert eye with glint
+            let eyeRect = CGRect(x: w * 0.62, y: h * 0.22, width: 6.6, height: 6.6)
             context.fill(Path(ellipseIn: eyeRect), with: .color(darkEye))
-            let glint1 = CGRect(x: w * 0.66 + 1.2, y: h * 0.48 + 1.0, width: 2.6, height: 2.6)
-            context.fill(Path(ellipseIn: glint1), with: .color(.white))
-            let glint2 = CGRect(x: w * 0.66 + 4.2, y: h * 0.48 + 4.0, width: 1.4, height: 1.4)
-            context.fill(Path(ellipseIn: glint2), with: .color(.white))
+            let glint = CGRect(x: w * 0.62 + 1.1, y: h * 0.22 + 0.9, width: 2.2, height: 2.2)
+            context.fill(Path(ellipseIn: glint), with: .color(.white))
 
-            // Shiny button nose at tip of snout
-            let noseRect = CGRect(x: w * 0.88, y: h * 0.53, width: 4.2, height: 4.0)
-            context.fill(Path(ellipseIn: noseRect), with: .color(darkNose))
-
-            // Autumn red berry held in front paws
-            let berryRect = CGRect(x: w * 0.74, y: h * 0.68, width: 9.0, height: 9.0)
-            context.fill(Path(ellipseIn: berryRect), with: .color(berryRed))
-            var berryLeaf = Path()
-            berryLeaf.addEllipse(in: CGRect(x: w * 0.77, y: h * 0.65, width: 4.5, height: 3.0))
-            context.fill(berryLeaf, with: .color(leafGreen))
-
-            // Little cream front paws hugging the berry
-            let paw1 = CGRect(x: w * 0.68, y: h * 0.70, width: 6.5, height: 5.5)
-            context.fill(Path(ellipseIn: paw1), with: .color(faceCream))
-            let paw2 = CGRect(x: w * 0.76, y: h * 0.74, width: 6.0, height: 5.0)
-            context.fill(Path(ellipseIn: paw2), with: .color(faceCream))
-
-            // Little hind foot planted on the bough
-            let footRect = CGRect(x: w * 0.34, y: h * 0.78, width: 9.0, height: 5.5)
-            context.fill(Path(ellipseIn: footRect), with: .color(faceCream))
+            // Dark leg stockings where the paws meet the bough
+            let paw1 = CGRect(x: w * 0.24, y: h * 0.80, width: 8.5, height: 7.0)
+            context.fill(Path(ellipseIn: paw1), with: .color(foxDark))
+            let paw2 = CGRect(x: w * 0.42, y: h * 0.82, width: 8.0, height: 6.5)
+            context.fill(Path(ellipseIn: paw2), with: .color(foxDark))
         }
         .frame(width: size, height: size * 0.82)
         .scaleEffect(y: breathe ? 1.03 : 0.98, anchor: .bottom)
@@ -2041,15 +2040,15 @@ private struct AutumnHedgehogMark: View {
     }
 }
 
-private struct AutumnHedgehogItem: View {
-    let branchPoint: CGPoint
+private struct AutumnFoxItem: View {
+    let groundPoint: CGPoint
     let reduceMotion: Bool
 
     @State private var breathe = false
 
     var body: some View {
-        AutumnHedgehogMark(size: 46, breathe: breathe)
-            .position(x: branchPoint.x, y: branchPoint.y)
+        AutumnFoxMark(size: 58, breathe: breathe)
+            .position(x: groundPoint.x, y: groundPoint.y)
             .onAppear {
                 guard !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
