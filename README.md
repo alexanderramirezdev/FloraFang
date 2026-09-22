@@ -448,3 +448,11 @@ the 0 of 346 figure comes from anyway.
 
 **Zero of 346 is a measurement, not a guarantee.** It rests on one caught case
 in one holdout. The true rate has real uncertainty around it.
+
+***
+
+## License
+
+All rights reserved. See [`LICENSE`](LICENSE) — the code, models, training
+data, and visual assets here are shared for evaluation and reference only,
+not for reuse or redistribution.
