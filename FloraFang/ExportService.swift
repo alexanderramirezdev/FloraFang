@@ -287,7 +287,8 @@ enum ExportService {
 
     /// Escapes a field for CSV. Notes are free text and will contain commas.
     /// Defends against CSV formula injection (=, +, -, @, \t, \r) for downstream spreadsheet viewers.
-    private static func csv(_ value: String) -> String {
+    /// Internal rather than private so FloraFangTests can exercise it directly.
+    static func csv(_ value: String) -> String {
         var sanitized = value
         let formulaPrefixes: [Character] = ["=", "+", "-", "@", "\t", "\r"]
         if let first = sanitized.first, formulaPrefixes.contains(first) {

@@ -68,9 +68,17 @@ final class LocationService: NSObject {
     /// enough to identify a building.
     var coarseCoordinate: (latitude: Double, longitude: Double)? {
         guard isEnabled, let loc = lastLocation else { return nil }
-        return (
-            (loc.coordinate.latitude * 100).rounded() / 100,
-            (loc.coordinate.longitude * 100).rounded() / 100
+        return Self.coarsen(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude)
+    }
+
+    /// Rounds to two decimal places, about a kilometre: fine enough for a
+    /// species range check, far too coarse to identify a building. Pulled out
+    /// as a pure function so this privacy guarantee is directly unit testable
+    /// without standing up a real CLLocationManager.
+    nonisolated static func coarsen(latitude: Double, longitude: Double) -> (latitude: Double, longitude: Double) {
+        (
+            (latitude * 100).rounded() / 100,
+            (longitude * 100).rounded() / 100
         )
     }
 

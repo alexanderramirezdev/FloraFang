@@ -79,18 +79,10 @@ actor PlantClassifier {
         // (fetch_holdout.py + calibrate_plants.py, 2026-09-18): cut Expected
         // Calibration Error from 0.095 to 0.019.
         let temperature: Double = 1.62
-        var powered: [(identifier: String, prob: Double)] = []
-        var sum: Double = 0.0
-
-        for obs in classifications {
-            let raw = max(Double(obs.confidence), 1e-6)
-            let scaled = pow(raw, 1.0 / temperature)
-            powered.append((obs.identifier, scaled))
-            sum += scaled
-        }
-
-        let calibrated = powered.map { ($0.identifier, $0.prob / max(sum, 1e-6)) }
-            .sorted { $0.1 > $1.1 }
+        let calibrated = CalibrationMath.temperatureScale(
+            classifications.map { ($0.identifier, Double($0.confidence)) },
+            temperature: temperature
+        )
 
         guard let top = calibrated.first else { return nil }
         let runnerUp = calibrated.dropFirst().first.map { $0.1 }

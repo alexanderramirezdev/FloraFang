@@ -42,7 +42,12 @@ struct ConfidenceGate {
     /// Margin the top prediction must beat the runner-up by.
     var minimumMargin: Double = 0.06
 
-    enum Verdict {
+    /// nonisolated for the same reason SpiderClass and PlantClass are: this
+    /// is compared (== ) from nonisolated contexts, including XCTest test
+    /// methods, and under Swift 6 default main actor isolation the
+    /// synthesized Equatable conformance would otherwise be main actor
+    /// isolated too, which is not something a plain data enum needs.
+    nonisolated enum Verdict {
         /// Confident enough to report as-is.
         case accept
         /// Report, but frame it as a possible hazard rather than an ID.

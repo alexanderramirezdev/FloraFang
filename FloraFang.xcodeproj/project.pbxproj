@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2FB5C698FD004B25BE14B909 /* UnlockCelebrationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */; };
 		5E14ED2030520C000031EC4D /* SpiderHazardGate.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 5E14ED2130520C000031EC4D /* SpiderHazardGate.mlmodel */; };
 		5E1764163043EEF000332D86 /* SubjectSegmenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764153043EEF000332D86 /* SubjectSegmenter.swift */; };
 		5E1764173043EEF000332D86 /* FeatureExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1764133043EEF000332D86 /* FeatureExtractor.swift */; };
@@ -19,7 +20,7 @@
 		5E4CE972305E37B400128263 /* PurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE96C305E37B400128263 /* PurchaseManager.swift */; };
 		5E4CE973305E37B400128263 /* CatalogBrowseScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE96A305E37B400128263 /* CatalogBrowseScreen.swift */; };
 		5E4CE9C63060B1C300128263 /* CatalogSubSpecies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */; };
-		2FB5C698FD004B25BE14B909 /* UnlockCelebrationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */; };
+		5E8AA1DB30696D2D00EAE4C2 /* CalibrationMath.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8AA1DA30696D2D00EAE4C2 /* CalibrationMath.swift */; };
 		5EA57B6C3039F6E7008FEC56 /* TRAINING.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B693039F6E7008FEC56 /* TRAINING.md */; };
 		5EA57B6E3039F6E7008FEC56 /* SETUP.md in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B663039F6E7008FEC56 /* SETUP.md */; };
 		5EA57B6F3039F6E7008FEC56 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */; };
@@ -57,6 +58,16 @@
 		5EA57E0630450003008FEC56 /* FieldGuidanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57E0530450003008FEC56 /* FieldGuidanceView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5E8AA1C730696C3A00EAE4C2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5E9248DA302142BF0001493F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5E9248E1302142BF0001493F;
+			remoteInfo = FloraFang;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5E14ED2130520C000031EC4D /* SpiderHazardGate.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = SpiderHazardGate.mlmodel; sourceTree = "<group>"; };
 		5E1764123043EEF000332D86 /* DiagnosticFeatures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticFeatures.swift; sourceTree = "<group>"; };
@@ -71,7 +82,8 @@
 		5E4CE96E305E37B400128263 /* SpeciesLifeListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeciesLifeListScreen.swift; sourceTree = "<group>"; };
 		5E4CE9C430606CA700128263 /* FloraFang.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = FloraFang.storekit; sourceTree = "<group>"; };
 		5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogSubSpecies.swift; sourceTree = "<group>"; };
-		BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockCelebrationScreen.swift; sourceTree = "<group>"; };
+		5E8AA1C330696C3A00EAE4C2 /* FloraFangTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FloraFangTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E8AA1DA30696D2D00EAE4C2 /* CalibrationMath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationMath.swift; sourceTree = "<group>"; };
 		5E9248E2302142BF0001493F /* FloraFang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FloraFang.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5EA57B4E3039F6E7008FEC56 /* Assessment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Assessment.swift; sourceTree = "<group>"; };
 		5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -109,9 +121,25 @@
 		5EA57E0130450001008FEC56 /* ExposureIncident.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureIncident.swift; sourceTree = "<group>"; };
 		5EA57E0330450002008FEC56 /* ExposureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureHistoryView.swift; sourceTree = "<group>"; };
 		5EA57E0530450003008FEC56 /* FieldGuidanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldGuidanceView.swift; sourceTree = "<group>"; };
+		BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockCelebrationScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5E8AA1C430696C3A00EAE4C2 /* FloraFangTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FloraFangTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		5E8AA1C030696C3A00EAE4C2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E9248DF302142BF0001493F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -127,6 +155,7 @@
 			children = (
 				5E4CE9C430606CA700128263 /* FloraFang.storekit */,
 				5EA57B6A3039F6E7008FEC56 /* FloraFang */,
+				5E8AA1C430696C3A00EAE4C2 /* FloraFangTests */,
 				5E9248E3302142BF0001493F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -135,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				5E9248E2302142BF0001493F /* FloraFang.app */,
+				5E8AA1C330696C3A00EAE4C2 /* FloraFangTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -143,8 +173,8 @@
 			isa = PBXGroup;
 			children = (
 				5EA57B8C303B6580008FEC56 /* Info.plist */,
-				5EA57B4E3039F6E7008FEC56 /* Assessment.swift */,
 				5EA57B4F3039F6E7008FEC56 /* Assets.xcassets */,
+				5EA57B4E3039F6E7008FEC56 /* Assessment.swift */,
 				5EA57B503039F6E7008FEC56 /* CameraPreview.swift */,
 				5EA57B513039F6E7008FEC56 /* CameraScreen.swift */,
 				5EA57B523039F6E7008FEC56 /* CameraService.swift */,
@@ -166,6 +196,7 @@
 				5EA57BA03045F001008FEC56 /* SeasonalAtmosphereView.swift */,
 				5EA57CCB303E8EB3008FEC56 /* ExportConfirmSheet.swift */,
 				5EA57B5C3039F6E7008FEC56 /* HazardClassifier.swift */,
+				5E8AA1DA30696D2D00EAE4C2 /* CalibrationMath.swift */,
 				5EA57B5D3039F6E7008FEC56 /* IdentificationCascade.swift */,
 				5EA57B5E3039F6E7008FEC56 /* ImageCropping.swift */,
 				5EA57B5F3039F6E7008FEC56 /* LabelInspector.swift */,
@@ -198,6 +229,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		5E8AA1C230696C3A00EAE4C2 /* FloraFangTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E8AA1C930696C3A00EAE4C2 /* Build configuration list for PBXNativeTarget "FloraFangTests" */;
+			buildPhases = (
+				5E8AA1BF30696C3A00EAE4C2 /* Sources */,
+				5E8AA1C030696C3A00EAE4C2 /* Frameworks */,
+				5E8AA1C130696C3A00EAE4C2 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5E8AA1C830696C3A00EAE4C2 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				5E8AA1C430696C3A00EAE4C2 /* FloraFangTests */,
+			);
+			name = FloraFangTests;
+			packageProductDependencies = (
+			);
+			productName = FloraFangTests;
+			productReference = 5E8AA1C330696C3A00EAE4C2 /* FloraFangTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		5E9248E1302142BF0001493F /* FloraFang */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5E9248ED302142C00001493F /* Build configuration list for PBXNativeTarget "FloraFang" */;
@@ -225,6 +279,10 @@
 				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
+					5E8AA1C230696C3A00EAE4C2 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 5E9248E1302142BF0001493F;
+					};
 					5E9248E1302142BF0001493F = {
 						CreatedOnToolsVersion = 27.0;
 					};
@@ -245,11 +303,19 @@
 			projectRoot = "";
 			targets = (
 				5E9248E1302142BF0001493F /* FloraFang */,
+				5E8AA1C230696C3A00EAE4C2 /* FloraFangTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		5E8AA1C130696C3A00EAE4C2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E9248E0302142BF0001493F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -263,6 +329,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		5E8AA1BF30696C3A00EAE4C2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		5E9248DE302142BF0001493F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -291,6 +364,7 @@
 				5EA57B7E3039F6E7008FEC56 /* PlantClassifier.swift in Sources */,
 				5EA57B7F3039F6E7008FEC56 /* SpiderClasses.swift in Sources */,
 				5EA57B803039F6E7008FEC56 /* SpiderHazard.mlmodel in Sources */,
+				5E8AA1DB30696D2D00EAE4C2 /* CalibrationMath.swift in Sources */,
 				5E4CE96F305E37B400128263 /* PaywallSheet.swift in Sources */,
 				5E4CE970305E37B400128263 /* ShareableIDCard.swift in Sources */,
 				5E4CE971305E37B400128263 /* SpeciesLifeListScreen.swift in Sources */,
@@ -317,7 +391,57 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		5E8AA1C830696C3A00EAE4C2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5E9248E1302142BF0001493F /* FloraFang */;
+			targetProxy = 5E8AA1C730696C3A00EAE4C2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		5E8AA1CA30696C3A00EAE4C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFangTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FloraFang.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FloraFang";
+			};
+			name = Debug;
+		};
+		5E8AA1CB30696C3A00EAE4C2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = UV9NBSUZA6;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFangTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FloraFang.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FloraFang";
+			};
+			name = Release;
+		};
 		5E9248EB302142C00001493F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -445,7 +569,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = UV9NBSUZA6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -464,7 +588,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -487,7 +611,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = UV9NBSUZA6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -506,7 +630,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -526,6 +650,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		5E8AA1C930696C3A00EAE4C2 /* Build configuration list for PBXNativeTarget "FloraFangTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5E8AA1CA30696C3A00EAE4C2 /* Debug */,
+				5E8AA1CB30696C3A00EAE4C2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		5E9248DD302142BF0001493F /* Build configuration list for PBXProject "FloraFang" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -132,28 +132,18 @@ actor HazardClassifier {
 
         // Layer 2: Empirical Temperature Scaling (T = 1.53)
         // Slashed Expected Calibration Error from 0.1014 to 0.0274 on holdout.
+        // Math lives in CalibrationMath so it is unit testable directly.
         let temperature: Double = 1.53
-        var powered: [(identifier: String, prob: Double)] = []
-        var sum: Double = 0.0
-
-        for obs in classifications {
-            let raw = max(Double(obs.confidence), 1e-6)
-            let scaled = pow(raw, 1.0 / temperature)
-            powered.append((obs.identifier, scaled))
-            sum += scaled
-        }
-
-        let calibrated = powered.map { ($0.identifier, $0.prob / max(sum, 1e-6)) }
-            .sorted { $0.1 > $1.1 }
+        let calibrated = CalibrationMath.temperatureScale(
+            classifications.map { ($0.identifier, Double($0.confidence)) },
+            temperature: temperature
+        )
 
         guard let top = calibrated.first else { return nil }
         let runnerUp = calibrated.dropFirst().first.map { $0.1 }
 
         // Layer 1: Shannon Entropy Out of Distribution Filter
-        var entropy: Double = 0.0
-        for (_, p) in calibrated where p > 1e-6 {
-            entropy -= p * (log(p) / log(2.0))
-        }
+        let entropy = CalibrationMath.shannonEntropyBits(calibrated.map { $0.1 })
         let isHighEntropy = entropy > 2.35 && top.1 < 0.55
 
         guard let spiderClass = SpiderClass.from(label: top.0) else {
@@ -185,18 +175,10 @@ actor HazardClassifier {
 
         // Empirical temperature scaling for three class gate (T = 1.86)
         let temperature: Double = 1.86
-        var powered: [(identifier: String, prob: Double)] = []
-        var sum: Double = 0.0
-
-        for obs in classifications {
-            let raw = max(Double(obs.confidence), 1e-6)
-            let scaled = pow(raw, 1.0 / temperature)
-            powered.append((obs.identifier, scaled))
-            sum += scaled
-        }
-
-        let calibrated = powered.map { ($0.identifier, $0.prob / max(sum, 1e-6)) }
-            .sorted { $0.1 > $1.1 }
+        let calibrated = CalibrationMath.temperatureScale(
+            classifications.map { ($0.identifier, Double($0.confidence)) },
+            temperature: temperature
+        )
 
         guard let top = calibrated.first else { return nil }
 
