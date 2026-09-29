@@ -4,8 +4,7 @@ Generated 2026-09-21 for the Full Catalog / sub-species reference photos
 (spiders, toxic plants, general categories, and the bird/mammal/lizard "top 10" drill-down).
 
 All photos are from iNaturalist, filtered to CC0 or CC-BY only. CC0 photos need no
-credit. **CC-BY photos require photographer attribution somewhere in the app** (an
-About/Credits screen is the usual place) before shipping.
+credit.
 
 ## Needs credit — CC-BY (42)
 
@@ -54,7 +53,7 @@ About/Credits screen is the usual place) before shipping.
 | `ref_widow` | renatobrito | [51608861](https://www.inaturalist.org/observations/51608861) |
 | `ref_wolf_spider` | invertebratist | [204690367](https://www.inaturalist.org/observations/204690367) |
 
-## No credit needed — CC0 (10)
+## No credit needed — CC0 (13)
 
 | Imageset | Photographer | Observation |
 |---|---|---|
@@ -68,16 +67,6 @@ About/Credits screen is the usual place) before shipping.
 | `ref_sub_lizard_eastern_collared_lizard` | jasonleduc | [250009415](https://www.inaturalist.org/observations/250009415) |
 | `ref_sub_lizard_eastern_fence_lizard` | catslovetofindplants | [193912600](https://www.inaturalist.org/observations/193912600) |
 | `ref_sub_mammal_coyote` | nathanael15 | [39871374](https://www.inaturalist.org/observations/39871374) |
-
-## Needs manual license check (3)
-
-These three were saved by hand from inaturalist.org (the fetch script's taxon IDs were
-stale after recent taxonomic revisions) and never went through the script's license
-filter or attribution.csv. Check each observation's license on the site and, if it's
-CC-BY, add a row to the table above with the photographer's username.
-
-| Imageset | Species |
-|---|---|
-| `ref_sub_lizard_desert_spiny_lizard` | Desert Spiny Lizard |
-| `ref_sub_lizard_five_lined_skink` | Five Lined Skink |
-| `ref_sub_lizard_new_mexico_whiptail` | New Mexico Whiptail |
+| `ref_sub_lizard_desert_spiny_lizard` | sealgyu | [photo 699735878](https://www.inaturalist.org/photos/699735878) |
+| `ref_sub_lizard_five_lined_skink` | liz_bullock | [photo 731023269](https://www.inaturalist.org/photos/731023269) |
+| `ref_sub_lizard_new_mexico_whiptail` | aggie_wildlifer | [photo 415463346](https://www.inaturalist.org/photos/415463346) |
