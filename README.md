@@ -453,4 +453,4 @@ in one holdout. The true rate has real uncertainty around it.
 
 ## License
 
-All rights reserved. See [`LICENSE`](LICENSE) The code, trained models, and original visual assets here are shared for evaluation and reference only, not for reuse or redistribution. Third party photographs and data are credited in REFERENCE_PHOTO_CREDITS.md and remain under their original licenses.
+All rights reserved. See [`LICENSE`](LICENSE). The code, trained models, and original visual assets here are shared for evaluation and reference only, not for reuse or redistribution. Third party photographs and data are credited in REFERENCE_PHOTO_CREDITS.md and remain under their original licenses.
