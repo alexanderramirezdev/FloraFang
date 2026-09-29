@@ -56,6 +56,8 @@
 		5EA57E0230450001008FEC56 /* ExposureIncident.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57E0130450001008FEC56 /* ExposureIncident.swift */; };
 		5EA57E0430450002008FEC56 /* ExposureHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57E0330450002008FEC56 /* ExposureHistoryView.swift */; };
 		5EA57E0630450003008FEC56 /* FieldGuidanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA57E0530450003008FEC56 /* FieldGuidanceView.swift */; };
+		5EF6CF1A306B495700A13843 /* PhotoCredits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF6CF19306B495700A13843 /* PhotoCredits.swift */; };
+		5EF6CF1B306B495700A13843 /* CreditsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EF6CF18306B495700A13843 /* CreditsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -121,6 +123,8 @@
 		5EA57E0130450001008FEC56 /* ExposureIncident.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureIncident.swift; sourceTree = "<group>"; };
 		5EA57E0330450002008FEC56 /* ExposureHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExposureHistoryView.swift; sourceTree = "<group>"; };
 		5EA57E0530450003008FEC56 /* FieldGuidanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldGuidanceView.swift; sourceTree = "<group>"; };
+		5EF6CF18306B495700A13843 /* CreditsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditsView.swift; sourceTree = "<group>"; };
+		5EF6CF19306B495700A13843 /* PhotoCredits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCredits.swift; sourceTree = "<group>"; };
 		BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnlockCelebrationScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -178,6 +182,7 @@
 				5EA57B503039F6E7008FEC56 /* CameraPreview.swift */,
 				5EA57B513039F6E7008FEC56 /* CameraScreen.swift */,
 				5EA57B523039F6E7008FEC56 /* CameraService.swift */,
+				5EF6CF18306B495700A13843 /* CreditsView.swift */,
 				5EA57B533039F6E7008FEC56 /* Catalog.swift */,
 				5E4CE9C53060B1C300128263 /* CatalogSubSpecies.swift */,
 				BE1CEF33737F4D68996FB153 /* UnlockCelebrationScreen.swift */,
@@ -213,6 +218,7 @@
 				5E1764153043EEF000332D86 /* SubjectSegmenter.swift */,
 				5E4CE96A305E37B400128263 /* CatalogBrowseScreen.swift */,
 				5E4CE96B305E37B400128263 /* PaywallSheet.swift */,
+				5EF6CF19306B495700A13843 /* PhotoCredits.swift */,
 				5E4CE96C305E37B400128263 /* PurchaseManager.swift */,
 				5E4CE96D305E37B400128263 /* ShareableIDCard.swift */,
 				5E4CE96E305E37B400128263 /* SpeciesLifeListScreen.swift */,
@@ -380,6 +386,8 @@
 				5EA57B92303B6619008FEC56 /* OnboardingView.swift in Sources */,
 				5EA57B853039F6E7008FEC56 /* CameraService.swift in Sources */,
 				5EA57B863039F6E7008FEC56 /* EntryDetailScreen.swift in Sources */,
+				5EF6CF1A306B495700A13843 /* PhotoCredits.swift in Sources */,
+				5EF6CF1B306B495700A13843 /* CreditsView.swift in Sources */,
 				5E4CE9C63060B1C300128263 /* CatalogSubSpecies.swift in Sources */,
 				2FB5C698FD004B25BE14B909 /* UnlockCelebrationScreen.swift in Sources */,
 				5EA57B893039F988008FEC56 /* FloraFangApp.swift in Sources */,
