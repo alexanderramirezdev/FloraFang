@@ -1060,6 +1060,20 @@ struct SettingsSheet: View {
                                 }
                             }
 
+                            NavigationLink {
+                                CreditsView()
+                            } label: {
+                                HStack {
+                                    Text("Photo Credits")
+                                        .font(.system(size: 12.5))
+                                        .foregroundStyle(theme.parchment)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(theme.lichen)
+                                }
+                            }
+
                             if let supportURL = URL(string: "mailto:support@ramirezlabs.app") {
                                 Link(destination: supportURL) {
                                     HStack {

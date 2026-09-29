@@ -11,13 +11,13 @@
 
 import Foundation
 
-enum CalibrationMath {
+nonisolated enum CalibrationMath {
 
     /// Raises each softmax probability to 1/T and renormalizes. Mathematically
     /// identical to scaling logits by T (softmax(z/T)) when only final
     /// probabilities are available, which is all Vision/Core ML hands back.
     /// Returned in descending order of calibrated probability.
-    static func temperatureScale(
+    nonisolated static func temperatureScale(
         _ raw: [(identifier: String, confidence: Double)],
         temperature: Double
     ) -> [(identifier: String, probability: Double)] {
@@ -39,7 +39,7 @@ enum CalibrationMath {
     /// Shannon entropy in bits: H = -sum(p * log2(p)). Near 0 means the
     /// distribution is confidently peaked on one class; higher means it is
     /// spread out, the signature of an out-of-distribution input.
-    static func shannonEntropyBits(_ probabilities: [Double]) -> Double {
+    nonisolated static func shannonEntropyBits(_ probabilities: [Double]) -> Double {
         var entropy: Double = 0.0
         for p in probabilities where p > 1e-6 {
             entropy -= p * (log(p) / log(2.0))
