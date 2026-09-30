@@ -583,6 +583,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FloraFang/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FloraFang;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_NSCameraUsageDescription = "FloraFang requires camera access to capture and identify spiders and plants in the field.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.";
@@ -596,7 +597,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -625,6 +626,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FloraFang/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FloraFang;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_NSCameraUsageDescription = "FloraFang requires camera access to capture and identify spiders and plants in the field.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "FloraFang can record where a scan happened, since range narrows down what a species can be. This is optional and stays on your iPhone.";
@@ -638,7 +640,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.aramirez.FloraFang;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 public struct SeasonalAtmosphereView: View {
     @AppStorage("app_season_setting") private var seasonSetting = "auto"
@@ -17,6 +18,31 @@ public struct SeasonalAtmosphereView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init() {}
+
+    /// Distance from the bottom of the screen up to the top rim of the
+    /// floating tab bar pill, which is where every perched critter stands.
+    ///
+    /// Measured on iPhone 18 Pro Max (34pt bottom safe area): the pill's
+    /// bottom edge sits 13pt inside the safe area and the pill is 62pt
+    /// tall, so its rim is 83pt up. The old hard coded 96 was 13pt too
+    /// high, which is why everything on the rim looked like it hovered.
+    /// Deriving it from the live safe area keeps that true on other phone
+    /// sizes. Home button phones report 0, so the pill gets a small floor.
+    private var tabBarRimInset: CGFloat {
+        let bottomInset = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .safeAreaInsets.bottom ?? 34
+        return Self.rimInset(forBottomSafeArea: bottomInset)
+    }
+
+    /// Pure version of the rim math, split out so it can be unit tested.
+    nonisolated static func rimInset(forBottomSafeArea bottomInset: CGFloat) -> CGFloat {
+        let pillHeight: CGFloat = 62
+        let pillBottom = max(bottomInset - 13, 8)
+        return pillBottom + pillHeight
+    }
 
     public var body: some View {
         let theme = SeasonTheme.theme(for: seasonSetting)
@@ -91,13 +117,15 @@ public struct SeasonalAtmosphereView: View {
         if isEaster {
             // Fluffy Easter Bunny perched directly on the tab menu top rim
             EasterBunnyItem(
-                position: CGPoint(x: size.width * 0.70, y: size.height - 96 - 18),
+                position: CGPoint(x: size.width * 0.70, y: size.height - tabBarRimInset - 17.5),
                 reduceMotion: reduceMotion
             )
 
             // Decorated pastel Easter eggs nestled beside bunny on the tab menu
+            // Kept on the flat part of the pill; the old 0.82 hung past
+            // where the capsule's right end curves away.
             EasterEggsItem(
-                position: CGPoint(x: size.width * 0.82, y: size.height - 96 - 12)
+                position: CGPoint(x: size.width * 0.58, y: size.height - tabBarRimInset - 15)
             )
         }
     }
@@ -185,29 +213,32 @@ public struct SeasonalAtmosphereView: View {
         }
         .frame(width: size.width, height: size.height)
 
-        // Resident Autumn Fox settled on the ground at the foot of the
-        // tree, not up in the branches like the hedgehog it replaced
-        AutumnFoxItem(
-            groundPoint: CGPoint(x: size.width * 0.74, y: size.height - 96 - 18),
-            reduceMotion: reduceMotion
-        )
-
         // Month and preview logic for October and November visitors
         let month = Calendar.current.component(.month, from: .now)
         let isOctober = (autumnVisitorSetting == "october") || (autumnVisitorSetting == "auto" && month == 10)
         let isNovember = (autumnVisitorSetting == "november") || (autumnVisitorSetting == "auto" && month == 11)
 
-        // Harvest Pumpkin nestled along the left shoulder of the tab menu
-        AutumnPumpkinMark(
+        // Resident Autumn Fox, only when no holiday visitor has the rim.
+        // October belongs to the skeleton and November to the turkey.
+        if !isOctober && !isNovember {
+            AutumnFoxItem(
+                groundPoint: CGPoint(x: size.width * 0.70, y: size.height - tabBarRimInset - 20.5),
+                reduceMotion: reduceMotion
+            )
+        }
+
+        // Harvest Pumpkin in the bottom left corner, left of the tab bar.
+        // Placed so the whole face clears the pill (the old spot put the
+        // face directly behind the bar, so the jack o lantern was never
+        // visible); the pill still overlaps its right lobe for depth.
+        AutumnPumpkinItem(
             size: 150,
             pumpkinColor: theme.accent,
             stemColor: theme.accentAlt,
             isJackOLantern: isOctober,
-            reduceMotion: reduceMotion
+            reduceMotion: reduceMotion,
+            center: CGPoint(x: 44, y: size.height - 56)
         )
-        .shadow(color: .black.opacity(0.4), radius: 10, x: 0, y: 8)
-        .position(x: size.width * 0.23, y: size.height - 30)
-        .opacity(0.95)
 
         // October Halloween Surprise: Bat swooping across sky
         if isOctober {
@@ -219,7 +250,7 @@ public struct SeasonalAtmosphereView: View {
             // October Halloween Surprise: Vintage Silly Symphony dancing skeleton on top of tab menu
             OctoberSkeletonItem(
                 containerSize: size,
-                groundY: size.height - 96,
+                groundY: size.height - tabBarRimInset + 1,
                 reduceMotion: reduceMotion
             )
         }
@@ -227,7 +258,7 @@ public struct SeasonalAtmosphereView: View {
         // November Harvest Surprise: Wild Turkey perched proudly on top of tab menu
         if isNovember {
             NovemberTurkeyItem(
-                position: CGPoint(x: size.width * 0.32, y: size.height - 96 - 18),
+                position: CGPoint(x: size.width * 0.56, y: size.height - tabBarRimInset - 21.4),
                 reduceMotion: reduceMotion
             )
         }
@@ -267,7 +298,7 @@ public struct SeasonalAtmosphereView: View {
 
             // Wrapped holiday gift boxes perched on top of the tab menu
             WinterGiftBoxesItem(
-                position: CGPoint(x: size.width * 0.28, y: size.height - 96)
+                position: CGPoint(x: size.width * 0.34, y: size.height - tabBarRimInset - 21)
             )
         }
 
@@ -361,18 +392,13 @@ private struct DriftingPetalItem: View {
     let color: Color
     let reduceMotion: Bool
 
-    @State private var animatedY: CGFloat = 0
-    @State private var swayX: CGFloat = 0
-    @State private var rotationDeg: Double = 0
-
     private var initialX: CGFloat {
         let seed = Double((index * 137) % 100) / 100.0
         return containerSize.width * CGFloat(0.08 + seed * 0.84)
     }
 
-    private var initialY: CGFloat {
-        let seed = Double((index * 79) % 100) / 100.0
-        return containerSize.height * CGFloat(seed)
+    private var startFraction: Double {
+        Double((index * 79) % 100) / 100.0
     }
 
     private var petalSize: CGFloat {
@@ -385,32 +411,31 @@ private struct DriftingPetalItem: View {
         return opacities[index % opacities.count]
     }
 
-    private var duration: Double {
-        return 9.0 + Double(index % 5) * 2.2
+    private var motion: FallMotion {
+        FallMotion(
+            topY: -20,
+            bottomY: containerSize.height + 30,
+            fallDuration: 9.0 + Double(index % 5) * 2.2,
+            swayAmplitude: 16,
+            swayPeriod: 2 * (3.5 + Double(index % 3)),
+            baseRotation: Double((index * 47) % 360),
+            spin: 80,
+            maxOpacity: opacity
+        )
     }
 
     var body: some View {
-        CherryBlossomPetalShape()
-            .fill(color)
-            .opacity(opacity)
-            .frame(width: petalSize * 1.1, height: petalSize * 1.5)
-            .rotationEffect(.degrees(rotationDeg))
-            .position(
-                x: initialX + swayX,
-                y: reduceMotion ? initialY : (initialY + animatedY).truncatingRemainder(dividingBy: containerSize.height + 40)
-            )
-            .onAppear {
-                rotationDeg = Double((index * 47) % 360)
-                guard !reduceMotion else { return }
-
-                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
-                    animatedY = containerSize.height + 50
-                }
-                withAnimation(.easeInOut(duration: 3.5 + Double(index % 3)).repeatForever(autoreverses: true)) {
-                    swayX = 16
-                    rotationDeg += 40
-                }
-            }
+        FallingParticle(
+            x: initialX,
+            motion: motion,
+            phase: motion.cycle * startFraction,
+            reduceMotion: reduceMotion,
+            staticY: containerSize.height * CGFloat(startFraction)
+        ) {
+            CherryBlossomPetalShape()
+                .fill(color)
+                .frame(width: petalSize * 1.1, height: petalSize * 1.5)
+        }
     }
 }
 
@@ -1100,103 +1125,168 @@ private struct AutumnPumpkinMark: View {
     let pumpkinColor: Color
     let stemColor: Color
     var isJackOLantern: Bool = false
-    var reduceMotion: Bool = false
-
-    @State private var flicker: Double = 1.0
+    /// Candle brightness 0...1 from CandleFlicker. Passed in as a plain
+    /// number each frame because Canvas can't animate state on its own;
+    /// the old flicker snapped between two values instead of flickering.
+    var candle: Double = 1.0
 
     var body: some View {
         Canvas { context, sz in
             let w = sz.width
             let h = sz.height
 
-            // Stem: curved harvest amber stem centered at top
+            // Ground shadow
+            let shadowRect = CGRect(x: w * 0.06, y: h * 0.84, width: w * 0.88, height: h * 0.14)
+            context.fill(Path(ellipseIn: shadowRect), with: .color(Color.black.opacity(0.28)))
+
+            // Stem
             var stem = Path()
             stem.move(to: CGPoint(x: w * 0.46, y: h * 0.28))
-            stem.addQuadCurve(
-                to: CGPoint(x: w * 0.54, y: h * 0.06),
-                control: CGPoint(x: w * 0.44, y: h * 0.14)
-            )
+            stem.addQuadCurve(to: CGPoint(x: w * 0.54, y: h * 0.06), control: CGPoint(x: w * 0.44, y: h * 0.14))
             stem.addLine(to: CGPoint(x: w * 0.62, y: h * 0.08))
-            stem.addQuadCurve(
-                to: CGPoint(x: w * 0.56, y: h * 0.28),
-                control: CGPoint(x: w * 0.52, y: h * 0.16)
-            )
+            stem.addQuadCurve(to: CGPoint(x: w * 0.56, y: h * 0.28), control: CGPoint(x: w * 0.52, y: h * 0.16))
             stem.closeSubpath()
             context.fill(stem, with: .color(stemColor))
 
-            // Ground shadow
-            let shadowRect = CGRect(x: w * 0.06, y: h * 0.84, width: w * 0.88, height: h * 0.14)
-            context.fill(Path(ellipseIn: shadowRect), with: .color(Color.black.opacity(0.22)))
+            // Curling vine tendril and a little leaf off the stem
+            let vineGreen = Color(red: 0.36, green: 0.46, blue: 0.20)
+            var tendril = Path()
+            tendril.move(to: CGPoint(x: w * 0.56, y: h * 0.14))
+            tendril.addCurve(to: CGPoint(x: w * 0.76, y: h * 0.12), control1: CGPoint(x: w * 0.64, y: h * 0.02), control2: CGPoint(x: w * 0.74, y: h * 0.02))
+            tendril.addQuadCurve(to: CGPoint(x: w * 0.70, y: h * 0.16), control: CGPoint(x: w * 0.78, y: h * 0.20))
+            context.stroke(tendril, with: .color(vineGreen), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            var leaf = Path()
+            leaf.move(to: CGPoint(x: w * 0.47, y: h * 0.16))
+            leaf.addQuadCurve(to: CGPoint(x: w * 0.30, y: h * 0.14), control: CGPoint(x: w * 0.38, y: h * 0.04))
+            leaf.addQuadCurve(to: CGPoint(x: w * 0.47, y: h * 0.16), control: CGPoint(x: w * 0.38, y: h * 0.22))
+            context.fill(leaf, with: .color(vineGreen))
 
-            // Outer lobes (darker burnt harvest orange)
-            let lobeDark = Color(red: 0.82, green: 0.24, blue: 0.12).opacity(0.92)
+            // Lobes, back to front
+            let lobeDark = Color(red: 0.74, green: 0.22, blue: 0.10)
             context.fill(Path(ellipseIn: CGRect(x: w * 0.06, y: h * 0.24, width: w * 0.38, height: h * 0.64)), with: .color(lobeDark))
             context.fill(Path(ellipseIn: CGRect(x: w * 0.56, y: h * 0.24, width: w * 0.38, height: h * 0.64)), with: .color(lobeDark))
-
-            // Middle lobes (signature harvest pumpkin hue)
             context.fill(Path(ellipseIn: CGRect(x: w * 0.18, y: h * 0.20, width: w * 0.38, height: h * 0.70)), with: .color(pumpkinColor))
             context.fill(Path(ellipseIn: CGRect(x: w * 0.44, y: h * 0.20, width: w * 0.38, height: h * 0.70)), with: .color(pumpkinColor))
+            context.fill(Path(ellipseIn: CGRect(x: w * 0.30, y: h * 0.22, width: w * 0.40, height: h * 0.68)), with: .color(pumpkinColor))
 
-            // Central front lobe
-            context.fill(Path(ellipseIn: CGRect(x: w * 0.30, y: h * 0.22, width: w * 0.40, height: h * 0.68)), with: .color(pumpkinColor.opacity(0.95)))
+            // Rib creases between lobes for roundness
+            let crease = Color(red: 0.55, green: 0.16, blue: 0.06).opacity(0.45)
+            for (x, bend) in [(w * 0.31, -w * 0.05), (w * 0.69, w * 0.05)] {
+                var rib = Path()
+                rib.move(to: CGPoint(x: x, y: h * 0.26))
+                rib.addQuadCurve(to: CGPoint(x: x, y: h * 0.86), control: CGPoint(x: x + bend, y: h * 0.56))
+                context.stroke(rib, with: .color(crease), style: StrokeStyle(lineWidth: 1.6, lineCap: .round))
+            }
 
-            // Carved glowing Jack o Lantern face when Halloween is active
-            if isJackOLantern {
-                let candleGold = Color(red: 1.0, green: 0.88, blue: 0.25).opacity(0.98 * flicker)
-                let glowHalo = Color(red: 1.0, green: 0.72, blue: 0.15).opacity(0.35 * flicker)
+            // Soft highlight on the upper left
+            context.fill(
+                Path(ellipseIn: CGRect(x: w * 0.24, y: h * 0.28, width: w * 0.10, height: h * 0.20)),
+                with: .color(Color.white.opacity(isJackOLantern ? 0.08 : 0.16))
+            )
 
-                // Left triangular eye centered on middle left lobe
-                var leftEye = Path()
-                leftEye.move(to: CGPoint(x: w * 0.36, y: h * 0.40))
-                leftEye.addLine(to: CGPoint(x: w * 0.44, y: h * 0.52))
-                leftEye.addLine(to: CGPoint(x: w * 0.28, y: h * 0.52))
-                leftEye.closeSubpath()
-                context.stroke(leftEye, with: .color(glowHalo), style: StrokeStyle(lineWidth: 3.5))
-                context.fill(leftEye, with: .color(candleGold))
+            guard isJackOLantern else { return }
 
-                // Right triangular eye centered on middle right lobe
-                var rightEye = Path()
-                rightEye.move(to: CGPoint(x: w * 0.64, y: h * 0.40))
-                rightEye.addLine(to: CGPoint(x: w * 0.72, y: h * 0.52))
-                rightEye.addLine(to: CGPoint(x: w * 0.56, y: h * 0.52))
-                rightEye.closeSubpath()
-                context.stroke(rightEye, with: .color(glowHalo), style: StrokeStyle(lineWidth: 3.5))
-                context.fill(rightEye, with: .color(candleGold))
+            // Carved face. Each cut is drawn twice: a dark rim first (the
+            // thickness of the carved shell), then the lit interior on top,
+            // slightly inset, with a bloom so it reads as candlelight.
+            func eye(_ cx: CGFloat) -> Path {
+                var p = Path()
+                p.move(to: CGPoint(x: cx, y: h * 0.38))
+                p.addLine(to: CGPoint(x: cx + w * 0.085, y: h * 0.53))
+                p.addLine(to: CGPoint(x: cx - w * 0.085, y: h * 0.53))
+                p.closeSubpath()
+                return p
+            }
+            var nose = Path()
+            nose.move(to: CGPoint(x: w * 0.50, y: h * 0.54))
+            nose.addLine(to: CGPoint(x: w * 0.55, y: h * 0.62))
+            nose.addLine(to: CGPoint(x: w * 0.45, y: h * 0.62))
+            nose.closeSubpath()
+            var mouth = Path()
+            mouth.move(to: CGPoint(x: w * 0.25, y: h * 0.65))
+            mouth.addLine(to: CGPoint(x: w * 0.33, y: h * 0.71))
+            mouth.addLine(to: CGPoint(x: w * 0.38, y: h * 0.66))
+            mouth.addLine(to: CGPoint(x: w * 0.44, y: h * 0.72))
+            mouth.addLine(to: CGPoint(x: w * 0.50, y: h * 0.67))
+            mouth.addLine(to: CGPoint(x: w * 0.56, y: h * 0.72))
+            mouth.addLine(to: CGPoint(x: w * 0.62, y: h * 0.66))
+            mouth.addLine(to: CGPoint(x: w * 0.67, y: h * 0.71))
+            mouth.addLine(to: CGPoint(x: w * 0.75, y: h * 0.65))
+            mouth.addQuadCurve(to: CGPoint(x: w * 0.25, y: h * 0.65), control: CGPoint(x: w * 0.50, y: h * 0.96))
+            let face = [eye(w * 0.37), eye(w * 0.63), nose, mouth]
 
-                // Small center triangular nose
-                var nose = Path()
-                nose.move(to: CGPoint(x: w * 0.50, y: h * 0.53))
-                nose.addLine(to: CGPoint(x: w * 0.55, y: h * 0.60))
-                nose.addLine(to: CGPoint(x: w * 0.45, y: h * 0.60))
-                nose.closeSubpath()
-                context.stroke(nose, with: .color(glowHalo), style: StrokeStyle(lineWidth: 2.5))
-                context.fill(nose, with: .color(candleGold))
+            let carvedRim = Color(red: 0.36, green: 0.10, blue: 0.04)
+            for cut in face {
+                context.stroke(cut, with: .color(carvedRim), style: StrokeStyle(lineWidth: 3.2, lineJoin: .round))
+            }
 
-                // Broad carved grinning toothy mouth
-                var mouth = Path()
-                mouth.move(to: CGPoint(x: w * 0.26, y: h * 0.66))
-                mouth.addLine(to: CGPoint(x: w * 0.34, y: h * 0.73))
-                mouth.addLine(to: CGPoint(x: w * 0.40, y: h * 0.67))
-                mouth.addLine(to: CGPoint(x: w * 0.50, y: h * 0.74))
-                mouth.addLine(to: CGPoint(x: w * 0.60, y: h * 0.67))
-                mouth.addLine(to: CGPoint(x: w * 0.66, y: h * 0.73))
-                mouth.addLine(to: CGPoint(x: w * 0.74, y: h * 0.66))
-                mouth.addLine(to: CGPoint(x: w * 0.68, y: h * 0.79))
-                mouth.addLine(to: CGPoint(x: w * 0.50, y: h * 0.83))
-                mouth.addLine(to: CGPoint(x: w * 0.32, y: h * 0.79))
-                mouth.closeSubpath()
-                context.stroke(mouth, with: .color(glowHalo), style: StrokeStyle(lineWidth: 3.5))
-                context.fill(mouth, with: .color(candleGold))
+            let flame = max(0.35, min(1.0, candle))
+            context.drawLayer { layer in
+                layer.addFilter(.shadow(color: Color(red: 1.0, green: 0.62, blue: 0.10).opacity(0.95 * flame), radius: 7))
+                let lit = GraphicsContext.Shading.linearGradient(
+                    Gradient(colors: [
+                        Color(red: 1.0, green: 0.96, blue: 0.62).opacity(flame),
+                        Color(red: 1.0, green: 0.66, blue: 0.14).opacity(0.9 * flame)
+                    ]),
+                    startPoint: CGPoint(x: w * 0.5, y: h * 0.36),
+                    endPoint: CGPoint(x: w * 0.5, y: h * 0.86)
+                )
+                for cut in face {
+                    layer.fill(cut, with: lit)
+                }
             }
         }
         .frame(width: size, height: size * 0.85)
-        .drawingGroup()
-        .onAppear {
-            guard isJackOLantern, !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true)) {
-                flicker = 0.55
+    }
+}
+
+/// Owns the clock for the pumpkin so the candle can flicker smoothly, and
+/// draws the warm glow a lit jack o lantern throws onto everything around it.
+private struct AutumnPumpkinItem: View {
+    let size: CGFloat
+    let pumpkinColor: Color
+    let stemColor: Color
+    let isJackOLantern: Bool
+    let reduceMotion: Bool
+    let center: CGPoint
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !isJackOLantern || reduceMotion)) { timeline in
+            let candle = (isJackOLantern && !reduceMotion)
+                ? CandleFlicker.intensity(at: timeline.date.timeIntervalSinceReferenceDate)
+                : 0.85
+
+            ZStack {
+                if isJackOLantern {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color(red: 1.0, green: 0.60, blue: 0.14).opacity(0.42 * candle),
+                                    Color(red: 1.0, green: 0.45, blue: 0.08).opacity(0.14 * candle),
+                                    .clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: size * 1.0
+                            )
+                        )
+                        .frame(width: size * 2.0, height: size * 2.0)
+                        .offset(y: size * 0.05)
+                }
+
+                AutumnPumpkinMark(
+                    size: size,
+                    pumpkinColor: pumpkinColor,
+                    stemColor: stemColor,
+                    isJackOLantern: isJackOLantern,
+                    candle: candle
+                )
+                .shadow(color: .black.opacity(0.4), radius: 10, x: 0, y: 8)
             }
         }
+        .frame(width: size * 2.0, height: size * 2.0)
+        .position(x: center.x, y: center.y)
     }
 }
 
@@ -1818,11 +1908,6 @@ private struct DriftingAutumnLeafItem: View {
     let containerSize: CGSize
     let reduceMotion: Bool
 
-    @State private var currentY: CGFloat = -40
-    @State private var swayX: CGFloat = 0
-    @State private var rotationDeg: Double = 0
-    @State private var opacity: Double = 0
-
     // Six rich botanical autumn tones
     private var leafColor: Color {
         let colors: [Color] = [
@@ -1846,72 +1931,40 @@ private struct DriftingAutumnLeafItem: View {
         return containerSize.width * CGFloat(0.06 + seed * 0.88)
     }
 
+    /// Lands all the way down at the bottom edge, not partway.
     private var groundY: CGFloat {
         let variance = CGFloat((index * 17) % 18)
-        return containerSize.height - 24 - variance
+        return containerSize.height - 10 - variance
     }
 
-    private var fallDuration: Double {
-        7.5 + Double((index * 7) % 5) * 1.2
-    }
-
-    private var restDuration: Double {
-        2.5 + Double((index * 3) % 4) * 0.8
+    private var motion: FallMotion {
+        FallMotion(
+            topY: -30,
+            bottomY: groundY,
+            fallDuration: 7.5 + Double((index * 7) % 5) * 1.2,
+            restDuration: 2.5 + Double((index * 3) % 4) * 0.8,
+            swayAmplitude: 18 * ((index % 2 == 0) ? 1 : -1),
+            swayPeriod: 4.4,
+            baseRotation: Double((index * 47) % 360),
+            spin: 160,
+            maxOpacity: 0.62
+        )
     }
 
     var body: some View {
-        Image(systemName: "leaf.fill")
-            .font(.system(size: leafSize))
-            .foregroundStyle(leafColor.opacity(0.52))
-            .rotationEffect(.degrees(rotationDeg))
-            .position(x: startX + swayX, y: currentY)
-            .opacity(opacity)
-            .task {
-                guard !reduceMotion else {
-                    currentY = groundY
-                    opacity = 0.40
-                    return
-                }
-
-                // Initial stagger so leaves fall in a natural sequence
-                let initialDelay = Double(index) * 0.75
-                try? await Task.sleep(for: .seconds(initialDelay))
-
-                while !Task.isCancelled {
-                    currentY = -30
-                    opacity = 0
-                    swayX = 0
-                    rotationDeg = Double((index * 47) % 360)
-
-                    // 1. Fade in and start falling
-                    withAnimation(.easeIn(duration: 0.6)) {
-                        opacity = 0.52
-                    }
-
-                    // 2. Swaying and fluttering during the fall
-                    withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
-                        swayX = CGFloat(((index % 2 == 0) ? 1 : -1) * 18)
-                        rotationDeg += 45
-                    }
-
-                    // 3. Fall down to the ground
-                    withAnimation(.easeInOut(duration: fallDuration)) {
-                        currentY = groundY
-                    }
-
-                    // Wait for fall to complete
-                    try? await Task.sleep(for: .seconds(fallDuration))
-
-                    // 4. Rest on the ground
-                    try? await Task.sleep(for: .seconds(restDuration))
-
-                    // 5. Fade out before recycling
-                    withAnimation(.easeOut(duration: 0.8)) {
-                        opacity = 0
-                    }
-                    try? await Task.sleep(for: .seconds(0.9))
-                }
-            }
+        FallingParticle(
+            x: startX,
+            motion: motion,
+            // Spread across the whole cycle so there's always a mix of
+            // leaves high, low, and resting, never a synchronized wave.
+            phase: motion.cycle * Double(index) / Double(max(totalCount, 1)),
+            reduceMotion: reduceMotion,
+            staticY: groundY
+        ) {
+            Image(systemName: "leaf.fill")
+                .font(.system(size: leafSize))
+                .foregroundStyle(leafColor)
+        }
     }
 }
 
@@ -2288,7 +2341,7 @@ private struct OctoberSkeletonItem: View {
     var body: some View {
         OctoberSkeletonMark(size: 54, walkPhase: walkPhase)
             .scaleEffect(x: isFacingRight ? 1 : -1, anchor: .center)
-            .position(x: containerSize.width * walkX, y: groundY - 24)
+            .position(x: containerSize.width * walkX, y: groundY - 25.4)
             .task {
                 guard !reduceMotion else {
                     walkX = 0.50
@@ -2304,14 +2357,14 @@ private struct OctoberSkeletonItem: View {
                 while !Task.isCancelled {
                     isFacingRight = true
                     withAnimation(.linear(duration: 8.0)) {
-                        walkX = 0.68
+                        walkX = 0.70
                     }
                     try? await Task.sleep(for: .seconds(8.0))
 
                     try? await Task.sleep(for: .seconds(1.2))
                     isFacingRight = false
                     withAnimation(.linear(duration: 8.0)) {
-                        walkX = 0.32
+                        walkX = 0.40
                     }
                     try? await Task.sleep(for: .seconds(8.0))
                     try? await Task.sleep(for: .seconds(1.2))
@@ -2324,8 +2377,10 @@ private struct OctoberSkeletonItem: View {
 
 private struct NovemberTurkeyMark: View {
     let size: CGFloat
-    let headBob: Bool
-    let tailFan: Bool
+    /// Clock time in seconds. Canvas can't tween a Bool, which is why the
+    /// old head bob and tail fan snapped between two poses and looked like
+    /// a glitch. A continuous time value makes every motion smooth.
+    let t: Double
 
     var body: some View {
         Canvas { context, sz in
@@ -2339,91 +2394,83 @@ private struct NovemberTurkeyMark: View {
                 Color(red: 0.45, green: 0.28, blue: 0.14)  // Chestnut
             ]
             let bodyBrown = Color(red: 0.44, green: 0.24, blue: 0.10)
-            let headBlue = Color(red: 0.42, green: 0.52, blue: 0.62)
+            let wingBrown = Color(red: 0.32, green: 0.17, blue: 0.08)
+            let headBlue = Color(red: 0.52, green: 0.62, blue: 0.74)
             let snoodRed = Color(red: 0.88, green: 0.18, blue: 0.16)
             let beakGold = Color(red: 0.96, green: 0.74, blue: 0.18)
             let feetColor = Color(red: 0.86, green: 0.62, blue: 0.15)
 
-            // Fanned Tail Feathers
+            // Idle motion: a slow tail puff and a quicker strutting head bob
+            let fan = 1.0 + 0.07 * sin(t * 2 * .pi / 3.6)
+            let bob = CGFloat(sin(t * 2 * .pi / 1.4)) * 1.6
+            let lean = CGFloat(sin(t * 2 * .pi / 1.4 + 0.6)) * 0.6
+
+            // Tail fan: an upward arc behind the body, like a real display,
+            // instead of feathers pointing sideways through the turkey.
+            let pivot = CGPoint(x: w * 0.42, y: h * 0.62)
             let fanCount = 9
             for i in 0..<fanCount {
-                let angle = Double(i) * 18.0 - 72.0
-                let rad = angle * .pi / 180.0
-                let len = (tailFan ? 1.05 : 0.95) * w * 0.42
-                let fx = w * 0.32 + CGFloat(cos(rad)) * len
-                let fy = h * 0.50 + CGFloat(sin(rad)) * len
+                let degrees = -162.0 + Double(i) * (144.0 / Double(fanCount - 1))
+                let rad = degrees * .pi / 180
+                let len = w * 0.38 * fan
+                let tip = CGPoint(x: pivot.x + CGFloat(cos(rad)) * len, y: pivot.y + CGFloat(sin(rad)) * len)
 
                 var feather = Path()
-                feather.move(to: CGPoint(x: w * 0.32, y: h * 0.50))
-                feather.addLine(to: CGPoint(x: fx, y: fy))
-                context.stroke(feather, with: .color(featherColors[i % featherColors.count]), style: StrokeStyle(lineWidth: 5.5, lineCap: .round))
-
-                let tipRect = CGRect(x: fx - 3, y: fy - 3, width: 6, height: 6)
-                context.fill(Path(ellipseIn: tipRect), with: .color(beakGold))
+                feather.move(to: pivot)
+                feather.addLine(to: tip)
+                context.stroke(feather, with: .color(featherColors[i % featherColors.count]), style: StrokeStyle(lineWidth: 6.5, lineCap: .round))
+                context.fill(Path(ellipseIn: CGRect(x: tip.x - 2.5, y: tip.y - 2.5, width: 5, height: 5)), with: .color(beakGold))
             }
 
-            // Plump Body
-            let bodyRect = CGRect(x: w * 0.22, y: h * 0.38, width: w * 0.48, height: h * 0.46)
+            // Legs and feet (drawn before the body so the body overlaps them)
+            for legX in [w * 0.40, w * 0.52] {
+                var leg = Path()
+                leg.move(to: CGPoint(x: legX, y: h * 0.80))
+                leg.addLine(to: CGPoint(x: legX, y: h * 0.95))
+                leg.addLine(to: CGPoint(x: legX + w * 0.06, y: h * 0.95))
+                context.stroke(leg, with: .color(feetColor), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
+            }
+
+            // Plump body in front of the fan
+            let bodyRect = CGRect(x: w * 0.24 + lean, y: h * 0.44, width: w * 0.46, height: h * 0.42)
             context.fill(Path(ellipseIn: bodyRect), with: .color(bodyBrown))
 
-            // Wing feather outline
+            // Folded wing
             var wing = Path()
-            wing.addQuadCurve(
-                to: CGPoint(x: w * 0.56, y: h * 0.68),
-                control: CGPoint(x: w * 0.42, y: h * 0.74)
-            )
-            context.stroke(wing, with: .color(Color(red: 0.30, green: 0.16, blue: 0.08)), style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            wing.move(to: CGPoint(x: w * 0.32 + lean, y: h * 0.58))
+            wing.addQuadCurve(to: CGPoint(x: w * 0.58 + lean, y: h * 0.70), control: CGPoint(x: w * 0.40 + lean, y: h * 0.80))
+            wing.addQuadCurve(to: CGPoint(x: w * 0.32 + lean, y: h * 0.58), control: CGPoint(x: w * 0.50 + lean, y: h * 0.56))
+            context.fill(wing, with: .color(wingBrown))
 
-            // Legs and feet
-            var leg1 = Path()
-            leg1.move(to: CGPoint(x: w * 0.38, y: h * 0.80))
-            leg1.addLine(to: CGPoint(x: w * 0.38, y: h * 0.95))
-            leg1.addLine(to: CGPoint(x: w * 0.44, y: h * 0.95))
-            context.stroke(leg1, with: .color(feetColor), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
-
-            var leg2 = Path()
-            leg2.move(to: CGPoint(x: w * 0.50, y: h * 0.80))
-            leg2.addLine(to: CGPoint(x: w * 0.50, y: h * 0.95))
-            leg2.addLine(to: CGPoint(x: w * 0.56, y: h * 0.95))
-            context.stroke(leg2, with: .color(feetColor), style: StrokeStyle(lineWidth: 2.0, lineCap: .round))
-
-            // Head and Neck with bobbing
-            let bobY = headBob ? -2.0 : 1.0
+            // Neck and head, bobbing
             var neck = Path()
-            neck.move(to: CGPoint(x: w * 0.58, y: h * 0.52))
-            neck.addQuadCurve(
-                to: CGPoint(x: w * 0.68, y: h * 0.28 + bobY),
-                control: CGPoint(x: w * 0.64, y: h * 0.38)
-            )
+            neck.move(to: CGPoint(x: w * 0.60 + lean, y: h * 0.56))
+            neck.addQuadCurve(to: CGPoint(x: w * 0.74 + lean, y: h * 0.32 + bob), control: CGPoint(x: w * 0.70 + lean, y: h * 0.46))
             context.stroke(neck, with: .color(headBlue), style: StrokeStyle(lineWidth: 5.0, lineCap: .round))
 
-            let headRect = CGRect(x: w * 0.64, y: h * 0.20 + bobY, width: w * 0.18, height: h * 0.18)
+            let headRect = CGRect(x: w * 0.68 + lean, y: h * 0.22 + bob, width: w * 0.16, height: w * 0.16)
             context.fill(Path(ellipseIn: headRect), with: .color(headBlue))
 
-            // Red Snood and Wattle
+            // Snood draping over the beak, wattle under the chin
             var snood = Path()
-            snood.move(to: CGPoint(x: w * 0.74, y: h * 0.28 + bobY))
-            snood.addCurve(
-                to: CGPoint(x: w * 0.72, y: h * 0.46 + bobY),
-                control1: CGPoint(x: w * 0.78, y: h * 0.34 + bobY),
-                control2: CGPoint(x: w * 0.76, y: h * 0.42 + bobY)
-            )
-            context.stroke(snood, with: .color(snoodRed), style: StrokeStyle(lineWidth: 2.8, lineCap: .round))
+            snood.move(to: CGPoint(x: w * 0.80 + lean, y: h * 0.26 + bob))
+            snood.addQuadCurve(to: CGPoint(x: w * 0.84 + lean, y: h * 0.40 + bob), control: CGPoint(x: w * 0.88 + lean, y: h * 0.30 + bob))
+            context.stroke(snood, with: .color(snoodRed), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
+            context.fill(Path(ellipseIn: CGRect(x: w * 0.72 + lean, y: h * 0.36 + bob, width: w * 0.08, height: w * 0.11)), with: .color(snoodRed))
 
             // Beak
             var beak = Path()
-            beak.move(to: CGPoint(x: w * 0.80, y: h * 0.26 + bobY))
-            beak.addLine(to: CGPoint(x: w * 0.92, y: h * 0.30 + bobY))
-            beak.addLine(to: CGPoint(x: w * 0.80, y: h * 0.34 + bobY))
+            beak.move(to: CGPoint(x: w * 0.83 + lean, y: h * 0.28 + bob))
+            beak.addLine(to: CGPoint(x: w * 0.93 + lean, y: h * 0.31 + bob))
+            beak.addLine(to: CGPoint(x: w * 0.83 + lean, y: h * 0.34 + bob))
             beak.closeSubpath()
             context.fill(beak, with: .color(beakGold))
 
-            // Eye
-            let eyeRect = CGRect(x: w * 0.72, y: h * 0.25 + bobY, width: 2.5, height: 2.5)
-            context.fill(Path(ellipseIn: eyeRect), with: .color(.black))
+            // Eye with a glint
+            context.fill(Path(ellipseIn: CGRect(x: w * 0.75 + lean, y: h * 0.26 + bob, width: 3, height: 3)), with: .color(.black))
+            context.fill(Path(ellipseIn: CGRect(x: w * 0.76 + lean, y: h * 0.265 + bob, width: 1, height: 1)), with: .color(.white))
         }
         .frame(width: size, height: size * 0.88)
-        .drawingGroup()
     }
 }
 
@@ -2431,21 +2478,15 @@ private struct NovemberTurkeyItem: View {
     let position: CGPoint
     let reduceMotion: Bool
 
-    @State private var headBob = false
-    @State private var tailFan = false
-
     var body: some View {
-        NovemberTurkeyMark(size: 46, headBob: headBob, tailFan: tailFan)
-            .position(x: position.x, y: position.y)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
-                    headBob = true
-                }
-                withAnimation(.easeInOut(duration: 3.6).repeatForever(autoreverses: true)) {
-                    tailFan = true
-                }
-            }
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
+            NovemberTurkeyMark(
+                size: 54,
+                t: reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            )
+        }
+        .frame(width: 54, height: 54 * 0.88)
+        .position(x: position.x, y: position.y)
     }
 }
 
@@ -2458,18 +2499,9 @@ private struct DriftingSnowflakeItem: View {
     let crystalColor: Color
     let reduceMotion: Bool
 
-    @State private var animatedY: CGFloat = 0
-    @State private var swayX: CGFloat = 0
-    @State private var rotationDeg: Double = 0
-
     private var initialX: CGFloat {
         let seed = Double((index * 127) % 100) / 100.0
         return containerSize.width * CGFloat(0.05 + seed * 0.90)
-    }
-
-    private var initialY: CGFloat {
-        let seed = Double((index * 91) % 100) / 100.0
-        return containerSize.height * CGFloat(seed)
     }
 
     private var itemSize: CGFloat {
@@ -2486,27 +2518,35 @@ private struct DriftingSnowflakeItem: View {
         9.0 + Double(index % 5) * 1.8
     }
 
-    var body: some View {
-        Image(systemName: "snowflake")
-            .font(.system(size: itemSize))
-            .foregroundStyle(crystalColor.opacity(opacity))
-            .rotationEffect(.degrees(rotationDeg))
-            .position(
-                x: initialX + swayX,
-                y: reduceMotion ? initialY : (initialY + animatedY).truncatingRemainder(dividingBy: containerSize.height + 40)
-            )
-            .onAppear {
-                rotationDeg = Double((index * 60) % 360)
-                guard !reduceMotion else { return }
+    private var startFraction: Double {
+        Double((index * 91) % 100) / 100.0
+    }
 
-                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
-                    animatedY = containerSize.height + 40
-                }
-                withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                    swayX = 12
-                    rotationDeg += 60
-                }
-            }
+    private var motion: FallMotion {
+        FallMotion(
+            topY: -20,
+            bottomY: containerSize.height + 30,
+            fallDuration: duration,
+            swayAmplitude: 12,
+            swayPeriod: 8.0,
+            baseRotation: Double((index * 60) % 360),
+            spin: 120,
+            maxOpacity: opacity
+        )
+    }
+
+    var body: some View {
+        FallingParticle(
+            x: initialX,
+            motion: motion,
+            phase: motion.cycle * startFraction,
+            reduceMotion: reduceMotion,
+            staticY: containerSize.height * CGFloat(startFraction)
+        ) {
+            Image(systemName: "snowflake")
+                .font(.system(size: itemSize))
+                .foregroundStyle(crystalColor)
+        }
     }
 }
 
@@ -2906,7 +2946,103 @@ private struct WinterGiftBoxesItem: View {
 
     var body: some View {
         WinterGiftBoxesMark(size: 58)
-            .position(x: position.x, y: position.y - 25)
+            .position(x: position.x, y: position.y)
     }
 }
 
+// MARK: Time Driven Falling Particles (Leaves, Petals, Snow)
+
+/// The math for one falling particle, as a pure function of clock time.
+///
+/// Leaves, petals, and snow used to be driven by a looping sway animation
+/// and a fall animation on the same .position modifier. SwiftUI merged the
+/// two, so autumn leaves bobbed near the top of the screen, and petals and
+/// snow (whose wraparound was computed inside the animated value) drifted
+/// about 10pt and stopped. Computing position from the clock every frame
+/// makes that class of bug impossible, and makes the motion unit testable.
+nonisolated struct FallMotion {
+    var topY: CGFloat
+    var bottomY: CGFloat
+    var fallDuration: Double
+    /// Time spent resting at bottomY before recycling. 0 means it wraps
+    /// straight back to the top (petals and snow fall off screen).
+    var restDuration: Double = 0
+    var swayAmplitude: CGFloat
+    var swayPeriod: Double
+    var baseRotation: Double
+    /// Degrees turned over one full fall.
+    var spin: Double
+    var maxOpacity: Double
+    var fadeIn: Double = 0.6
+    var fadeOut: Double = 0.8
+
+    struct Sample {
+        var xOffset: CGFloat
+        var y: CGFloat
+        var rotation: Double
+        var opacity: Double
+    }
+
+    var cycle: Double { fallDuration + restDuration }
+
+    func sample(at time: Double) -> Sample {
+        var local = time.truncatingRemainder(dividingBy: cycle)
+        if local < 0 { local += cycle }
+
+        let falling = local < fallDuration
+        let progress = falling ? local / fallDuration : 1.0
+
+        // Sway freezes at the moment of landing so a resting leaf doesn't
+        // keep sliding sideways or jump back to center.
+        let swayTime = falling ? time : time - (local - fallDuration)
+        let wave = sin(swayTime * 2 * .pi / swayPeriod)
+
+        let fadeInFactor = min(1.0, local / fadeIn)
+        let fadeOutFactor = min(1.0, (cycle - local) / fadeOut)
+
+        return Sample(
+            xOffset: CGFloat(wave) * swayAmplitude,
+            y: topY + (bottomY - topY) * CGFloat(progress),
+            rotation: baseRotation + spin * progress + wave * 14,
+            opacity: maxOpacity * max(0, min(fadeInFactor, fadeOutFactor))
+        )
+    }
+}
+
+private struct FallingParticle<Content: View>: View {
+    let x: CGFloat
+    let motion: FallMotion
+    let phase: Double
+    let reduceMotion: Bool
+    let staticY: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        if reduceMotion {
+            content()
+                .rotationEffect(.degrees(motion.baseRotation))
+                .opacity(motion.maxOpacity * 0.8)
+                .position(x: x, y: staticY)
+        } else {
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+                let sample = motion.sample(at: timeline.date.timeIntervalSinceReferenceDate + phase)
+                content()
+                    .rotationEffect(.degrees(sample.rotation))
+                    .opacity(sample.opacity)
+                    .position(x: x + sample.xOffset, y: sample.y)
+            }
+        }
+    }
+}
+
+/// Irregular candle brightness for the jack o lantern: a few unrelated
+/// sine waves summed, so it never settles into an obvious pulse.
+nonisolated enum CandleFlicker {
+    static func intensity(at time: Double) -> Double {
+        let raw = 0.80
+            + 0.10 * sin(time * 9.1)
+            + 0.06 * sin(time * 23.7 + 1.3)
+            + 0.05 * sin(time * 4.3 + 0.7)
+        return max(0.55, min(1.0, raw))
+    }
+}

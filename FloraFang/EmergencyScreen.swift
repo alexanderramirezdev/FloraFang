@@ -174,7 +174,7 @@ struct EmergencyScreen: View {
     }
 
     private var humanHotline: some View {
-        Link(destination: URL(string: "tel://18002221222")!) {
+        Link(destination: PoisonResources.human.callURL) {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
@@ -198,7 +198,7 @@ struct EmergencyScreen: View {
                             .padding(.vertical, 3)
                             .background(Color.white.opacity(0.22), in: Capsule())
                     }
-                    Text("(800) 222 1222")
+                    Text(PoisonResources.human.phone)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -211,7 +211,7 @@ struct EmergencyScreen: View {
     }
 
     private var aspcaHotline: some View {
-        Link(destination: URL(string: "tel://8884264435")!) {
+        Link(destination: PoisonResources.aspca.callURL) {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
@@ -235,7 +235,7 @@ struct EmergencyScreen: View {
                             .padding(.vertical, 3)
                             .background(Color.white.opacity(0.22), in: Capsule())
                     }
-                    Text("(888) 426 4435")
+                    Text(PoisonResources.aspca.phone)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -248,7 +248,7 @@ struct EmergencyScreen: View {
     }
 
     private var petPoisonHelpline: some View {
-        Link(destination: URL(string: "tel://8557647661")!) {
+        Link(destination: PoisonResources.petPoisonHelpline.callURL) {
             HStack(spacing: 14) {
                 ZStack {
                     Circle()
@@ -272,7 +272,7 @@ struct EmergencyScreen: View {
                             .padding(.vertical, 3)
                             .background(Color.white.opacity(0.22), in: Capsule())
                     }
-                    Text("(855) 764 7661")
+                    Text(PoisonResources.petPoisonHelpline.phone)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -614,7 +614,7 @@ struct EmergencyScreen: View {
 
             HStack(spacing: 10) {
                 Button {
-                    UIPasteboard.general.string = report.relaySummary()
+                    SensitiveClipboard.copy(report.relaySummary())
                     showCopied = true
                     Task {
                         try? await Task.sleep(for: .seconds(2))

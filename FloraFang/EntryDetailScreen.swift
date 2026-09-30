@@ -367,11 +367,11 @@ struct EntryDetailScreen: View {
                 .lineSpacing(2)
 
             VStack(spacing: 8) {
-                if let url = URL(string: "tel://18002221222") {
-                    Link(destination: url) {
+                Group {
+                    Link(destination: PoisonResources.human.callURL) {
                         HStack {
                             Image(systemName: "phone.fill")
-                            Text("Call Poison Control: 1-800-222-1222")
+                            Text("Call Poison Control: \(PoisonResources.human.phone)")
                                 .font(.system(size: 12, weight: .semibold))
                             Spacer()
                             Text("Free · 24/7")
@@ -386,11 +386,11 @@ struct EntryDetailScreen: View {
                     }
                 }
 
-                if let url = URL(string: "tel://8884264435") {
-                    Link(destination: url) {
+                Group {
+                    Link(destination: PoisonResources.aspca.callURL) {
                         HStack {
                             Image(systemName: "pawprint.fill")
-                            Text("ASPCA Pet Poison: (888) 426-4435")
+                            Text("ASPCA Pet Poison: \(PoisonResources.aspca.phone)")
                                 .font(.system(size: 12, weight: .semibold))
                             Spacer()
                             Text("Animal Hotline")
@@ -443,44 +443,7 @@ struct EntryDetailScreen: View {
     }
 
     private func isMedicalOrEmergencyQuery(_ query: String) -> Bool {
-        let lower = query.lowercased()
-
-        let biteTerms = ["bit", "bite", "bitten", "biting", "stung", "sting", "stings", "stinging", "fang", "fangs", "puncture", "nip", "nipped"]
-        let symptomTerms = ["symptom", "symptoms", "swelling", "swollen", "swell", "pain", "painful", "hurt", "hurts", "hurting", "ache", "aching", "necrosis", "necrotic", "rot", "rotting", "fever", "cramp", "cramps", "cramping", "spasm", "spasms", "nausea", "vomit", "vomiting", "dizzy", "dizziness", "itch", "itching", "itchy", "rash", "redness", "blister", "blisters", "wound", "pus", "infection", "infected", "hives", "allergic", "allergy", "anaphylaxis"]
-        let treatmentTerms = ["treatment", "treat", "treating", "cure", "curing", "remedy", "antivenom", "antidote", "first aid", "doctor", "hospital", "ambulance", "urgent care", "emergency room", "er", "911", "poison control", "call doctor"]
-        let medicationTerms = ["dose", "dosage", "medication", "medicine", "pill", "pills", "ointment", "cream", "ice", "tourniquet", "benadryl", "aspirin", "ibuprofen", "tylenol", "antihistamine", "prednisone", "epipen", "antibiotic"]
-        let ingestionTerms = ["ate", "eaten", "eat", "eating", "swallow", "swallowed", "swallowing", "ingest", "ingested", "ingesting", "chew", "chewed", "in mouth", "poisoned", "poisoning", "toxic reaction"]
-
-        let allCategories = [biteTerms, symptomTerms, treatmentTerms, medicationTerms, ingestionTerms]
-
-        for category in allCategories {
-            for term in category {
-                let pattern = "\\b\(NSRegularExpression.escapedPattern(for: term))\\b"
-                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-                   regex.firstMatch(in: lower, options: [], range: NSRange(location: 0, length: lower.utf16.count)) != nil {
-                    return true
-                }
-            }
-        }
-
-        let phrasePatterns = [
-            "what do i do if",
-            "what should i do if",
-            "what to do if",
-            "is my dog going to die",
-            "is my cat going to die",
-            "is my child going to",
-            "call 911",
-            "need a doctor",
-            "how to treat"
-        ]
-        for phrase in phrasePatterns {
-            if lower.contains(phrase) {
-                return true
-            }
-        }
-
-        return false
+        ClinicalQueryFilter.isMedicalOrEmergencyQuery(query)
     }
 
     private func submitNaturalistQuery(_ query: String) {
@@ -520,7 +483,7 @@ struct EntryDetailScreen: View {
 
                     STRICT OPERATIONAL RULES:
                     1. NEVER RE-EVALUATE OR RESTATE A HAZARD VERDICT: The hazard assessment was computed exclusively by the app's deterministic confidence gate above. You must NEVER declare this organism "safe", "harmless", "dangerous", "deadly", or "not medically significant". If the user asks if this organism can hurt them, is venomous/poisonous, or is safe, instruct them: "Please refer to the hazard assessment banner at the top of this entry. FloraFang's chat does not render safety verdicts."
-                    2. NO MEDICAL ADVICE: Never answer questions about bites, stings, symptoms, treatments, medications, or first aid. If asked about exposure, direct the user to tap 'Exposure Protocol' or call Poison Control at (800) 222 1222.
+                    2. NO MEDICAL ADVICE: Never answer questions about bites, stings, symptoms, treatments, medications, or first aid. If asked about exposure, direct the user to tap 'Exposure Protocol' or call Poison Control at \(PoisonResources.human.phone).
                     3. STRICTLY GROUNDED: Answer only regarding:
                        * What visible physical markings were recorded in this scan.
                        * Recommended photographic angles and lighting to improve identification on retakes.
@@ -709,5 +672,55 @@ struct ZoomableImageView: View {
                 Spacer()
             }
         }
+    }
+}
+
+/// Deterministic pre-model filter for the Field Naturalist chat. Anything
+/// touching bites, symptoms, treatment, medication, or ingestion never
+/// reaches the language model; the UI shows the Poison Control card
+/// instead. Top level and nonisolated so it can be unit tested directly.
+///
+/// Terms match as whole words with common English suffixes (s, es, d, ed,
+/// ing), so "bites", "doses", "medications", and "rashes" are caught. The
+/// first version matched exact words only, which let plurals through.
+/// Over blocking a harmless question here is the intended failure mode.
+nonisolated enum ClinicalQueryFilter {
+
+    static let biteTerms = ["bit", "bite", "bitten", "biting", "stung", "sting", "stings", "stinging", "fang", "fangs", "puncture", "nip", "nipped"]
+    static let symptomTerms = ["symptom", "symptoms", "swelling", "swollen", "swell", "pain", "painful", "hurt", "hurts", "hurting", "ache", "aching", "necrosis", "necrotic", "rot", "rotting", "fever", "cramp", "cramps", "cramping", "spasm", "spasms", "nausea", "vomit", "vomiting", "dizzy", "dizziness", "itch", "itching", "itchy", "rash", "redness", "blister", "blisters", "wound", "pus", "infection", "infected", "hives", "allergic", "allergy", "anaphylaxis"]
+    static let treatmentTerms = ["treatment", "treat", "treating", "cure", "curing", "remedy", "antivenom", "antidote", "first aid", "doctor", "hospital", "ambulance", "urgent care", "emergency room", "er", "911", "poison control", "call doctor"]
+    static let medicationTerms = ["dose", "dosage", "medication", "medicine", "pill", "pills", "ointment", "cream", "ice", "tourniquet", "benadryl", "aspirin", "ibuprofen", "tylenol", "antihistamine", "prednisone", "epipen", "antibiotic"]
+    static let ingestionTerms = ["ate", "eaten", "eat", "eating", "swallow", "swallowed", "swallowing", "ingest", "ingested", "ingesting", "chew", "chewed", "in mouth", "poisoned", "poisoning", "toxic reaction"]
+
+    static let phrasePatterns = [
+        "what do i do if",
+        "what should i do if",
+        "what to do if",
+        "is my dog going to die",
+        "is my cat going to die",
+        "is my child going to",
+        "call 911",
+        "need a doctor",
+        "how to treat"
+    ]
+
+    static func isMedicalOrEmergencyQuery(_ query: String) -> Bool {
+        // Lowercase and collapse runs of whitespace so "what  do I do if"
+        // and line breaks can't slip past the phrase check.
+        let lower = query.lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+        let range = NSRange(location: 0, length: lower.utf16.count)
+
+        let allTerms = biteTerms + symptomTerms + treatmentTerms + medicationTerms + ingestionTerms
+        for term in allTerms {
+            let pattern = "\\b\(NSRegularExpression.escapedPattern(for: term))(?:s|es|d|ed|ing)?\\b"
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               regex.firstMatch(in: lower, options: [], range: range) != nil {
+                return true
+            }
+        }
+
+        return phrasePatterns.contains { lower.contains($0) }
     }
 }

@@ -231,7 +231,7 @@ struct OnboardingView: View {
                     icon: "phone.fill",
                     color: Palette.rust,
                     headline: "Do Not Wait for a Scan",
-                    detail: "Call Poison Control (1-800-222-1222) or ASPCA Pet Poison ((888) 426-4435) immediately while opening the app."
+                    detail: "Call Poison Control \(PoisonResources.human.phone) or ASPCA Pet Poison \(PoisonResources.aspca.phone) immediately while opening the app."
                 ),
                 OnboardingPoint(
                     icon: "list.clipboard.fill",

@@ -100,6 +100,7 @@ enum ExportService {
 
         try? fm.removeItem(at: workDir)
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+        protect(workDir)
 
         var rows: [String] = [
             "filename,captured_at,headline,category,raw_label,confidence,hazard,tier,verdict,actual_identity,place,latitude,longitude,note,cascade_trace"
@@ -167,6 +168,7 @@ enum ExportService {
 
         try? fm.removeItem(at: workDir)
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
+        protect(workDir)
 
         var reportLines: [String] = [
             "FLORAFANG CLINICAL EXPOSURE REPORT",
@@ -273,6 +275,7 @@ enum ExportService {
             do {
                 try? FileManager.default.removeItem(at: dest)
                 try FileManager.default.copyItem(at: zippedURL, to: dest)
+                protect(dest)
                 result = dest
             } catch {
                 copyError = error
@@ -283,6 +286,17 @@ enum ExportService {
         if let copyError { throw ExportError.writeFailed(copyError.localizedDescription) }
         guard let result else { throw ExportError.writeFailed("no archive produced") }
         return result
+    }
+
+    /// Temp directory files default to .completeUntilFirstUserAuthentication.
+    /// An export holds every photo, note, and coordinate, so it gets the same
+    /// .complete class as the SwiftData store for the short time it exists.
+    /// Files created inside a protected directory inherit its class.
+    private static func protect(_ url: URL) {
+        try? FileManager.default.setAttributes(
+            [.protectionKey: FileProtectionType.complete],
+            ofItemAtPath: url.path
+        )
     }
 
     /// Escapes a field for CSV. Notes are free text and will contain commas.

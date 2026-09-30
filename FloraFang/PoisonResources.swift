@@ -13,6 +13,28 @@
 //
 
 import Foundation
+import UIKit
+import UniformTypeIdentifiers
+
+/// Copies exposure summaries (patient type, weight, symptoms, what was
+/// eaten) without letting them outlive the phone call. Local only keeps it
+/// off Universal Clipboard, so it doesn't sync to the person's Mac or iPad,
+/// and it expires after 10 minutes instead of sitting in the pasteboard
+/// for whatever app reads it next.
+enum SensitiveClipboard {
+    static let lifetime: TimeInterval = 600
+
+    @MainActor
+    static func copy(_ text: String) {
+        UIPasteboard.general.setItems(
+            [[UTType.utf8PlainText.identifier: text]],
+            options: [
+                .localOnly: true,
+                .expirationDate: Date().addingTimeInterval(lifetime)
+            ]
+        )
+    }
+}
 
 struct PoisonResource: Identifiable {
     let id = UUID()
@@ -28,33 +50,43 @@ struct PoisonResource: Identifiable {
     }
 
     var telURL: URL? { URL(string: "tel://\(dialString)") }
+
+    /// Non optional form for Link(destination:). Safe to unwrap because
+    /// dialString is digits only, which PoisonResourcesTests enforces.
+    var callURL: URL { telURL! }
 }
 
 enum PoisonResources {
 
-    static let all: [PoisonResource] = [
-        PoisonResource(
-            name: "ASPCA Animal Poison Control",
-            phone: "(888) 426 4435",
-            dialString: "8884264435",
-            detail: "24 hours, every day. A consultation fee may apply.",
-            audience: .pet
-        ),
-        PoisonResource(
-            name: "Pet Poison Helpline",
-            phone: "(855) 764 7661",
-            dialString: "8557647661",
-            detail: "24 hours, every day. A consultation fee may apply.",
-            audience: .pet
-        ),
-        PoisonResource(
-            name: "Poison Control (people)",
-            phone: "(800) 222 1222",
-            dialString: "18002221222",
-            detail: "24 hours, every day. Free and confidential.",
-            audience: .human
-        )
-    ]
+    // The single source for every hotline number in the app. Every screen
+    // that shows or dials one reads it from here, so a number can only be
+    // wrong in one place, and PoisonResourcesTests pins every digit.
+
+    static let aspca = PoisonResource(
+        name: "ASPCA Animal Poison Control",
+        phone: "(888) 426 4435",
+        dialString: "8884264435",
+        detail: "24 hours, every day. A consultation fee may apply.",
+        audience: .pet
+    )
+
+    static let petPoisonHelpline = PoisonResource(
+        name: "Pet Poison Helpline",
+        phone: "(855) 764 7661",
+        dialString: "8557647661",
+        detail: "24 hours, every day. A consultation fee may apply.",
+        audience: .pet
+    )
+
+    static let human = PoisonResource(
+        name: "Poison Control (people)",
+        phone: "(800) 222 1222",
+        dialString: "18002221222",
+        detail: "24 hours, every day. Free and confidential.",
+        audience: .human
+    )
+
+    static let all: [PoisonResource] = [aspca, petPoisonHelpline, human]
 
     static func forAudience(_ audience: PoisonResource.Audience) -> [PoisonResource] {
         all.filter { $0.audience == audience }

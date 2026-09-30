@@ -268,7 +268,7 @@ struct ExposureIncidentDetailSheet: View {
 
                             HStack(spacing: 10) {
                                 Button {
-                                    UIPasteboard.general.string = incident.relaySummaryText
+                                    SensitiveClipboard.copy(incident.relaySummaryText)
                                     showCopied = true
                                     Task {
                                         try? await Task.sleep(for: .seconds(2))
