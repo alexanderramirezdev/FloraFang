@@ -83,6 +83,19 @@ final class CameraService: NSObject {
     private var isConfigured = false
     private var photoContinuation: CheckedContinuation<UIImage, Error>?
 
+    /// What the app currently wants: running or stopped. Read and written
+    /// only on sessionQueue, so a queued stop and a queued start always
+    /// resolve in the order they were asked for.
+    @ObservationIgnored private var wantsRunning = false
+
+    /// Bumped by every start() and stop() on the main actor. Async work that
+    /// finishes later only writes `state` if no newer start or stop has
+    /// happened since, so a slow stop can't overwrite a fresh .ready with a
+    /// stale .idle (the "big delay" coming back from the Exposure tab).
+    @ObservationIgnored private var lifecycleGeneration = 0
+
+    @ObservationIgnored private var pressureObservation: NSKeyValueObservation?
+
     override init() {
         super.init()
         observeSessionNotifications()
@@ -94,44 +107,74 @@ final class CameraService: NSObject {
 
     func start() async {
         guard await requestAccess() else {
-            await MainActor.run { state = .denied }
+            state = .denied
             return
         }
 
-        if isConfigured && session.isRunning {
-            await MainActor.run {
-                if state != .denied { state = .ready }
-            }
-            return
-        }
+        lifecycleGeneration += 1
+        let generation = lifecycleGeneration
 
-        await withCheckedContinuation { continuation in
-            sessionQueue.async { [weak self] in
-                guard let self else { continuation.resume(); return }
+        // Two attempts: startRunning can come back not running when it lands
+        // right behind a stopRunning from a tab switch.
+        for attempt in 0..<2 {
+            let running: Bool = await withCheckedContinuation { continuation in
+                sessionQueue.async { [weak self] in
+                    guard let self else { continuation.resume(returning: false); return }
 
-                if !self.isConfigured { self.configure() }
+                    self.wantsRunning = true
+                    if !self.isConfigured { self.configure() }
 
-                if self.isConfigured, !self.session.isRunning {
-                    self.session.startRunning()
+                    if self.isConfigured, !self.session.isRunning {
+                        self.session.startRunning()
+                    }
+
+                    continuation.resume(returning: self.isConfigured && self.session.isRunning && !self.session.isInterrupted)
                 }
+            }
 
-                continuation.resume()
+            // A newer start or stop owns the state now.
+            guard generation == lifecycleGeneration else { return }
+            // configure() already reported its own .failed reason.
+            guard isConfigured else { return }
+
+            if running {
+                state = .ready
+                return
+            }
+            if attempt == 0 {
+                try? await Task.sleep(for: .milliseconds(400))
+                guard generation == lifecycleGeneration else { return }
             }
         }
 
-        if isConfigured && state != .denied {
-            state = session.isRunning ? .ready : .interrupted
-        }
+        state = .interrupted
     }
 
     func stop() {
+        lifecycleGeneration += 1
+        let generation = lifecycleGeneration
         sessionQueue.async { [weak self] in
-            guard let self, self.session.isRunning else { return }
-            self.session.stopRunning()
+            guard let self else { return }
+            self.wantsRunning = false
+            if self.session.isRunning { self.session.stopRunning() }
             Task { @MainActor in
+                guard generation == self.lifecycleGeneration else { return }
                 self.state = .idle
             }
         }
+    }
+
+    /// Escape hatch behind the "Restart camera" button: a full stop and
+    /// start, which clears a session iOS left wedged after an interruption.
+    func forceRestart() async {
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [weak self] in
+                guard let self else { continuation.resume(); return }
+                if self.session.isRunning { self.session.stopRunning() }
+                continuation.resume()
+            }
+        }
+        await start()
     }
 
     private func requestAccess() async -> Bool {
@@ -196,7 +239,39 @@ final class CameraService: NSObject {
         }
 
         configureDevice(device)
+
+        // Watch for heat and load. Sustained camera plus Core ML plus
+        // Foundation Models right after a shot is exactly what raises it.
+        pressureObservation = device.observe(\.systemPressureState, options: [.new]) { @Sendable device, _ in
+            CameraService.applyPressure(to: device)
+        }
+
         isConfigured = true
+    }
+
+    /// Apple's guidance under system pressure is to cut the frame rate
+    /// before iOS interrupts the session outright. A 15 fps viewfinder is
+    /// plenty for framing a spider, and it keeps the camera alive.
+    nonisolated private static func applyPressure(to device: AVCaptureDevice) {
+        let level = device.systemPressureState.level
+        let throttle = (level == .serious || level == .critical)
+
+        guard (try? device.lockForConfiguration()) != nil else { return }
+        defer { device.unlockForConfiguration() }
+
+        if throttle {
+            let supports15 = device.activeFormat.videoSupportedFrameRateRanges.contains {
+                $0.minFrameRate <= 15 && $0.maxFrameRate >= 15
+            }
+            guard supports15 else { return }
+            let frame = CMTime(value: 1, timescale: 15)
+            device.activeVideoMinFrameDuration = frame
+            device.activeVideoMaxFrameDuration = frame
+        } else {
+            // .invalid restores the format's default frame rate.
+            device.activeVideoMinFrameDuration = .invalid
+            device.activeVideoMaxFrameDuration = .invalid
+        }
     }
 
     func setCaptureMode(_ mode: CaptureMode) {
@@ -324,8 +399,23 @@ final class CameraService: NSObject {
 
         // iOS 18 moved these onto AVCaptureSession as nested names. The old
         // global constants still work but are deprecated.
-        center.addObserver(forName: AVCaptureSession.wasInterruptedNotification, object: session, queue: .main) { [weak self] _ in
-            self?.state = .interrupted
+        center.addObserver(forName: AVCaptureSession.wasInterruptedNotification, object: session, queue: .main) { [weak self] note in
+            guard let self else { return }
+            if let raw = note.userInfo?[AVCaptureSessionInterruptionReasonKey] as? Int,
+               let reason = AVCaptureSession.InterruptionReason(rawValue: raw) {
+                print("[FloraFang] camera interrupted, reason \(reason.rawValue)")
+            }
+            self.state = .interrupted
+
+            // Belt and braces: if the ended notification never arrives,
+            // check again on our own instead of leaving "paused" up.
+            Task { @MainActor [weak self] in
+                for delay in [1.5, 4.0] {
+                    try? await Task.sleep(for: .seconds(delay))
+                    guard let self, self.state == .interrupted else { return }
+                    self.restart()
+                }
+            }
         }
 
         center.addObserver(forName: AVCaptureSession.interruptionEndedNotification, object: session, queue: .main) { [weak self] _ in
@@ -344,10 +434,22 @@ final class CameraService: NSObject {
     }
 
     private func restart() {
+        let generation = lifecycleGeneration
         sessionQueue.async { [weak self] in
-            guard let self, self.isConfigured, !self.session.isRunning else { return }
-            self.session.startRunning()
-            Task { @MainActor in self.state = .ready }
+            guard let self, self.isConfigured, self.wantsRunning else { return }
+
+            // THE "CAMERA PAUSED" BUG: iOS usually resumes the session on its
+            // own when an interruption ends, so it is often already running
+            // here. The old guard bailed out in that case without ever
+            // clearing .interrupted, which left "Camera paused" on screen
+            // after every shot until a tab switch forced a full restart.
+            if !self.session.isRunning { self.session.startRunning() }
+            let running = self.session.isRunning && !self.session.isInterrupted
+
+            Task { @MainActor in
+                guard generation == self.lifecycleGeneration else { return }
+                self.state = running ? .ready : .interrupted
+            }
         }
     }
 

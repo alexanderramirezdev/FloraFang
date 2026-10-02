@@ -61,7 +61,11 @@ struct CameraScreen: View {
             case .denied:
                 message("FloraFang needs the camera to identify anything. Enable it in Settings → FloraFang.")
             case .interrupted:
-                message("Camera paused. This usually clears on its own. If it does not, switch tabs and come back.")
+                // Keep the viewfinder up. Most interruptions (often heat or
+                // load right after a shot) clear within a second, and the
+                // old full screen message made every blip look like a failure.
+                preview
+                    .overlay { interruptedBanner }
             case .failed(let reason):
                 message(reason)
             case .idle:
@@ -108,8 +112,11 @@ struct CameraScreen: View {
                 Task { await camera.start() }
             } else {
                 stopTask?.cancel()
+                // Grace period before releasing the camera, so hopping to
+                // Exposure and straight back is instant instead of paying
+                // a full cold start every time.
                 stopTask = Task {
-                    try? await Task.sleep(for: .seconds(3))
+                    try? await Task.sleep(for: .seconds(10))
                     guard !Task.isCancelled else { return }
                     camera.stop()
                 }
@@ -404,6 +411,21 @@ struct CameraScreen: View {
     private var isReady: Bool {
         if case .ready = camera.state { return true }
         return false
+    }
+
+    private var interruptedBanner: some View {
+        VStack(spacing: 10) {
+            Text("Camera catching up…")
+                .font(.system(size: 14, design: .serif))
+                .foregroundStyle(Palette.parchment)
+            Button("Restart camera") {
+                Task { await camera.forceRestart() }
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Palette.ochre)
+        }
+        .padding(16)
+        .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private func message(_ text: String) -> some View {

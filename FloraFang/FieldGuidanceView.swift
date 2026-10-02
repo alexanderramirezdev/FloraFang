@@ -73,13 +73,19 @@ struct FieldGuidanceView: View {
                         Image(systemName: "eye.slash.fill")
                             .font(.system(size: 11))
                             .foregroundStyle(Palette.ochre)
-                        Text("OBSCURED IN THIS ANGLE")
+                        Text(missingFeaturesAreGeneric ? "WHAT SETTLES IT" : "OBSCURED IN THIS ANGLE")
                             .font(.system(size: 10, weight: .bold))
                             .tracking(1.2)
                             .foregroundStyle(Palette.lichen)
                     }
 
-                    Text("Crucial safety markings could not be confirmed:")
+                    // The generic list is not a reading of this photo, so it
+                    // must not claim these were checked and missing. The old
+                    // copy told people a clearly visible eye row "could not
+                    // be confirmed" when nothing had looked for it.
+                    Text(missingFeaturesAreGeneric
+                         ? "Widows and recluses are told apart by these markings. A clear shot of any one helps most:"
+                         : "Crucial safety markings could not be confirmed:")
                         .font(.system(size: 11.5))
                         .foregroundStyle(Palette.parchment.opacity(0.75))
 
@@ -187,6 +193,22 @@ struct FieldGuidanceView: View {
             }
             return nil
         }
+    }
+
+    /// True when missingFeatures is the fallback list rather than what the
+    /// on-device model actually reported as not visible in this photo.
+    private var missingFeaturesAreGeneric: Bool {
+        guard wasRefusal else { return false }
+        guard let line = notes.first(where: {
+            $0.lowercased().contains("not visible in photo:") || $0.lowercased().contains("not visible in this photo:")
+        }) else { return true }
+        let prefix = line.contains("Not visible in photo:") ? "Not visible in photo:" : "Not visible in this photo:"
+        guard let range = line.range(of: prefix) else { return true }
+        let tokens = String(line[range.upperBound...])
+            .trimmingCharacters(in: CharacterSet(charactersIn: ". "))
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        return tokens.compactMap { humanizeDiagnosticFeature(String($0)) }.isEmpty
     }
 
     private var missingFeatures: [String] {
