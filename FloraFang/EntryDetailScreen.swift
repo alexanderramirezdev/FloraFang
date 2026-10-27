@@ -52,6 +52,7 @@ struct EntryDetailScreen: View {
                 // duplicate of itself.
                 .padding(20)
                 .padding(.bottom, 44)
+                .readableColumn()
             }
         }
         .navigationTitle("")

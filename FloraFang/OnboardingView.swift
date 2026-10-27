@@ -75,6 +75,7 @@ struct OnboardingView: View {
                 .padding(.horizontal, 28)
                 .padding(.bottom, 28)
             }
+            .readableColumn()
         }
     }
 

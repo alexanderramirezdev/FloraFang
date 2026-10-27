@@ -92,8 +92,7 @@ struct SpeciesLifeListScreen: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("Field Checklist")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Field Checklist")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

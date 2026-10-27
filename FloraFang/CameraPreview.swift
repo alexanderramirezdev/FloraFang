@@ -12,11 +12,15 @@ struct CameraPreview: UIViewRepresentable {
     var onFocusTap: (CGPoint, CGPoint) -> Void = { _, _ in }
     /// Called with a zoom multiplier during a pinch.
     var onPinch: (CGFloat, UIGestureRecognizer.State) -> Void = { _, _ in }
+    /// Hands the preview layer to CameraService so it can keep the image
+    /// level when the interface rotates (iPhone Duo's inner display).
+    var onLayerReady: (AVCaptureVideoPreviewLayer) -> Void = { _ in }
 
     func makeUIView(context: Context) -> PreviewView {
         let view = PreviewView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
+        onLayerReady(view.videoPreviewLayer)
 
         let tap = UITapGestureRecognizer(
             target: context.coordinator,

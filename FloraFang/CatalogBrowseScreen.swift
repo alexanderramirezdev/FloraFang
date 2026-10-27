@@ -131,9 +131,9 @@ struct CatalogBrowseScreen: View {
                     .listRowBackground(Palette.surface)
                 }
                 .scrollContentBackground(.hidden)
+                .readableColumn()
             }
-            .navigationTitle("Species Catalog")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Species Catalog")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -217,9 +217,9 @@ private struct CatalogSubSpeciesListScreen: View {
                 .listRowBackground(Palette.surface)
             }
             .scrollContentBackground(.hidden)
+            .readableColumn()
         }
-        .navigationTitle(category.displayName)
-        .navigationBarTitleDisplayMode(.inline)
+        .centeredTitle(category.displayName)
         .toolbarBackground(Palette.bark, for: .navigationBar)
     }
 

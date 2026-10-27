@@ -96,6 +96,15 @@ final class CameraService: NSObject {
 
     @ObservationIgnored private var pressureObservation: NSKeyValueObservation?
 
+    /// Keeps the viewfinder and the captured photo level with the horizon
+    /// whichever way the interface is turned. The app is portrait only on
+    /// a regular iPhone, but iPhone Duo's inner display runs apps in
+    /// landscape regardless of that setting, and without this the preview
+    /// turns sideways there and photos are saved rotated 90°.
+    @ObservationIgnored private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
+    @ObservationIgnored private var previewRotationObservation: NSKeyValueObservation?
+    @ObservationIgnored private weak var previewLayer: AVCaptureVideoPreviewLayer?
+
     override init() {
         super.init()
         observeSessionNotifications()
@@ -139,6 +148,7 @@ final class CameraService: NSObject {
 
             if running {
                 state = .ready
+                setUpRotationCoordinator()
                 return
             }
             if attempt == 0 {
@@ -175,6 +185,33 @@ final class CameraService: NSObject {
             }
         }
         await start()
+    }
+
+    // MARK: Rotation
+
+    /// Called by CameraPreview once its layer exists. The coordinator needs
+    /// both the layer and the configured device, and either can arrive
+    /// first, so each side tries to set it up.
+    func attachPreview(_ layer: AVCaptureVideoPreviewLayer) {
+        guard layer !== previewLayer else { return }
+        previewLayer = layer
+        rotationCoordinator = nil
+        setUpRotationCoordinator()
+    }
+
+    private func setUpRotationCoordinator() {
+        guard rotationCoordinator == nil, let device, let previewLayer else { return }
+        let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: previewLayer)
+        rotationCoordinator = coordinator
+        previewLayer.connection?.videoRotationAngle = coordinator.videoRotationAngleForHorizonLevelPreview
+        previewRotationObservation = coordinator.observe(
+            \.videoRotationAngleForHorizonLevelPreview, options: .new
+        ) { [weak previewLayer] _, change in
+            guard let angle = change.newValue else { return }
+            Task { @MainActor in
+                previewLayer?.connection?.videoRotationAngle = angle
+            }
+        }
     }
 
     private func requestAccess() async -> Bool {
@@ -460,6 +497,9 @@ final class CameraService: NSObject {
         guard isConfigured else { throw CameraError.notReady }
 
         let targetMode = mode ?? self.captureMode
+        // Read on the main actor, where the coordinator lives; applied to
+        // the photo connection on the session queue just before capture.
+        let captureAngle = rotationCoordinator?.videoRotationAngleForHorizonLevelCapture
 
         return try await withCheckedThrowingContinuation { continuation in
             self.photoContinuation = continuation
@@ -481,6 +521,12 @@ final class CameraService: NSObject {
                 }
 
                 settings.photoQualityPrioritization = (targetMode == .action ? .speed : .quality)
+
+                if let captureAngle,
+                   let connection = self.photoOutput.connection(with: .video),
+                   connection.isVideoRotationAngleSupported(captureAngle) {
+                    connection.videoRotationAngle = captureAngle
+                }
 
                 self.photoOutput.capturePhoto(with: settings, delegate: self)
             }

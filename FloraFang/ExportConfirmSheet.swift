@@ -40,8 +40,7 @@ struct ExportConfirmSheet: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("Export field log")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Export field log")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

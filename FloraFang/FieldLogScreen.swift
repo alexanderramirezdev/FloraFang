@@ -103,9 +103,9 @@ struct FieldLogScreen: View {
                         exposureLogContent
                     }
                 }
+                .readableColumn()
             }
-            .navigationTitle("Log")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Log")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 if isSelectingIncidents {
@@ -1178,8 +1178,7 @@ struct SettingsSheet: View {
                     .padding(20)
                 }
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Settings")
             .toolbarBackground(theme.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

@@ -47,8 +47,7 @@ struct ExposureHistoryView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Incident History")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Incident History")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -327,8 +326,7 @@ struct ExposureIncidentDetailSheet: View {
                     .padding(.bottom, 24)
                 }
             }
-            .navigationTitle("Incident Details")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Incident Details")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

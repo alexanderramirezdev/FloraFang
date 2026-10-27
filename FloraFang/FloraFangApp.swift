@@ -25,6 +25,7 @@ struct FloraFangApp: App {
         WindowGroup {
             RootView()
                 .environment(purchases)
+                .detectsDuoSpread()
         }
         .modelContainer(for: [FieldEntry.self, ExposureIncident.self])
     }
@@ -309,5 +310,28 @@ extension Color {
             blue: Double(b) / 255.0,
             opacity: Double(a) / 255.0
         )
+    }
+}
+
+// MARK: Readable Column
+
+/// Caps a screen's content to a comfortable reading width and centers it.
+/// A no-op on a regular iPhone, which is already narrower than the cap; on
+/// iPhone Duo's unfolded inner display (about 950pt wide in landscape) it
+/// keeps rows, segmented controls and paragraphs from stretching edge to
+/// edge into lines too long to read.
+struct ReadableColumn: ViewModifier {
+    static let maxWidth: CGFloat = 640
+
+    func body(content: Content) -> some View {
+        content
+            .frame(maxWidth: Self.maxWidth)
+            .frame(maxWidth: .infinity)
+    }
+}
+
+extension View {
+    func readableColumn() -> some View {
+        modifier(ReadableColumn())
     }
 }

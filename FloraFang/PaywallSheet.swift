@@ -86,10 +86,10 @@ struct PaywallSheet: View {
                         legal
                     }
                     .padding(20)
+                    .readableColumn()
                 }
             }
-            .navigationTitle("Unlock FloraFang")
-            .navigationBarTitleDisplayMode(.inline)
+            .centeredTitle("Unlock FloraFang")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

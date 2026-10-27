@@ -51,50 +51,29 @@ struct CameraScreen: View {
 
     private let squareSide: CGFloat = 260
 
+    @Environment(\.isDuoSpread) private var isDuoSpread
+
     var body: some View {
-        ZStack {
-            Palette.bark.ignoresSafeArea()
-
-            switch camera.state {
-            case .ready:
-                preview
-            case .denied:
-                message("FloraFang needs the camera to identify anything. Enable it in Settings → FloraFang.")
-            case .interrupted:
-                // Keep the viewfinder up. Most interruptions (often heat or
-                // load right after a shot) clear within a second, and the
-                // old full screen message made every blip look like a failure.
-                preview
-                    .overlay { interruptedBanner }
-            case .failed(let reason):
-                message(reason)
-            case .idle:
-                ProgressView().tint(Palette.parchment)
-            }
-
-            if shutterFlash {
-                Color.black.opacity(0.65)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-            }
-
-            VStack {
-                header
-                Spacer()
-                if isReady { quadratFrame }
-                Spacer()
-                if isReady { zoomControl }
-                shutterArea
-            }
-            .padding(.vertical, 24)
-
-            if backgroundToastVisible, let thumbnail = backgroundThumbnail {
-                VStack {
-                    Spacer()
-                    backgroundProcessingToast(thumbnail: thumbnail)
-                        .padding(.bottom, 106)
+        Group {
+            if isDuoSpread {
+                // iPhone Duo unfolded: two pages. The viewfinder
+                // keeps the left page and each result opens on the right,
+                // so scanning the next plant never means dismissing the
+                // last one first.
+                HStack(spacing: 0) {
+                    cameraStage
+                        .frame(maxWidth: .infinity)
+                    // Above the camera stage, not clipped against it:
+                    // clipping cut the stage's background off at the safe
+                    // area, while an opaque page on top simply covers any
+                    // aspect-fill overflow from the preview.
+                    resultPage
+                        .frame(maxWidth: .infinity)
+                        .zIndex(1)
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeInOut(duration: 0.25), value: assessment?.id)
+            } else {
+                cameraStage
             }
         }
         .onAppear {
@@ -141,25 +120,12 @@ struct CameraScreen: View {
                 Task { await camera.start() }
             }
         }
-        .fullScreenCover(item: $assessment) { result in
-            ResultScreen(
-                assessment: result,
-                image: capturedImage,
-                trace: trace,
-                savedEntry: savedEntry,
-                onDelete: {
-                    if let entry = savedEntry {
-                        modelContext.delete(entry)
-                        try? modelContext.save()
-                    }
-                    savedEntry = nil
-                    assessment = nil
-                },
-                onDismiss: {
-                    savedEntry = nil
-                    assessment = nil
-                }
-            )
+        // Folded, a result covers the camera as before. Unfolded it lives on
+        // the right-hand page instead, so the cover stands down; folding
+        // with a result open brings the cover straight back, and unfolding
+        // moves it onto the page, so the result is never lost either way.
+        .fullScreenCover(item: isDuoSpread ? .constant(nil) : $assessment) { result in
+            resultScreen(for: result)
         }
         #if DEBUG
         .sheet(isPresented: $showInspector) {
@@ -170,6 +136,95 @@ struct CameraScreen: View {
             Button("OK") { errorMessage = nil }
         } message: {
             Text(errorMessage ?? "")
+        }
+    }
+
+    // MARK: Result
+
+    private func resultScreen(for result: Assessment) -> some View {
+        ResultScreen(
+            assessment: result,
+            image: capturedImage,
+            trace: trace,
+            savedEntry: savedEntry,
+            onDelete: {
+                if let entry = savedEntry {
+                    modelContext.delete(entry)
+                    try? modelContext.save()
+                }
+                savedEntry = nil
+                assessment = nil
+            },
+            onDismiss: {
+                savedEntry = nil
+                assessment = nil
+            }
+        )
+    }
+
+    /// The right-hand page unfolded: the latest result, or the scan
+    /// intro and today's finds until there is one.
+    @ViewBuilder
+    private var resultPage: some View {
+        if let assessment {
+            resultScreen(for: assessment)
+                // A fresh page per scan, so a half-typed note from the
+                // last plant never carries over onto the next one.
+                .id(assessment.id)
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+        } else {
+            ScanResultEmptyPage()
+                .transition(.opacity)
+        }
+    }
+
+    /// The viewfinder and its controls: the whole screen folded, the
+    /// left page unfolded.
+    private var cameraStage: some View {
+        ZStack {
+            Palette.bark.ignoresSafeArea()
+
+            switch camera.state {
+            case .ready:
+                preview
+            case .denied:
+                message("FloraFang needs the camera to identify anything. Enable it in Settings → FloraFang.")
+            case .interrupted:
+                // Keep the viewfinder up. Most interruptions (often heat or
+                // load right after a shot) clear within a second, and the
+                // old full screen message made every blip look like a failure.
+                preview
+                    .overlay { interruptedBanner }
+            case .failed(let reason):
+                message(reason)
+            case .idle:
+                ProgressView().tint(Palette.parchment)
+            }
+
+            if shutterFlash {
+                Color.black.opacity(0.65)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+
+            VStack {
+                header
+                Spacer()
+                if isReady { quadratFrame }
+                Spacer()
+                if isReady { zoomControl }
+                shutterArea
+            }
+            .padding(.vertical, 24)
+
+            if backgroundToastVisible, let thumbnail = backgroundThumbnail {
+                VStack {
+                    Spacer()
+                    backgroundProcessingToast(thumbnail: thumbnail)
+                        .padding(.bottom, 106)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
     }
 
@@ -187,7 +242,8 @@ struct CameraScreen: View {
                     if state == .changed {
                         camera.setZoom(camera.zoomFactor * scale)
                     }
-                }
+                },
+                onLayerReady: { camera.attachPreview($0) }
             )
             .onAppear { previewSize = geo.size }
             .onChange(of: geo.size) { _, newValue in previewSize = newValue }

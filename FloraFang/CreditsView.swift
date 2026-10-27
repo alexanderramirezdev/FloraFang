@@ -52,8 +52,7 @@ struct CreditsView: View {
                 .padding(20)
             }
         }
-        .navigationTitle("Photo Credits")
-        .navigationBarTitleDisplayMode(.inline)
+        .centeredTitle("Photo Credits")
         .toolbarBackground(theme.bark, for: .navigationBar)
     }
 

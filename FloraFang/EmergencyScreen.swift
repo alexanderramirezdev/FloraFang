@@ -46,35 +46,69 @@ struct EmergencyScreen: View {
 
     private let classifier = PlantClassifier()
 
+    /// Two pages when this screen itself is wide enough. Measured here
+    /// rather than read from the root, because Exposure also opens as a
+    /// sheet from a scan result, which can be narrower than the display.
+    @State private var isTwoPage = false
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Palette.bark.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        urgencyBanner
-                        hotlines
-                        Divider().overlay(Palette.moss.opacity(0.3))
-                        subjectSelector
-
-                        if selectedSubject != nil {
-                            intakeForm
-                        } else {
-                            unselectedPlaceholder
+                if isTwoPage {
+                    // iPhone Duo unfolded: the call on the left page, the
+                    // intake checklist on the right. The hotlines stay in
+                    // view the whole time the form is being filled in,
+                    // instead of scrolling away above it.
+                    HStack(alignment: .top, spacing: 0) {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 18) {
+                                urgencyBanner
+                                hotlines
+                            }
+                            .padding(24)
                         }
+                        .frame(maxWidth: .infinity)
+
+                        Rectangle()
+                            .fill(Palette.moss.opacity(0.25))
+                            .frame(width: 1)
+                            .ignoresSafeArea(edges: .bottom)
+
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 18) {
+                                intakeColumn
+                            }
+                            .padding(24)
+                            .padding(.bottom, 60)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .scrollDismissesKeyboard(.interactively)
                     }
-                    .padding(20)
-                    .padding(.bottom, 100)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 18) {
+                            urgencyBanner
+                            hotlines
+                            Divider().overlay(Palette.moss.opacity(0.3))
+                            intakeColumn
+                        }
+                        .padding(20)
+                        .padding(.bottom, 100)
+                        .readableColumn()
+                    }
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                .scrollDismissesKeyboard(.interactively)
 
                 if showSavedToast {
                     savedToast
                 }
             }
-            .navigationTitle("Exposure")
-            .navigationBarTitleDisplayMode(.inline)
+            .onGeometryChange(for: Bool.self) { proxy in
+                proxy.size.width >= 760 && proxy.size.height >= 500
+            } action: { isTwoPage = $0 }
+            .centeredTitle("Exposure")
             .toolbarBackground(Palette.bark, for: .navigationBar)
             .onAppear {
                 guard !didPrefill else { return }
@@ -125,6 +159,19 @@ struct EmergencyScreen: View {
         }
     }
 
+    /// Who was exposed, then the checklist for them: the right-hand page
+    /// unfolded, everything below the hotlines folded.
+    @ViewBuilder
+    private var intakeColumn: some View {
+        subjectSelector
+
+        if selectedSubject != nil {
+            intakeForm
+        } else {
+            unselectedPlaceholder
+        }
+    }
+
     // MARK: Above the fold: Urgency Banner
 
     private var urgencyBanner: some View {
@@ -170,6 +217,8 @@ struct EmergencyScreen: View {
             Text("US numbers. If you are outside the US, contact your local poison center or emergency vet.")
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(Palette.lichen)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -837,11 +886,14 @@ struct EmergencyScreen: View {
         }
     }
 
+    // Centered over the full-width cards and buttons below it, so the
+    // screen stays balanced rather than leaning on its left edge.
     private func sectionLabel(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
             .tracking(1.4)
             .foregroundStyle(Palette.ochre)
+            .frame(maxWidth: .infinity)
     }
 
     private func smallLabel(_ text: String) -> some View {
@@ -882,7 +934,8 @@ struct EmergencyCaptureSheet: View {
             Color.black.ignoresSafeArea()
 
             if case .ready = camera.state {
-                CameraPreview(session: camera.session).ignoresSafeArea()
+                CameraPreview(session: camera.session, onLayerReady: { camera.attachPreview($0) })
+                    .ignoresSafeArea()
             } else {
                 ProgressView().tint(.white)
             }
